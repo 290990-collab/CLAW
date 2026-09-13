@@ -43,6 +43,7 @@ Reference material for whoever reviews. Two blocks, **separate and not merged** 
 - Do formats already written to disk still read back?
 - Do external consumers stay compatible? If not, is the migration planned?
 - Do changed public signatures have every side updated?
+- Text shortened, merged or moved: did the enforcement survive — obligations, checks, defaults? Compression removes it first, because it reads as repetition.
 
 ### Tests
 

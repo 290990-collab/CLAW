@@ -5,7 +5,7 @@ Every action starts from evidence gathered in session, never from the model's me
 1. **Verified sources:** never cite APIs, numbers, versions or files without having read/run them in the current session.
 2. **Execution state:** whatever was not explicitly launched goes marked as `UNVERIFIED`.
 3. **Hypotheses vs facts:** separate interpretations ("probably") from verified data, typographically too.
-4. **Empty searches:** file/command not found? Try 2-3 variants before concluding it does not exist. State it.
+4. **Empty searches:** file/command not found? Try 2-3 variants before concluding it does not exist. A count or search that comes back empty over expected data blames the instrument first: confirm it with an independent check. State it.
 5. **Safe modifications:** before the diff, read the current file, find dependencies, check usages in the repo.
 6. **No self-approval:** agents close with the standard report; the judgement belongs to the coordinator.
 7. **Rigorous debugging:** random fix attempts are forbidden. Proceed only when the cause explains *all* the symptoms.

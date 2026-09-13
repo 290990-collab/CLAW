@@ -74,7 +74,7 @@ for p in sorted(Path('<folder>').glob('*.jsonl')):
 | step | for k/N | neutral k/N | against k/N |
 |---|---|---|---|
 
-- **Hook candidate:** a step missed in the neutral prompt **and** checkable from the call alone — name, arguments, order. What is deterministic gets blocked.
+- **Hook candidate:** a step missed in the neutral prompt **and** checkable from the call alone — name, arguments, order. What is deterministic gets blocked. Before proposing it, test the pattern on two real calls taken from the runs: one it must block and one it must not.
 - **Missed but not checkable from the call:** the rule is reworded or moved; a hook there would be heuristic.
 - **Followed only in the prompt for:** the rule is not remembered on its own — position or wording.
 - **The prompt against** measures how well the rule withstands pressure: on its own it does not decide a hook.
