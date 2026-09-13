@@ -28,70 +28,76 @@
 
 </td></tr></table>
 
-**A working method for Claude Code. One command to install. A doctor to keep it honest.**
+**A working method for Claude Code. Installed in one command, checked by a doctor.**
 
-Claude Code gives you subagents, hooks and skills. It doesn't give you a
-**method** — so every project writes its own `CLAUDE.md` by hand, and every one
-of them drifts. CLAW is that method: written once, tested, versioned, and
-generated into your project in minutes.
+Claude Code ships subagents, hooks and skills, but no method. Every project
+writes its own `CLAUDE.md` by hand, and every one drifts. CLAW is the method:
+versioned, tested, generated into your project.
 
 ---
 
 ## Why CLAW
 
-### Evidence, not vibes
+### Evidence before action
 
-No API, number or file gets cited unless it was read in this session. Whatever
-wasn't run is marked `UNVERIFIED`. No fix until the cause explains every symptom.
-And every agent closes with the same report: how confident it is, what would
-prove it wrong, and what it did **not** check.
+- Nothing is cited unless it was read or run in the current session.
+- Anything not executed is marked `UNVERIFIED`.
+- No fix until the root cause explains every symptom.
+- Every agent closes with the same report: confidence, what would disprove it,
+  what it did **not** check.
 
-### The rules you already know — actually applied
+### Principles, applied
 
-- **KISS and YAGNI** — the simplest thing that meets today's requirement, nothing
-  built for hypothetical needs.
-- **Minimal safe change** — one problem per diff, no drive-by refactors.
-- **Single source of truth** — two copies that can diverge will.
-- **Fail loudly** — no swallowed exceptions, no invented defaults; security
-  checks fail closed.
-- **Hyrum's law** — every observable behaviour is a contract: find who relies on
-  it before you change it.
-- **Least privilege** — reviewers read the code; they don't get a shell.
-- **No shortcut to green** — a test never passes because it was weakened.
+| Principle | In practice |
+|---|---|
+| **KISS, YAGNI** | The simplest code for today's requirement. Nothing for hypothetical needs. |
+| **Minimal safe change** | One problem per diff. No unrequested refactoring. |
+| **Single source of truth** | Two copies that can diverge will diverge. |
+| **Fail loudly** | No swallowed exceptions, no invented defaults. Security checks fail closed. |
+| **Hyrum's law** | Every observable behaviour is a contract. Find its consumers before changing it. |
+| **Least privilege** | Read-only reviewers get no shell. |
+| **No shortcut to green** | A check never passes by being weakened. |
 
-### Guardrails that don't trust the model
+### Hooks where prompts fall short
 
-A rule in a prompt is a suggestion. CLAW measures it: `/framework-comply` puts the
-rule through real sessions and counts how often each step actually happens. What
-the model skips, and a tool call can prove, becomes a hook — `--no-verify` blocked,
-linter configs that loosen blocked, and the first edit of a file answered with
-"who imports this?".
+A rule in a prompt is followed most of the time, not every time.
+`/framework-comply` measures how often: it runs the rule through real `claude -p`
+sessions and counts each step. The steps a tool call can prove become hooks:
 
-### Context is a budget
+| Hook | Blocks |
+|---|---|
+| `block_no_verify` | `--no-verify`, `commit -n` and any change to `core.hooksPath` |
+| `config_protection` | Edits to an existing linter configuration |
+| `gateguard` | The first edit of a file, until its importers and public surface are checked |
 
-Progressive disclosure, by construction. The method every agent needs lives in
-`CLAUDE.md`, under a word budget the tests enforce. Delegation rules live where
-only the coordinator reads them. Domain guides load only when the task needs
-them. `fwbuild cost` turns it all into tokens and dollars.
+### Context as a budget
 
-### One method, every project
+Progressive disclosure by design:
 
-The method sits in a hashed region: touch it and the doctor notices. The edits
-worth keeping go back to the source with `framework-sync --up`, so the next
-project starts smarter.
+- `CLAUDE.md` holds only what every agent needs, under a word budget the test
+  suite enforces.
+- Delegation rules load for the coordinator only.
+- Domain guides load when the task needs them.
+- `fwbuild cost` converts all of it into tokens and dollars.
+
+### Drift detection
+
+The generated method sits in a hashed region. Edit it and the doctor reports it.
+Changes worth keeping go back to the source with `framework-sync --up`, and the
+next project inherits them.
 
 ---
 
 ## The team
 
-28 specialised agents across 7 profiles. Your project gets only the ones it
-needs. The core of the roster:
+28 agents across 7 profiles. Each project installs only the ones it needs. The
+core roster:
 
 | Agent | What it does |
 |---|---|
 | `explorer` | Finds where things live, cheaply, before anything changes |
 | `api-scout` | Checks third-party APIs and version differences before code relies on them |
-| `architect` | Plans changes that cross files or contracts — and writes no production code |
+| `architect` | Plans changes that cross files or contracts. Writes no production code |
 | `implementer` | Writes the planned change |
 | `debugger` | Finds the cause of the defect nobody can explain |
 | `tester` | Tests invariants and contracts, not just examples |
