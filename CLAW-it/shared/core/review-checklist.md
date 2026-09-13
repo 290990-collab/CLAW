@@ -43,6 +43,7 @@ Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi** �
 - I formati già scritti su disco si rileggono ancora?
 - I consumatori esterni restano compatibili? Se no, la migrazione è prevista?
 - Le firme pubbliche cambiate hanno tutti i lati aggiornati?
+- Testo accorciato, fuso o spostato: sopravvivono i controlli — obblighi, verifiche, valori predefiniti? La compressione li toglie per primi, perché sembrano ripetizioni.
 
 ### Test
 

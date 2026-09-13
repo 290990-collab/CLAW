@@ -5,7 +5,7 @@ Ogni azione parte da evidenze raccolte in sessione, mai dalla memoria del modell
 1. **Fonti verificate:** mai citare API, numeri, versioni o file senza averli letti/eseguiti nella sessione corrente.
 2. **Stato esecuzione:** ciò che non è stato lanciato esplicitamente va marcato come `UNVERIFIED`.
 3. **Ipotesi vs fatti:** separa le interpretazioni ("probabile") dai dati verificati, anche tipograficamente.
-4. **Ricerche a vuoto:** file/comando non trovato? Tenta 2-3 varianti prima di concludere che non esiste. Dichiaralo.
+4. **Ricerche a vuoto:** file/comando non trovato? Tenta 2-3 varianti prima di concludere che non esiste. Un conteggio o una ricerca che torna vuota su dati attesi accusa prima lo strumento: confermala con un controllo indipendente. Dichiaralo.
 5. **Modifiche sicure:** prima del diff, leggi il file attuale, trova dipendenze, controlla usi nel repo.
 6. **Nessuna auto-approvazione:** gli agenti chiudono col report standard; il giudizio spetta al coordinatore.
 7. **Debug rigoroso:** vietato tentare fix casuali. Procedi solo quando la causa spiega *tutti* i sintomi.

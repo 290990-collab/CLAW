@@ -74,7 +74,7 @@ for p in sorted(Path('<cartella>').glob('*.jsonl')):
 | passo | a favore k/N | neutro k/N | contrario k/N |
 |---|---|---|---|
 
-- **Candidato a hook:** passo mancato nel prompt neutro **e** verificabile dalla sola chiamata — nome, argomenti, ordine. Il deterministico si blocca.
+- **Candidato a hook:** passo mancato nel prompt neutro **e** verificabile dalla sola chiamata — nome, argomenti, ordine. Il deterministico si blocca. Prima di proporlo, il pattern si prova su due chiamate reali prese dalle esecuzioni: una che deve bloccare e una che non deve.
 - **Mancato ma non verificabile dalla chiamata:** la regola si riformula o si sposta; un hook lì sarebbe euristico.
 - **Seguito solo nel prompt a favore:** la regola non si ricorda da sola — posizione o formulazione.
 - **Il contrario** misura quanto la regola resiste a una pressione: da solo non decide un hook.
