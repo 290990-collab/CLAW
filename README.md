@@ -7,23 +7,23 @@
 <table align="center"><tr><td>
 
 ```
-+-- CLAW-eng ------------------------------+
-|   method        coordinator   cycles     |
-|   agents        shared        hooks      |
-+------------------------------+-----------+
-                               |       ^
-                         +-----+-----+ |
-                         |  profile  | |
-                         +-----+-----+ |
-                               |       |
-  /framework-install -+  +-----+-----+ |
-  /framework-doctor  -+->|  fwbuild  | |
-  /framework-sync    -+  +-----+-----+ |
-  /framework-comply  -+        |       |
-+-- project -------------------+-------+---+
-|   CLAUDE.md       .claude/agents  docs   |
-|   .claude/shared  .claude/hooks          |
-+------------------------------------------+
++-- CLAW-eng ----------------------------------------------+
+|       method             coordinator        cycles       |
+|       agents             shared             hooks        |
++-----------------------------------+----------------------+
+                                    |               ^
+                            +-------+-------+       |
+                            |    profile    |       |
+                            +-------+-------+       |
+                                    |               |
+  /framework-install -+     +-------+-------+       |
+  /framework-doctor  -+---->|    fwbuild    |       |
+  /framework-sync    -+     +-------+-------+       |
+  /framework-comply  -+             |               |
++-- project ------------------------+---------------+------+
+|      CLAUDE.md            .claude/agents       docs      |
+|      .claude/shared       .claude/hooks                  |
++----------------------------------------------------------+
 ```
 
 </td></tr></table>
