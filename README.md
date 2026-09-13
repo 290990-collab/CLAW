@@ -28,31 +28,77 @@
 
 </td></tr></table>
 
-**A working method for Claude Code, installed in one command and kept honest by a doctor.**
+**A working method for Claude Code. One command to install. A doctor to keep it honest.**
 
-Specialised subagents, delegation rules, evidence-before-action and a context
-budget per role — generated into your project, versioned, and checked by a tool
-that tells you the moment an installation drifts.
+Claude Code gives you subagents, hooks and skills. It doesn't give you a
+**method** — so every project writes its own `CLAUDE.md` by hand, and every one
+of them drifts. CLAW is that method: written once, tested, versioned, and
+generated into your project in minutes.
 
 ---
 
-## Why
+## Why CLAW
 
-Claude Code gives you subagents, hooks and skills. It does not give you a
-**method** — so everyone writes one by hand, per project, and watches it drift.
+### Evidence, not vibes
 
-- **Agents that stay in their lane.** A roster picked for your project, a routing
-  table, one task per agent with a verifiable done-criterion, and one fixed report
-  every subagent closes with: confidence, what would disprove it, what it did
-  **not** verify.
-- **Context you actually use.** The method every agent needs lives in
-  `CLAUDE.md`; delegation lives where only the coordinator reads it; guides load
-  on demand. `fwbuild cost` turns the words into tokens and dollars.
-- **Guardrails that don't trust the model.** Hooks block `--no-verify` and edits
-  that loosen an existing linter config. Read-only reviewers get no shell at all.
-- **One method, every project.** The generated method sits in a hashed kernel
-  region: edit it and the doctor sees it, and `framework-sync` carries the edits
-  worth keeping back into the source.
+No API, number or file gets cited unless it was read in this session. Whatever
+wasn't run is marked `UNVERIFIED`. No fix until the cause explains every symptom.
+And every agent closes with the same report: how confident it is, what would
+prove it wrong, and what it did **not** check.
+
+### The rules you already know — actually applied
+
+- **KISS and YAGNI** — the simplest thing that meets today's requirement, nothing
+  built for hypothetical needs.
+- **Minimal safe change** — one problem per diff, no drive-by refactors.
+- **Single source of truth** — two copies that can diverge will.
+- **Fail loudly** — no swallowed exceptions, no invented defaults; security
+  checks fail closed.
+- **Hyrum's law** — every observable behaviour is a contract: find who relies on
+  it before you change it.
+- **Least privilege** — reviewers read the code; they don't get a shell.
+- **No shortcut to green** — a test never passes because it was weakened.
+
+### Guardrails that don't trust the model
+
+A rule in a prompt is a suggestion. CLAW measures it: `/framework-comply` puts the
+rule through real sessions and counts how often each step actually happens. What
+the model skips, and a tool call can prove, becomes a hook — `--no-verify` blocked,
+linter configs that loosen blocked, and the first edit of a file answered with
+"who imports this?".
+
+### Context is a budget
+
+Progressive disclosure, by construction. The method every agent needs lives in
+`CLAUDE.md`, under a word budget the tests enforce. Delegation rules live where
+only the coordinator reads them. Domain guides load only when the task needs
+them. `fwbuild cost` turns it all into tokens and dollars.
+
+### One method, every project
+
+The method sits in a hashed region: touch it and the doctor notices. The edits
+worth keeping go back to the source with `framework-sync --up`, so the next
+project starts smarter.
+
+---
+
+## The team
+
+28 specialised agents across 7 profiles. Your project gets only the ones it
+needs. The core of the roster:
+
+| Agent | What it does |
+|---|---|
+| `explorer` | Finds where things live, cheaply, before anything changes |
+| `api-scout` | Checks third-party APIs and version differences before code relies on them |
+| `architect` | Plans changes that cross files or contracts — and writes no production code |
+| `implementer` | Writes the planned change |
+| `debugger` | Finds the cause of the defect nobody can explain |
+| `tester` | Tests invariants and contracts, not just examples |
+| `refactorer` | Cleans up the structure, behaviour unchanged |
+| `silent-failure-hunter` | Hunts swallowed errors and faults hidden behind defaults |
+| `security-reviewer` | Reviews untrusted input, secrets, auth and data exposure |
+| `final-reviewer` | Rereads the diff from scratch and re-runs the tests before anything is called done |
 
 ---
 
