@@ -35,6 +35,8 @@ Un task piccolo, con esito verificabile, che passa dal punto della regola. Tre f
 | neutro | solo il task |
 | contrario | il task, e spinge a saltarla («in fretta, niente controlli») |
 
+Nessun prompt nomina ciò che la regola impone di aprire o cercare: nominarlo risolve il passo in partenza, e si misura il prompt invece della regola.
+
 ## Passo 3 — Esecuzioni
 
 In una copia usa e getta del progetto, mai nel progetto: le sessioni scrivono.
@@ -65,7 +67,7 @@ for p in sorted(Path('<cartella>').glob('*.jsonl')):
 "
 ```
 
-- Ogni esecuzione, passo per passo: **eseguito · saltato · non applicabile**, col criterio del Passo 1.
+- Ogni esecuzione, passo per passo: **eseguito · saltato · non applicabile**, col criterio del Passo 1. Un esito giusto senza che la sessione abbia mai letto ciò che fa scattare la regola è **non applicabile**: cecità, non conformità.
 - Etichetta il coordinatore o un agente su modello intermedio, mai leggero: è classificare, e un modello leggero trova ed elenca, non classifica.
 - Un'esecuzione `INTERROTTA` esce dal denominatore e si riporta a parte.
 
@@ -75,7 +77,7 @@ for p in sorted(Path('<cartella>').glob('*.jsonl')):
 |---|---|---|---|
 
 - **Candidato a hook:** passo mancato nel prompt neutro **e** verificabile dalla sola chiamata — nome, argomenti, ordine. Il deterministico si blocca. Prima di proporlo, il pattern si prova su due chiamate reali prese dalle esecuzioni: una che deve bloccare e una che non deve.
-- **Mancato ma non verificabile dalla chiamata:** la regola si riformula o si sposta; un hook lì sarebbe euristico.
+- **Mancato ma non verificabile dalla chiamata:** la regola si riformula o si sposta; un hook lì sarebbe euristico. Regge meglio una riga obbligatoria scritta mentre si compie l'azione; una che chiede di accorgersi di ciò che manca non si ricorda nemmeno forzata.
 - **Seguito solo nel prompt a favore:** la regola non si ricorda da sola — posizione o formulazione.
 - **Il contrario** misura quanto la regola resiste a una pressione: da solo non decide un hook.
 

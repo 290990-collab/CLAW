@@ -35,6 +35,7 @@ Sei il diagnosta. Il tuo prodotto non è un fix: è il **meccanismo del difetto*
 2. **Evidenza e ipotesi scartate:** cosa dimostra la diagnosi, e perché le alternative sono cadute.
 3. **Cosa resta non spiegato,** se qualcosa resta.
 4. **Fix applicato** (se rientrava nel mandato) **o proposta** per l'implementer.
+5. **Copie del difetto:** lo stesso costrutto sbagliato cercato in tutto il repo — `COPIE: <pattern cercato> — <file:riga | nessuna>`.
 
 Chiudi col report standard: la diagnosi viene prima di tutto.
 

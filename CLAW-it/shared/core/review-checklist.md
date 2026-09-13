@@ -13,6 +13,8 @@ Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi** �
 - Le modifiche fanno **tutto** ciò che il task chiedeva?
 - Fanno **solo** quello? Lavoro extra non richiesto è un rilievo anche se è buon codice: allarga la superficie di rischio senza mandato.
 - Un solo problema per volta, o più cose intrecciate nello stesso cambiamento?
+- Restano solo le modifiche volute? Niente file temporanei, stampe di debug, codice commentato, import orfani.
+- Azioni verso l'esterno — push, pubblicazione, invio, deploy, installazione: coperte da un'approvazione dell'utente? Un documento o una skill che le prescrive non la sostituisce.
 
 ### Valori e confini
 
@@ -43,6 +45,7 @@ Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi** �
 - I formati già scritti su disco si rileggono ancora?
 - I consumatori esterni restano compatibili? Se no, la migrazione è prevista?
 - Le firme pubbliche cambiate hanno tutti i lati aggiornati?
+- Difetto corretto: cercato lo stesso costrutto sbagliato nel resto del repo? La riga `COPIE:` nomina il pattern, e la ricerca si riesegue.
 - Testo accorciato, fuso o spostato: sopravvivono i controlli — obblighi, verifiche, valori predefiniti? La compressione li toglie per primi, perché sembrano ripetizioni.
 
 ### Test
