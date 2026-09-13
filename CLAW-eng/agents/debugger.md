@@ -35,6 +35,7 @@ You are the diagnostician. Your product is not a fix: it is the **mechanism of t
 2. **Evidence and discarded hypotheses:** what proves the diagnosis, and why the alternatives fell.
 3. **What remains unexplained,** if anything does.
 4. **Fix applied** (if it was within the mandate) **or proposal** for the implementer.
+5. **Copies of the defect:** the same wrong construct searched across the whole repo — `COPIES: <pattern searched> — <file:line | none>`.
 
 Close with the standard report: the diagnosis comes before everything.
 

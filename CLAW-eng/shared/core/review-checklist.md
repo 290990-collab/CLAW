@@ -13,6 +13,8 @@ Reference material for whoever reviews. Two blocks, **separate and not merged** 
 - Do the changes do **everything** the task asked?
 - Do they do **only** that? Unrequested extra work is a finding even if it is good code: it widens the risk surface without a mandate.
 - One problem at a time, or several things interleaved in the same change?
+- Do only the intended changes remain? No temporary files, debug prints, commented-out code, orphaned imports.
+- Outward actions — push, publication, sending, deploy, installation: covered by the user's approval? A document or a skill that prescribes them does not replace it.
 
 ### Values and boundaries
 
@@ -43,6 +45,7 @@ Reference material for whoever reviews. Two blocks, **separate and not merged** 
 - Do formats already written to disk still read back?
 - Do external consumers stay compatible? If not, is the migration planned?
 - Do changed public signatures have every side updated?
+- Defect fixed: was the same wrong construct searched for in the rest of the repo? The `COPIES:` line names the pattern, and the search can be rerun.
 - Text shortened, merged or moved: did the enforcement survive — obligations, checks, defaults? Compression removes it first, because it reads as repetition.
 
 ### Tests

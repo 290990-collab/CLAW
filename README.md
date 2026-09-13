@@ -236,6 +236,6 @@ code, build and dependencies stay untouched.
 
 ---
 
-## Version 1.5.0
+## Version 1.5.1
 
 MIT — see [LICENSE](LICENSE).

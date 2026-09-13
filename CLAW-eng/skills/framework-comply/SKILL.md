@@ -35,6 +35,8 @@ A small task, with a verifiable outcome, that goes through the point of the rule
 | neutral | only the task |
 | against | the task, and pushes to skip it ("quickly, no checks") |
 
+No prompt names what the rule requires opening or searching: naming it solves the step in advance, and you measure the prompt instead of the rule.
+
 ## Step 3 — Runs
 
 In a throwaway copy of the project, never in the project: the sessions write.
@@ -65,7 +67,7 @@ for p in sorted(Path('<folder>').glob('*.jsonl')):
 "
 ```
 
-- Every run, step by step: **done · skipped · not applicable**, with the criterion from Step 1.
+- Every run, step by step: **done · skipped · not applicable**, with the criterion from Step 1. A right outcome in a run that never read what triggers the rule is **not applicable**: blindness, not compliance.
 - The labelling is done by the coordinator or by an agent on a mid-tier model, never a light one: it is classifying, and a light model finds and lists, it does not classify.
 - An `INTERRUPTED` run leaves the denominator and is reported separately.
 
@@ -75,7 +77,7 @@ for p in sorted(Path('<folder>').glob('*.jsonl')):
 |---|---|---|---|
 
 - **Hook candidate:** a step missed in the neutral prompt **and** checkable from the call alone — name, arguments, order. What is deterministic gets blocked. Before proposing it, test the pattern on two real calls taken from the runs: one it must block and one it must not.
-- **Missed but not checkable from the call:** the rule is reworded or moved; a hook there would be heuristic.
+- **Missed but not checkable from the call:** the rule is reworded or moved; a hook there would be heuristic. A mandatory line written while the action is being taken holds better; one that asks to notice what is missing is not remembered even when forced.
 - **Followed only in the prompt for:** the rule is not remembered on its own — position or wording.
 - **The prompt against** measures how well the rule withstands pressure: on its own it does not decide a hook.
 
