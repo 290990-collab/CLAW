@@ -4,29 +4,29 @@
 
 <h1 align="center">CLAW</h1>
 
-<div align="center">
+<table align="center"><tr><td>
 
 ```
 +-- CLAW-eng ------------------------------+
 |   method        coordinator   cycles     |
 |   agents        shared        hooks      |
 +------------------------------+-----------+
-                               |       ^    
-                         +-----+-----+ |    
-                         |  profile  | |    
-                         +-----+-----+ |    
-                               |       |    
-  /framework-install -+  +-----+-----+ |    
-  /framework-doctor  -+->|  fwbuild  | |    
-  /framework-sync    -+  +-----+-----+ |    
-  /framework-comply  -+        |       |    
+                               |       ^
+                         +-----+-----+ |
+                         |  profile  | |
+                         +-----+-----+ |
+                               |       |
+  /framework-install -+  +-----+-----+ |
+  /framework-doctor  -+->|  fwbuild  | |
+  /framework-sync    -+  +-----+-----+ |
+  /framework-comply  -+        |       |
 +-- project -------------------+-------+---+
 |   CLAUDE.md       .claude/agents  docs   |
 |   .claude/shared  .claude/hooks          |
 +------------------------------------------+
 ```
 
-</div>
+</td></tr></table>
 
 **A working method for Claude Code, installed in one command and kept honest by a doctor.**
 
