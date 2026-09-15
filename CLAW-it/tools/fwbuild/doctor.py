@@ -78,6 +78,8 @@ COORDINATOR_ONLY = (
     "Lo stato che si aggiorna da solo",
     "Scegliere fra agenti che sembrano vicini",
     "Roster di questo progetto",
+    "Orchestrazione: orchestratore e worker",
+    "Orchestrazione: Agent teams",
 )
 
 

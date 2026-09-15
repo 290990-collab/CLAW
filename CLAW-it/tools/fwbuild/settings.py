@@ -27,6 +27,13 @@ _MATCHER = {
 
 _TIMEOUT_SECONDS = 10
 
+# Ciò che un'orchestrazione pretende da `settings.json` per funzionare. Si
+# fonde come il profilo, e finisce nello stesso record: cambiarla o
+# disinstallare deve poterlo togliere.
+ORCHESTRATION_SETTINGS = {
+    "agent-teams": {"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}},
+}
+
 
 def merge(existing: dict, framework: dict) -> tuple[dict, dict, list[str]]:
     """`(unito, aggiunto, conflitti)`: le voci del framework sopra quelle dell'utente.

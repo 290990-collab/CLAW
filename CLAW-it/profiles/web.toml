@@ -4,6 +4,7 @@ critical_surface = "Ciò che l'utente vede e ciò che un estraneo raggiunge: res
 
 agents = ["frontend", "deploy", "security-reviewer", "api-scout", "debugger", "silent-failure-hunter", "conversation-analyzer"]
 cycles = ["design"]
+recommended_orchestrations = ["agent-teams"]
 
 shared = [
   "core/conventions.md",

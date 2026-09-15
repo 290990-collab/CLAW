@@ -115,5 +115,29 @@ class TestInstalledCycles(unittest.TestCase):
         self.assertEqual(assemble.installed_cycles("## Delega", root), [])
 
 
+class TestInstalledOrchestration(unittest.TestCase):
+    ROOT = Path(__file__).resolve().parents[2]
+
+    def _module(self, name):
+        return (self.ROOT / "orchestrations" / f"{name}.md").read_text(encoding="utf-8")
+
+    def test_detects_the_one_present(self):
+        found = assemble.installed_orchestration(self._module("agent-teams"), self.ROOT)
+        self.assertEqual(found.stem, "agent-teams")
+
+    def test_region_without_a_module_gets_the_default(self):
+        """Una regione installata prima dei moduli lavorava già come il default:
+        riassemblarla senza modulo le toglierebbe il modello di delega."""
+        found = assemble.installed_orchestration("## Delega", self.ROOT)
+        self.assertEqual(found.stem, assemble.DEFAULT_ORCHESTRATION)
+
+    def test_two_modules_are_an_error(self):
+        """Un'orchestrazione per progetto: con due, sceglierne una sarebbe
+        indovinare quale l'utente voleva."""
+        body = self._module("agent-teams") + self._module("orchestrator-worker")
+        with self.assertRaises(ValueError):
+            assemble.installed_orchestration(body, self.ROOT)
+
+
 if __name__ == "__main__":
     unittest.main()

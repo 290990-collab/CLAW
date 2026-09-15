@@ -9,6 +9,7 @@ name = "software"
 agents = ["debugger", "security-reviewer"]
 shared = ["core/review-checklist.md"]
 cycles = []
+recommended_orchestrations = ["agent-teams"]
 
 [settings.permissions]
 deny = ["Read(./**/*.key)"]
@@ -35,6 +36,14 @@ class TestLoad(unittest.TestCase):
     def test_settings_defaults_to_empty(self):
         minimal = 'name = "bare"\nagents = []\n'
         self.assertEqual(profile.load(self._write(minimal)).settings, {})
+
+    def test_reads_recommended_orchestrations(self):
+        prof = profile.load(self._write(TOML))
+        self.assertEqual(prof.recommended_orchestrations, ["agent-teams"])
+
+    def test_recommended_orchestrations_default_to_empty(self):
+        minimal = 'name = "bare"\nagents = []\n'
+        self.assertEqual(profile.load(self._write(minimal)).recommended_orchestrations, [])
 
 
 class TestRoster(unittest.TestCase):

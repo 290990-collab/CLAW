@@ -19,6 +19,9 @@ DOMAIN_HEADING = "## Contesto di progetto"
 METHOD_WORD_BUDGET = 2000
 COORDINATOR_WORD_BUDGET = 2500
 
+# L'orchestrazione di chi non ne sceglie una, e di chi è nato prima dei moduli.
+DEFAULT_ORCHESTRATION = "orchestrator-worker"
+
 
 def read_method(method_dir: Path, extra: Sequence[Path] = ()) -> str:
     """Concatena i moduli di una cartella di metodo, in ordine di nome file.
@@ -88,6 +91,41 @@ def installed_cycles(region_body: str, framework_root: Path) -> list[Path]:
         if heading and heading in region_body:
             out.append(p)
     return out
+
+
+def orchestration_file(framework_root: Path, name: str) -> Path:
+    """Risolve l'orchestrazione scelta in un file di `orchestrations/`.
+
+    Come per i cicli: un nome che non esiste passato in silenzio lascerebbe la
+    guida del coordinatore senza modello di delega, e nessun rilievo lo vedrebbe.
+    """
+    p = framework_root / "orchestrations" / f"{name}.md"
+    if not p.is_file():
+        raise FileNotFoundError(
+            f"orchestrazione dichiarata ma assente: orchestrations/{name}.md"
+        )
+    return p
+
+
+def installed_orchestration(region_body: str, framework_root: Path) -> Path:
+    """L'orchestrazione già presente in una regione kernel installata.
+
+    Stessa ragione di `installed_cycles`, stesso riconoscimento dal primo
+    titolo. Nessuna presente è una regione nata prima dei moduli, che lavorava
+    già come il default: la riceve. Due presenti non sono una scelta da
+    indovinare — il progetto ne ha una sola.
+    """
+    found = []
+    for p in sorted((framework_root / "orchestrations").glob("*.md")):
+        heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
+        if heading and heading in region_body:
+            found.append(p)
+    if len(found) > 1:
+        names = ", ".join(p.stem for p in found)
+        raise ValueError(f"più di un'orchestrazione nella regione: {names}")
+    if found:
+        return found[0]
+    return orchestration_file(framework_root, DEFAULT_ORCHESTRATION)
 
 
 def build_agent(

@@ -4,6 +4,7 @@ critical_surface = "Il comportamento a runtime davanti a input che il progetto n
 
 agents = ["debugger", "security-reviewer", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

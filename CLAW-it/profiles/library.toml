@@ -4,6 +4,7 @@ critical_surface = "Il contratto pubblico — firme, semantica, comportamento fr
 
 agents = ["debugger", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

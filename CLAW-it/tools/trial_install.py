@@ -18,6 +18,8 @@ FRAMEWORK = Path(__file__).resolve().parents[1]
 # Fuori dal sorgente: nel pacchetto entra il codice che fa la prova, non la prova.
 DEFAULT_OUT = FRAMEWORK.parent / "_build" / "prova"
 VERSION = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
+# La risposta alla domanda 5: `software` non ne raccomanda nessuna, vale il default.
+ORCHESTRATION = assemble.DEFAULT_ORCHESTRATION
 
 DOMAIN = {
     "explorer": (
@@ -285,14 +287,18 @@ def install(out: Path) -> int:
     )
 
     # La guida del coordinatore: stessa meccanica, altro destinatario. Non entra
-    # in CLAUDE.md, quindi i subagent non la pagano. I cicli dichiarati dal
-    # profilo si accodano qui: sono orchestrazione, non esecuzione.
+    # in CLAUDE.md, quindi i subagent non la pagano. L'orchestrazione scelta e
+    # i cicli dichiarati dal profilo si accodano qui, in quest'ordine: sono
+    # orchestrazione, non esecuzione.
     (out / ".claude" / "shared" / "orchestration.md").write_text(
         assemble.build_document(
             FRAMEWORK / "coordinator",
             VERSION,
             ROUTING,
-            extra=assemble.cycle_files(FRAMEWORK, prof.cycles),
+            extra=[
+                assemble.orchestration_file(FRAMEWORK, ORCHESTRATION),
+                *assemble.cycle_files(FRAMEWORK, prof.cycles),
+            ],
         ),
         encoding="utf-8",
     )
@@ -318,6 +324,11 @@ def install(out: Path) -> int:
     framework_settings, _, conflicts = settings.merge(prof.settings, settings.hooks(hooks))
     if conflicts:
         raise SystemExit(f"profilo e hook in conflitto su: {', '.join(conflicts)}")
+    framework_settings, _, conflicts = settings.merge(
+        framework_settings, settings.ORCHESTRATION_SETTINGS.get(ORCHESTRATION, {})
+    )
+    if conflicts:
+        raise SystemExit(f"orchestrazione in conflitto su: {', '.join(conflicts)}")
     merged, added, conflicts = settings.merge({}, framework_settings)
     if conflicts:
         raise SystemExit(f"settings.json in conflitto su: {', '.join(conflicts)}")

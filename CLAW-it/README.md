@@ -7,6 +7,7 @@ progetto. Tutto ciò che serve è qui dentro, tooling incluso.
 VERSION              versione del kernel (semantica: patch · minor · major)
 method/              kernel COMUNE → CLAUDE.md, letto da tutti a ogni spawn
 coordinator/         kernel del COORDINATORE → shared/orchestration.md, on-demand
+orchestrations/      modelli di orchestrazione: se ne accoda uno alla guida, orchestrator-worker il default
 cycles/              cicli di dominio, accodati alla guida se il profilo li chiede
 agents/              28 agenti: metodo + blocco [DA COMPILARE] di progetto
 shared/core/         guide generiche, caricate on-demand

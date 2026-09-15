@@ -4,6 +4,7 @@ critical_surface = "Il comportamento del modello non sta nel codice: un prompt c
 
 agents = ["debugger", "api-scout", "scientific-reviewer", "results-analyst", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = ["research"]
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

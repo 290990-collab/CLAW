@@ -4,6 +4,7 @@ critical_surface = "Le affermazioni pubbliche sul prodotto: una promessa che il 
 
 agents = ["market-researcher", "copywriter", "visual-designer", "campaign-planner", "content-analyst", "claim-reviewer"]
 cycles = ["launch"]
+recommended_orchestrations = ["agent-teams"]
 
 shared = [
   "core/conventions.md",

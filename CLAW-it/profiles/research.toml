@@ -4,6 +4,7 @@ critical_surface = "La validità della conclusione: un numero prodotto da un pro
 
 agents = ["debugger", "api-scout", "results-analyst", "literature", "scientific-reviewer", "silent-failure-hunter", "conversation-analyzer"]
 cycles = ["research"]
+recommended_orchestrations = ["agent-teams"]
 
 shared = [
   "core/conventions.md",

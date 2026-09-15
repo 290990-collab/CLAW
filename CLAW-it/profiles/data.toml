@@ -4,6 +4,7 @@ critical_surface = "La correttezza di ciò che entra: una pipeline che gira non 
 
 agents = ["debugger", "data-ingestion", "data-quality-reviewer", "infra", "api-scout", "silent-failure-hunter", "conversation-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

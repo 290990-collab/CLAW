@@ -4,7 +4,7 @@ description: >
   Allinea un'installazione con il framework sorgente: porta giù una versione
   nuova del metodo preservando l'adattamento, promuove su una modifica locale
   perché il prossimo progetto la erediti, attiva o disattiva un agente o una
-  guida, rimette ciò che manca, disinstalla. Da usare quando esce una versione
+  guida, cambia l'orchestrazione, rimette ciò che manca, disinstalla. Da usare quando esce una versione
   nuova, quando una modifica locale merita di diventare generale, quando
   un'installazione ha perso dei file o va tolta.
 ---
@@ -77,7 +77,7 @@ p.write_text(assemble.build_document(Path('../method'), version, sezioni), encod
 "
 ```
 
-4. **Stessa operazione su `.claude/shared/orchestration.md`**, col kernel da `<FW>/coordinator/`: i documenti versionati sono **due**, aggiornarne uno solo li lascia disallineati. Lì i cicli di dominio stanno **dentro** la regione e il progetto non registra da quale profilo è nato: vanno ripassati con `extra=assemble.installed_cycles(region.body, Path('..'))`, o spariscono senza che nessun rilievo lo veda.
+4. **Stessa operazione su `.claude/shared/orchestration.md`**, col kernel da `<FW>/coordinator/`: i documenti versionati sono **due**, aggiornarne uno solo li lascia disallineati. Lì orchestrazione e cicli di dominio stanno **dentro** la regione e il progetto non registra da cosa è nato: vanno ripassati, in quest'ordine, con `extra=[assemble.installed_orchestration(region.body, Path('..')), *assemble.installed_cycles(region.body, Path('..'))]`, o spariscono senza che nessun rilievo lo veda. Una regione nata prima dei moduli di orchestrazione riceve il default.
 5. **Stessa operazione su ogni agente installato**, con `split_source` e `build_agent`: frontmatter e blocco `## Contesto di progetto` restano del progetto, il metodo viene dal master. Se il piano nomina `model` o `effort` diversi dal sorgente, si chiede: sì → quella riga del frontmatter prende il valore del sorgente.
 6. **Esegui il piano** del passo 0 con `apply_update`: copia skill e hook, fonde `settings.json`, scrive `version` in `.claude/framework.json` e accoda il nuovo delta a `settings_added`. Le regioni kernel le salta: le hanno già riscritte i passi 3-5.
 7. **Verifica** con `doctor`: deve uscire con 0.
@@ -254,7 +254,18 @@ Un progetto non resta dov'è nato: una libreria si fa una demo, uno strumento di
 
 1. **Roster** — `--activate` per ciò che il campo nuovo implica, `--deactivate` per il resto. Controlla i conflitti dopo.
 2. **Guide** — copia quelle di `profile.guides` sul profilo nuovo e il roster di dopo, e aggiungi la riga in `CLAUDE.md § Guide condivise`: cosa contiene la guida, presa dalla riga sotto il suo titolo. Il doctor pretende che il percorso sia citato (`SHARED_ORPHAN`), non che la riga sia scritta bene: quella è responsabilità di chi installa.
-3. **Cicli** — riassembla la guida del coordinatore accodando quelli del campo nuovo (`assemble.cycle_files`), o senza se ne toglie. Stanno **dentro** la regione kernel: nessun rilievo li vede sparire.
+3. **Cicli** — riassembla la guida del coordinatore accodando, dopo l'orchestrazione installata (`assemble.installed_orchestration`), quelli del campo nuovo (`assemble.cycle_files`), o nessuno se ne toglie. Stanno **dentro** la regione kernel: nessun rilievo li vede sparire.
 4. **Permessi** — `settings.unmerge(corrente, settings_added)` toglie ciò che il campo vecchio aveva aggiunto ed è ancora uguale; poi `settings.merge(resto, nuovo)`, con `nuovo` = `Profile.settings` del profilo nuovo fuso con `settings.hooks` degli hook in `.claude/hooks/`. Mostra `tenuti` e conflitti prima di scrivere. Senza record, solo `merge`: il `deny` vecchio resta finché l'utente non lo toglie. Una rigenerazione secca cancella permessi che nessun profilo ha mai scritto.
 
 Poi aggiorna `profile` in `framework.json`; `settings_added` diventa l'aggiunto del `merge`. Saltarlo lascia il progetto a dichiarare un campo che non ha più: la prossima manutenzione rigenera i permessi sbagliati e nessun rilievo se ne accorge — il file dichiara, non verifica.
+
+---
+
+## Cambio di orchestrazione
+
+Una per progetto, dentro la regione kernel della guida del coordinatore. Nessuna modalità apposta:
+
+1. **Guida** — riassembla `.claude/shared/orchestration.md` come al passo 4 di `--down`, con `assemble.orchestration_file(Path('..'), '<nuova>')` al posto di `installed_orchestration`; i cicli si ripassano invariati.
+2. **Settings** — `settings.unmerge(corrente, vecchia)` toglie ciò che `settings.ORCHESTRATION_SETTINGS` dava alla vecchia ed è ancora uguale; `settings.merge(resto, nuova)` aggiunge quello della nuova. Conflitti e `tenuti` si mostrano prima di scrivere.
+3. **Manifesto** — `settings_added` perde la voce della vecchia e prende l'aggiunto del `merge`: senza, `--uninstall` lascia accesa una variabile che nessuna orchestrazione chiede più.
+4. **Verifica** con `doctor`.

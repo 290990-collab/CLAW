@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 import trial_install
-from fwbuild import assemble, cli, doctor, kernel, profile, source
+from fwbuild import assemble, cli, doctor, kernel, profile, settings, source
 
 FRAMEWORK = Path(__file__).resolve().parents[2]
 SURFACE_ONLY = {"compliance-reviewer", "perf-analyst"}
@@ -123,24 +123,33 @@ class TestRealFramework(unittest.TestCase):
         """COORDINATOR_LEAK confronta stringhe: se un titolo viene rinominato
         alla fonte, il check smette di vedere la sezione senza far fallire
         niente. Questo test è ciò che rende visibile il rinomino."""
-        sources = assemble.read_method(FRAMEWORK / "coordinator") + (
-            FRAMEWORK / "skills" / "framework-install" / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        sources = (
+            assemble.read_method(FRAMEWORK / "coordinator")
+            + (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+                encoding="utf-8"
+            )
+            + assemble.read_method(FRAMEWORK / "orchestrations")
+        )
         for heading in doctor.COORDINATOR_ONLY:
             self.assertIn(heading, sources, heading)
 
     def test_coordinator_guide_stays_under_budget(self):
         """Anche la guida del coordinatore ha un tetto: è on-demand, non pagata
         a ogni spawn, ma senza soglia è il prossimo posto dove il metodo si
-        gonfia. Si misura l'artefatto reale, cicli del profilo inclusi."""
+        gonfia. Si misura l'artefatto reale, cicli del profilo inclusi, con
+        ogni orchestrazione: la sceglie chi installa, non il profilo."""
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
             prof = profile.load(path)
-            text = assemble.read_method(
-                FRAMEWORK / "coordinator", assemble.cycle_files(FRAMEWORK, prof.cycles)
-            )
-            self.assertLess(
-                len(text.split()), assemble.COORDINATOR_WORD_BUDGET, prof.name
-            )
+            for orch in sorted((FRAMEWORK / "orchestrations").glob("*.md")):
+                text = assemble.read_method(
+                    FRAMEWORK / "coordinator",
+                    [orch, *assemble.cycle_files(FRAMEWORK, prof.cycles)],
+                )
+                self.assertLess(
+                    len(text.split()),
+                    assemble.COORDINATOR_WORD_BUDGET,
+                    f"{prof.name} + {orch.stem}",
+                )
 
     def test_common_kernel_stays_under_budget(self):
         """Soglia sul costo pagato a ogni spawn. Se la supera, non si aggiunge:
@@ -186,6 +195,40 @@ class TestRealFramework(unittest.TestCase):
             declared |= set(profile.load(path).cycles)
         on_disk = {p.stem for p in (FRAMEWORK / "cycles").glob("*.md")}
         self.assertEqual(on_disk - declared, set(), "cicli su disco che nessun profilo usa")
+
+    def test_every_named_orchestration_exists(self):
+        """Il default, le raccomandazioni dei profili e le chiavi dei settings
+        nominano moduli per nome: un nome senza file rompe l'installazione di
+        chi lo sceglie, e le chiavi orfane accenderebbero una variabile per
+        un'orchestrazione che nessuno può installare."""
+        assemble.orchestration_file(FRAMEWORK, assemble.DEFAULT_ORCHESTRATION)
+        for path in (FRAMEWORK / "profiles").glob("*.toml"):
+            for name in profile.load(path).recommended_orchestrations:
+                assemble.orchestration_file(FRAMEWORK, name)  # solleva se manca
+        for name in settings.ORCHESTRATION_SETTINGS:
+            assemble.orchestration_file(FRAMEWORK, name)
+
+    def test_orchestration_headings_are_recognizable(self):
+        """`installed_orchestration` riconosce un modulo dal primo titolo dentro
+        la regione: se quel titolo comparisse nel kernel del coordinatore, in un
+        ciclo o in un altro modulo, `--down` troverebbe un'orchestrazione che il
+        progetto non ha, o due, e riscriverebbe la guida sbagliata."""
+        modules = sorted((FRAMEWORK / "orchestrations").glob("*.md"))
+        self.assertGreaterEqual(len(modules), 2)
+        coordinator = assemble.read_method(FRAMEWORK / "coordinator")
+        cycles = assemble.read_method(FRAMEWORK / "cycles")
+        for p in modules:
+            heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
+            self.assertTrue(heading.startswith("## "), p.name)
+            others = "\n".join(
+                q.read_text(encoding="utf-8") for q in modules if q != p
+            )
+            for where, text in (
+                ("coordinator/", coordinator),
+                ("cycles/", cycles),
+                ("altri moduli", others),
+            ):
+                self.assertNotIn(heading, text, f"{p.name} in {where}")
 
     def test_every_profile_shared_guide_exists(self):
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
@@ -446,6 +489,43 @@ class TestRealFramework(unittest.TestCase):
             extra=assemble.installed_cycles(region.body, FRAMEWORK),
         )
         self.assertIn("Il ciclo del design", rebuilt)
+
+    def test_sync_down_preserves_the_orchestration(self):
+        """Come i cicli, l'orchestrazione sta dentro la regione e nessun file
+        dice quale sia: `--down` la deve ritrovare, nello stesso ordine, perché
+        la regione riassemblata verifichi. Una regione nata prima dei moduli
+        riceve il default, che è come lavorava già."""
+        version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
+        prof = profile.load(FRAMEWORK / "profiles" / "web.toml")
+        teams = assemble.orchestration_file(FRAMEWORK, "agent-teams")
+        installed = assemble.build_document(
+            FRAMEWORK / "coordinator",
+            version,
+            "## Roster di questo progetto",
+            extra=[teams, *assemble.cycle_files(FRAMEWORK, prof.cycles)],
+        )
+        region = kernel.parse(installed)
+        rebuilt = assemble.build_document(
+            FRAMEWORK / "coordinator",
+            version,
+            installed[region.end :],
+            extra=[
+                assemble.installed_orchestration(region.body, FRAMEWORK),
+                *assemble.installed_cycles(region.body, FRAMEWORK),
+            ],
+        )
+        self.assertIn("## Orchestrazione: Agent teams", rebuilt)
+        self.assertIn("Il ciclo del design", rebuilt)
+        self.assertEqual(kernel.verify(rebuilt), "OK")
+        self.assertEqual(kernel.parse(rebuilt).body, region.body)
+
+        old = assemble.build_document(
+            FRAMEWORK / "coordinator", version, "## Roster di questo progetto"
+        )
+        self.assertEqual(
+            assemble.installed_orchestration(kernel.parse(old).body, FRAMEWORK),
+            assemble.orchestration_file(FRAMEWORK, assemble.DEFAULT_ORCHESTRATION),
+        )
 
     def test_unfilled_roadmap_is_detectable(self):
         """Un template di stato con scheletro non compilato è indistinguibile

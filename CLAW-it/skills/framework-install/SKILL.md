@@ -101,7 +101,7 @@ Si riscrivono nella forma **più compressa che conserva il senso**: sono parole 
 
 **Proposta** — una volta per installazione, prima della domanda 1: profilo, agenti e guide extra, hook, ciascuno con la sua evidenza — i segnali del punto 8 di `explorer` con `file:riga`, o la frase dell'idea che lo motiva. Sta **accanto** alle domande, mai al loro posto: si fanno tutte, e ognuna conferma o corregge la sua parte.
 
-### Sempre — quattro domande
+### Sempre — cinque domande
 
 **1. Campo del progetto** → profilo in `<FW>/profiles/`:
 
@@ -140,6 +140,8 @@ Due revisori solo se il progetto ha davvero due superfici critiche distinte.
 **4. Autonomia** — cosa si può fare senza chiedere. Default conservativo: **nulla di tutto questo**. Commit · pubblicazione · installazione di dipendenze · esecuzioni lunghe o costose · modifiche irreversibili.
 
 Nella stessa domanda, **`gateguard` sì o no**: nega il primo tocco di ogni file in una sessione finché non si presentano i fatti — chi lo importa, cosa cambia di pubblico — ed è un turno in più per file; `FRAMEWORK_GATEGUARD=off` lo spegne. Gli altri hook di `settings.HOOKS` si installano sempre.
+
+**5. Orchestrazione** → un file di `<FW>/orchestrations/`, **uno** per progetto. Proponi `assemble.DEFAULT_ORCHESTRATION`; nomina come utili per il campo quelle di `recommended_orchestrations` del profilo, col punto **Quando** del loro modulo, e le altre come disponibili. `agent-teams` è sperimentale e vuole una sessione interattiva: dillo prima della scelta. Si cambia dopo con `framework-sync` (§ Cambio di orchestrazione).
 
 ### Condizionali — solo per ciò che il profilo non installa già
 
@@ -276,14 +278,17 @@ for d in ('.claude/shared', '.claude/agents', '.claude/skills', '.claude/output-
     P.joinpath(d).mkdir(parents=True, exist_ok=True)
 P.joinpath('CLAUDE.md').write_text(
     assemble.build_document(F/'method', V, SEZIONI_PROGETTO), encoding='utf-8')
+ORCH = '<ORCHESTRAZIONE>'; CICLI = [<cycles del profilo>]
 P.joinpath('.claude/shared/orchestration.md').write_text(
-    assemble.build_document(F/'coordinator', V, SEZIONI_ROSTER), encoding='utf-8')
+    assemble.build_document(F/'coordinator', V, SEZIONI_ROSTER,
+        extra=[assemble.orchestration_file(F, ORCH), *assemble.cycle_files(F, CICLI)]),
+    encoding='utf-8')
 "
 ```
 
 **Agenti attivi** — per ciascuno: leggi il sorgente con `assemble.split_source`, **compila il blocco `## Contesto di progetto`** con le direttive specifiche (ogni segnaposto dichiara cosa metterci), riassembla con `assemble.build_agent`, scrivi in `.claude/agents/`.
 
-**Cicli di dominio** — se il profilo dichiara `cycles`, i file di `<FW>/cycles/` si accodano alla regione kernel della guida del coordinatore (`extra=assemble.cycle_files(...)`): sono orchestrazione, non esecuzione, quindi mai in `CLAUDE.md`.
+**Orchestrazione e cicli di dominio** — il modulo della domanda 5, poi i cicli se il profilo dichiara `cycles`, si accodano **in quest'ordine** alla regione kernel della guida del coordinatore: `--down` li ripassa così. Sono orchestrazione, non esecuzione, quindi mai in `CLAUDE.md`.
 
 **Guide** — copia da `<FW>/shared/` l'elenco di `profile.guides` del Passo 4, compilando anche lì il blocco di progetto. Un agente extra porta le sue: senza, la scheda esce con un pointer morto che il doctor vede solo a installazione già scritta (`SHARED_MISSING`).
 
@@ -297,6 +302,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 ```python
 fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOK>))   # c non vuoto: difetto del sorgente, fermati
+fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get(ORCH, {}))   # idem
 merged, added, conflitti = settings.merge(<settings.json esistente, o {}>, fw_settings)
 ```
 
