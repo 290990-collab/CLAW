@@ -248,6 +248,24 @@ Piano con `plan_uninstall`, ok, `apply_uninstall`: un file cambiato dopo il pian
 
 ---
 
+## Skill esterne — collegare e staccare un pacchetto
+
+Le skill di altri autori non si pubblicano col framework: restano sulla macchina, sotto `<FW>/skills/<pacchetto>/`, e i comandi stanno **da shell**, perché scrivono nel sorgente e non in un progetto.
+
+```bash
+cd <FW>/tools && python -m fwbuild skills list
+cd <FW>/tools && python -m fwbuild skills add <repo> [--commit <sha>]
+cd <FW>/tools && python -m fwbuild skills remove <pacchetto>
+```
+
+`add` scarica il repository, lo fissa a un commit, copia ogni cartella con un `SKILL.md` e rifiuta un nome di skill già collegato: nel progetto stanno tutte a un livello e la seconda coprirebbe la prima. **Collegare è un'installazione di roba di altri: si chiede all'utente prima**, e il contenuto si legge — sono istruzioni, e a volte script, che un agente eseguirà.
+
+Il **pool** è `<FW>/skills/pool.toml`: le skill che il coordinatore può invocare da solo. Tutto ciò che è collegato e fuori dal pool resta invocabile dall'utente e invisibile al modello (`skillOverrides` in `settings.json`). Un nome sbagliato nel pool ferma i comandi invece di nascondere una skill in silenzio.
+
+Nei progetti le skill arrivano con `--down` o `--repair`, e se ne vanno con `--uninstall` o dopo un `remove`. Col primo pacchetto va attivato `skill-runner` (`--activate`), l'unico agente che può invocarle: il coordinatore non le esegue di persona.
+
+---
+
 ## Cambio di campo
 
 Un progetto non resta dov'è nato: una libreria si fa una demo, uno strumento diventa un servizio. Il campo sta in `profile` dentro `.claude/framework.json`, unico posto che lo sa. Nessuna modalità apposta: sono le stesse quattro operazioni dell'installazione, sul profilo nuovo.

@@ -10,6 +10,16 @@ Contenuto azionabile **solo dal coordinatore**. I subagent NON leggono questo fi
 - **Esecuzione diretta:** modifiche piccole (≤2-3 file, poche decine di righe, nessun contratto toccato) si eseguono direttamente: delegare costa di più.
 - **Subagent:** eseguono il task e riportano al coordinatore, e non spawnano subagent. Chi comunica con chi lo dice il modello di orchestrazione, nella sezione che gli dà nome in questa guida.
 
+## Skill esterne
+
+Le skill collegate stanno in `.claude/skills/`. Quelle che puoi invocare da solo sono quelle che ti vengono elencate: le altre restano all'utente, e i settings te le nascondono.
+
+- **Di rado, e solo se serve:** una skill è lunga e vale per un compito solo. Invocarne una per abitudine è contesto che paga tutta la sessione.
+- **Non la esegui tu:** deleghi a `skill-runner`, che la invoca e riporta. Le sue istruzioni restano nel contesto di lui e se ne vanno con lui; tu verifichi il report come ogni altro.
+- **Se la lancia l'utente, la esegui tu:** l'ha scelta lui, e passare da un subagent perderebbe ciò che aveva in mente.
+- **Le skill personali e dei plugin non si invocano in autonomia:** non le ha scelte questo progetto.
+- **Ciò che vale solo per quella skill muore lì:** non si salva in memoria, non si scrive nei file di stato, non si cita come regola generale.
+
 ## Economia dei token — le dieci regole della delega
 
 Lista canonica e completa, vive **solo qui**. Gli obblighi di chi esegue stanno in `CLAUDE.md` e sono un'altra cosa, non un sottoinsieme rinumerato di queste.

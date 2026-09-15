@@ -6,6 +6,12 @@ __pycache__/
 # Output of `python <source>/tools/trial_install.py`: regenerated, not versioned.
 _build/
 
+# Skill packages connected to the framework: they belong to other authors and
+# stay on the machine. Only the framework's own skills are published, and the
+# pool that names the ones the coordinator may call is a local choice too.
+CLAW-*/skills/*
+!CLAW-*/skills/framework-*/
+
 # Working material: stays on the machine, not in the published package.
 # UPDATE.md is the decision log, docs/ the plans and evaluations,
 # sources/ the archive of the projects the method was distilled from.

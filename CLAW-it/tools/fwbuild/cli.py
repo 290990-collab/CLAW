@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import doctor, report, source, upgrade
+from . import doctor, report, skills, source, upgrade
 
 # Listino Claude Opus 5, token di input non in cache, in dollari per milione.
 # È un default dichiarato, non una verità: i prezzi cambiano e la cache abbassa
@@ -81,7 +81,25 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("source", help="risolve e valida la root del sorgente")
     s.add_argument("path", type=Path, nargs="?")
 
+    k = sub.add_parser("skills", help="pacchetti di skill collegati al sorgente")
+    ks = k.add_subparsers(dest="skills_command", required=True)
+    for name, help_text in (
+        ("list", "pacchetti collegati, skill e pool"),
+        ("add", "collega un repository, fissato a un commit"),
+        ("remove", "stacca un pacchetto"),
+    ):
+        p = ks.add_parser(name, help=help_text)
+        if name == "add":
+            p.add_argument("repo", help="URL del repository o cartella locale")
+            p.add_argument("--commit", help="commit da fissare; senza, l'ultimo del ramo")
+        if name == "remove":
+            p.add_argument("package", help="nome del pacchetto, come lo stampa `skills list`")
+        p.add_argument("--source", type=Path, dest="path", help="root del sorgente")
+
     args = parser.parse_args(argv)
+
+    if args.command == "skills":
+        return _skills(args)
 
     if args.command == "source":
         try:
@@ -135,6 +153,55 @@ def main(argv: list[str] | None = None) -> int:
         else:
             _print_survey(s)
         return 1 if args.strict and not s.clean else 0
+    return 0
+
+
+def _skills(args) -> int:
+    """`skills list | add | remove`: la presa a cui si collegano le skill di altri.
+
+    Scrive nel **sorgente**, non nei progetti: le installazioni ricevono i
+    pacchetti al passaggio successivo di `framework-sync`, come ogni altro file
+    del framework. Dirlo qui evita di credere che un `add` abbia già cambiato
+    qualcosa nei progetti aperti.
+    """
+    try:
+        root = source.resolve(_bases(args.path))
+    except LookupError as err:
+        print(err)
+        return 1
+    try:
+        if args.skills_command == "add":
+            pkg = skills.add(root, args.repo, args.commit)
+            print(f"{pkg.name} @ {pkg.commit[:7]} — {', '.join(pkg.skills)}")
+            covered = skills.shadowed(pkg.skills)
+            if covered:
+                print(
+                    "hanno già una skill personale con lo stesso nome, che vince "
+                    "su quella del progetto: " + ", ".join(covered)
+                )
+            print(
+                f"fuori dal pool: invocabili da te, non dal coordinatore. "
+                f"Per metterle nel pool: skills/{skills.POOL_FILE}"
+            )
+            print("nei progetti arrivano con framework-sync --down o --repair")
+            return 0
+        if args.skills_command == "remove":
+            gone = skills.remove(root, args.package)
+            print(f"{args.package} staccato: {', '.join(gone) or 'nessuna skill'}")
+            print("nei progetti resta finché non passi da framework-sync --uninstall o --down")
+            return 0
+        in_pool = set(skills.pool(root))
+        packages = skills.packages(root)
+        if not packages:
+            print(f"nessun pacchetto collegato in {root / 'skills'}")
+            return 0
+        for pkg in packages:
+            print(f"{pkg.name} @ {pkg.commit[:7]} — {pkg.repo}")
+            for name in pkg.skills:
+                print(f"  {name:<30} {'pool' if name in in_pool else 'solo utente'}")
+    except (ValueError, RuntimeError) as err:
+        print(err)
+        return 1
     return 0
 
 

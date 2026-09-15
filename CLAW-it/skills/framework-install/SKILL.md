@@ -294,6 +294,8 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 **Skill di ciclo di vita** — copia `<FW>/skills/framework-doctor`, `framework-sync` e `framework-memory` in `.claude/skills/`. Senza, non sono invocabili e il doctor lo segnala (`SKILLS_MISSING`).
 
+**Skill dei pacchetti collegati** — `skills.installed(F)` dice quali ci sono (vuoto è il caso normale). Si copiano **appiattite**, da `<FW>/skills/<pacchetto>/<skill>/` a `.claude/skills/<skill>/`: Claude Code non scopre una skill annidata più in basso. Con un pacchetto collegato va attivato anche `skill-runner`, l'unico agente che può invocarle.
+
 **Stile delle risposte** — copia `<FW>/output-styles/reporting.md` in `.claude/output-styles/` e **compila il blocco `## Questo progetto`** con la risposta alla domanda 3. Non compilato è un `PLACEHOLDER`: il doctor legge ogni `.md` sotto `.claude/` tranne le skill.
 
 **Hook** — copia `<FW>/hooks/<nome>.py` in `.claude/hooks/` per ogni nome di `<HOOK>`. Una voce nei settings senza il suo script, per un hook chiuso, blocca ogni modifica o ogni comando.
@@ -303,6 +305,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 ```python
 fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOK>))   # c non vuoto: difetto del sorgente, fermati
 fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get('<ORCHESTRAZIONE>', {}))   # idem
+fw_settings, _, c = settings.merge(fw_settings, skills.overrides(F))   # il pool: fuori restano all'utente
 merged, added, conflitti = settings.merge(<settings.json esistente, o {}>, fw_settings)
 ```
 
@@ -311,8 +314,10 @@ merged, added, conflitti = settings.merge(<settings.json esistente, o {}>, fw_se
 **`.claude/framework.json`** — `source`, `version`, `profile`: è come le due skill ritrovano il sorgente, e l'unico posto in cui resta scritto **di cosa** è fatta l'installazione. Senza il profilo, «rigenera i permessi del profilo del progetto» non è eseguibile. `settings_added` è `added`: il solo pezzo di `settings.json` che `framework-sync --uninstall` potrà togliere. La forma **non la scrivi tu**: `source.manifest` rende il percorso relativo quando il sorgente sta dentro il progetto e assoluto solo quando sta fuori — un assoluto su un sorgente interno è la macchina di chi ha installato, e muore al primo clone.
 
 ```python
-source.manifest(PRJ, FW, version, prof.name, settings_added=added)
+source.manifest(PRJ, FW, version, prof.name, settings_added=added, skills=skills.installed(FW))
 ```
+
+`skills` è `nome skill → pacchetto`: nel progetto le skill dei pacchetti stanno tutte a un livello, e senza questa riga il doctor non può dire quale pacchetto manca.
 
 Il campo `accepted` **non si scrive all'installazione**: nasce vuoto e lo aggiunge chi decide di convivere con un avviso (→ skill `framework-doctor`).
 

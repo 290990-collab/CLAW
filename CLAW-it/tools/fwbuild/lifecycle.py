@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import assemble, doctor, kernel, profile, settings, source
+from . import assemble, doctor, kernel, profile, settings, skills, source
 
 CREATE = "crea"
 OVERWRITE = "sovrascrive"
@@ -173,7 +173,10 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
     for area in ("skills", "hooks"):
         for p in _files(prj / ".claude" / area):
             rel = p.relative_to(prj).as_posix()
-            original = fw / area / p.relative_to(prj / ".claude" / area)
+            inside = p.relative_to(prj / ".claude" / area)
+            original = (
+                _skill_source(fw, inside.as_posix()) if area == "skills" else fw / area / inside
+            )
             if not original.is_file():
                 ops.append(_op(prj, rel, KEEP, "non viene dal sorgente: resta"))
             elif original.read_bytes() == p.read_bytes():
@@ -389,6 +392,13 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
     if MANIFEST in paths:
         data = dict(manifest)
         data["version"] = _version(fw)
+        # Cosa il progetto ha ricevuto dai pacchetti: è l'unico posto in cui il
+        # doctor lo legge senza dover raggiungere il sorgente.
+        connected = skills.installed(fw)
+        if connected:
+            data["skills"] = connected
+        else:
+            data.pop("skills", None)
         if added:
             record = data.get("settings_added")
             data["settings_added"] = settings.merge(
@@ -410,13 +420,36 @@ def _files(directory: Path) -> list[Path]:
 
 
 def _skill_files(fw: Path) -> list[tuple[str, Path]]:
-    """I file delle skill di ciclo di vita: percorso nel progetto, originale."""
+    """I file delle skill da installare: percorso nel progetto, originale.
+
+    Quelle di ciclo di vita stanno già a un livello; quelle dei pacchetti
+    collegati perdono il livello del pacchetto, perché Claude Code scopre solo
+    `.claude/skills/<skill>/`.
+    """
     base = fw / "skills"
-    return [
+    out = [
         (f".claude/skills/{p.relative_to(base).as_posix()}", p)
         for skill in doctor.LIFECYCLE_SKILLS
         for p in _files(base / skill)
     ]
+    for skill, package in skills.installed(fw).items():
+        out += [
+            (f".claude/skills/{p.relative_to(base / package).as_posix()}", p)
+            for p in _files(base / package / skill)
+        ]
+    return out
+
+
+def _skill_source(fw: Path, rest: str) -> Path:
+    """Il file del sorgente di una skill installata, dato `<skill>/...`.
+
+    È l'inverso dell'appiattimento: senza, la disinstallazione non riconosce
+    come propria una skill di pacchetto e la lascia nel progetto, e `--repair`
+    non sa da dove ricopiarla.
+    """
+    base = fw / "skills"
+    package = skills.installed(fw).get(rest.split("/", 1)[0])
+    return base / package / rest if package else base / rest
 
 
 def _hook_source(fw: Path, name: str) -> Path:
@@ -468,6 +501,8 @@ def _source_of(fw: Path, rel: str) -> Path:
         (".claude/output-styles/", "output-styles"),
     ):
         if rel.startswith(prefix):
+            if area == "skills":
+                return _skill_source(fw, rel[len(prefix) :])
             return fw / area / rel[len(prefix) :]
     name = rel.removeprefix("docs/")
     if rel.startswith("docs/") and name in doctor.STATE_FILES:
@@ -492,7 +527,11 @@ def _removable(prj: Path, fw: Path, rel: str) -> bool:
     for area in ("skills", "hooks"):
         prefix = f".claude/{area}/"
         if rel.startswith(prefix):
-            original = fw / area / rel[len(prefix) :]
+            original = (
+                _skill_source(fw, rel[len(prefix) :])
+                if area == "skills"
+                else fw / area / rel[len(prefix) :]
+            )
             p = prj / rel
             return original.is_file() and p.is_file() and original.read_bytes() == p.read_bytes()
     return False
@@ -694,6 +733,12 @@ def _framework_settings(
     )
     if conflicts:
         raise ValueError(f"orchestrazione in conflitto su: {', '.join(conflicts)}")
+    # Le skill collegate e fuori dal pool: invocabili dall'utente, invisibili al
+    # coordinatore. Senza questa voce il pool non esiste — il modello le vede
+    # tutte, e «solo quelle del pool» resterebbe una frase in una guida.
+    merged, _, conflicts = settings.merge(merged, skills.overrides(fw))
+    if conflicts:
+        raise ValueError(f"pool delle skill in conflitto su: {', '.join(conflicts)}")
     return merged
 
 

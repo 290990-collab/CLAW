@@ -149,6 +149,21 @@ class TestDoctor(unittest.TestCase):
             )
             self.assertNotIn("PLACEHOLDER", codes(doctor.check(root)))
 
+    def test_detects_a_declared_package_skill_that_is_not_there(self):
+        """Le skill dei pacchetti stanno nel manifesto perché nel progetto
+        arrivano appiattite e non si vede più da dove vengono. Senza questo
+        controllo, un pacchetto che la sincronizzazione non ha portato è un
+        pool che nomina una skill assente, e nessun rilievo lo dice."""
+        with tempfile.TemporaryDirectory() as d:
+            root = make_project(d)
+            path = root / ".claude" / "framework.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["skills"] = {"alfa": "tizio-skills"}
+            path.write_text(json.dumps(data), encoding="utf-8")
+            found = [f for f in doctor.check(root) if f.code == "SKILLS_MISSING"]
+            self.assertEqual(len(found), 1)
+            self.assertIn("tizio-skills", found[0].message)
+
     def test_detects_missing_lifecycle_skills(self):
         with tempfile.TemporaryDirectory() as d:
             found = doctor.check(make_project(d, skills=False))

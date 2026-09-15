@@ -394,6 +394,23 @@ def check(root: Path) -> list[Finding]:
                 )
             )
 
+    # Le skill dei pacchetti collegati: il manifesto dice quali il progetto ha
+    # ricevuto, e si verifica da lì perché il sorgente può non essere
+    # raggiungibile da qui. Un pacchetto staccato dal sorgente e non ancora
+    # sincronizzato non lascia rilievi: la voce sparisce dal manifesto.
+    declared = manifest.get("skills") if isinstance(manifest, dict) else None
+    if isinstance(declared, dict):
+        for skill, package in sorted(declared.items()):
+            if not (root / ".claude" / "skills" / str(skill) / "SKILL.md").is_file():
+                out.append(
+                    Finding(
+                        "SKILLS_MISSING",
+                        "WARN",
+                        f".claude/skills/{skill}/ assente: la skill del pacchetto "
+                        f"{package} non è invocabile in questo progetto",
+                    )
+                )
+
     if present and not (root / ".claude" / "settings.json").is_file():
         out.append(
             Finding(

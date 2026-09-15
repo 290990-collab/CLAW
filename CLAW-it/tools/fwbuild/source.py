@@ -92,6 +92,7 @@ def manifest(
     version: str,
     profile_name: str,
     settings_added: dict | None = None,
+    skills: dict[str, str] | None = None,
 ) -> dict:
     """Il contenuto di `.claude/framework.json`.
 
@@ -104,6 +105,11 @@ def manifest(
     `settings.json`: il solo pezzo di quel file che la disinstallazione può
     togliere. Si scrive solo se c'è — un record vuoto e un record assente
     dicono cose diverse, e la seconda vuol dire «non toccare».
+
+    `skills` è `nome skill → pacchetto` per le skill dei pacchetti collegati:
+    nel progetto stanno tutte a un livello e non si vede più da dove vengono.
+    Senza, il doctor non può dire quale pacchetto manca senza raggiungere il
+    sorgente, che dalla macchina di chi apre il progetto può non esserci.
     """
     data = {
         "source": reference(project_root, framework_root),
@@ -112,6 +118,8 @@ def manifest(
     }
     if settings_added is not None:
         data["settings_added"] = settings_added
+    if skills:
+        data["skills"] = dict(skills)
     return data
 
 
