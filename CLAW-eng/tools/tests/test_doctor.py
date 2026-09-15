@@ -150,6 +150,21 @@ class TestDoctor(unittest.TestCase):
             )
             self.assertNotIn("PLACEHOLDER", codes(doctor.check(root)))
 
+    def test_detects_a_declared_package_skill_that_is_not_there(self):
+        """The skills of the packages are in the manifest because in the
+        project they arrive flattened and where they come from is no longer
+        visible. Without this check, a package the sync did not bring is a pool
+        naming an absent skill, and no finding says so."""
+        with tempfile.TemporaryDirectory() as d:
+            root = make_project(d)
+            path = root / ".claude" / "framework.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["skills"] = {"alfa": "someone-skills"}
+            path.write_text(json.dumps(data), encoding="utf-8")
+            found = [f for f in doctor.check(root) if f.code == "SKILLS_MISSING"]
+            self.assertEqual(len(found), 1)
+            self.assertIn("someone-skills", found[0].message)
+
     def test_detects_missing_lifecycle_skills(self):
         with tempfile.TemporaryDirectory() as d:
             found = doctor.check(make_project(d, skills=False))

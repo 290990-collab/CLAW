@@ -9,13 +9,14 @@ method/              kernel COMUNE → CLAUDE.md, letto da tutti a ogni spawn
 coordinator/         kernel del COORDINATORE → shared/orchestration.md, on-demand
 orchestrations/      modelli di orchestrazione: se ne accoda uno alla guida, orchestrator-worker il default
 cycles/              cicli di dominio, accodati alla guida se il profilo li chiede
-agents/              28 agenti: metodo + blocco [DA COMPILARE] di progetto
+agents/              29 agenti: metodo + blocco [DA COMPILARE] di progetto
 shared/core/         guide generiche, caricate on-demand
 shared/domain/       guide di dominio (design, ricerca, dati, llm)
 profiles/            7 profili: dominio → roster, guide, cicli, permessi
 templates/           i file di stato, generati vuoti ma strutturati
 hooks/               config_protection · block_no_verify (chiusi) · gateguard (aperto) → .claude/hooks/
 skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
+                     più i pacchetti collegati con `fwbuild skills add` e pool.toml: locali, mai pubblicati
 tools/fwbuild/       assemblaggio, hash, verifiche — Python stdlib puro
 tools/trial_install.py  la prova: installa un progetto finto, che il doctor verifica
 tools/tests/         218 test
@@ -71,8 +72,8 @@ La destinazione si chiama `framework/` perché è uno dei tre posti in cui il
 Passo 0 guarda; per lasciarla dov'è, la si indica con `$CLAUDE_FRAMEWORK`.
 
 **Copiato nel progetto** — questa cartella, rinominata `framework/`, nella root
-del progetto, più `cp -r framework/skills/* .claude/skills/`. Il Passo 0 la
-trova per prima.
+del progetto, più `cp -r framework/skills/framework-* .claude/skills/`. Il
+Passo 0 la trova per prima.
 
 Da lì in poi, ogni progetto nuovo è **solo** `/framework-install`: il Passo 0
 valida il sorgente prima di scrivere qualunque cosa, il Passo 6 verifica il

@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import doctor, report, source, upgrade
+from . import doctor, report, skills, source, upgrade
 
 # Claude Opus 5 list price, uncached input tokens, in dollars per million. It
 # is a declared default, not a truth: prices change and caching lowers the real
@@ -82,7 +82,25 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("source", help="resolve and validate the source root")
     s.add_argument("path", type=Path, nargs="?")
 
+    k = sub.add_parser("skills", help="skill packages connected to the source")
+    ks = k.add_subparsers(dest="skills_command", required=True)
+    for name, help_text in (
+        ("list", "connected packages, skills and pool"),
+        ("add", "connect a repository, pinned to a commit"),
+        ("remove", "disconnect a package"),
+    ):
+        p = ks.add_parser(name, help=help_text)
+        if name == "add":
+            p.add_argument("repo", help="repository URL or local folder")
+            p.add_argument("--commit", help="commit to pin; without it, the branch tip")
+        if name == "remove":
+            p.add_argument("package", help="package name, as `skills list` prints it")
+        p.add_argument("--source", type=Path, dest="path", help="source root")
+
     args = parser.parse_args(argv)
+
+    if args.command == "skills":
+        return _skills(args)
 
     if args.command == "source":
         try:
@@ -136,6 +154,55 @@ def main(argv: list[str] | None = None) -> int:
         else:
             _print_survey(s)
         return 1 if args.strict and not s.clean else 0
+    return 0
+
+
+def _skills(args) -> int:
+    """`skills list | add | remove`: the socket other people's skills plug into.
+
+    It writes into the **source**, not into the projects: installations receive
+    the packages at the next pass of `framework-sync`, like every other
+    framework file. Saying it here avoids believing that an `add` has already
+    changed something in the projects that are open.
+    """
+    try:
+        root = source.resolve(_bases(args.path))
+    except LookupError as err:
+        print(err)
+        return 1
+    try:
+        if args.skills_command == "add":
+            pkg = skills.add(root, args.repo, args.commit)
+            print(f"{pkg.name} @ {pkg.commit[:7]} — {', '.join(pkg.skills)}")
+            covered = skills.shadowed(pkg.skills)
+            if covered:
+                print(
+                    "these already have a personal skill of the same name, which "
+                    "wins over the project one: " + ", ".join(covered)
+                )
+            print(
+                f"outside the pool: invocable by you, not by the coordinator. "
+                f"To put them in the pool: skills/{skills.POOL_FILE}"
+            )
+            print("they reach projects with framework-sync --down or --repair")
+            return 0
+        if args.skills_command == "remove":
+            gone = skills.remove(root, args.package)
+            print(f"{args.package} disconnected: {', '.join(gone) or 'no skill'}")
+            print("in projects it stays until you run framework-sync --uninstall or --down")
+            return 0
+        in_pool = set(skills.pool(root))
+        packages = skills.packages(root)
+        if not packages:
+            print(f"no package connected in {root / 'skills'}")
+            return 0
+        for pkg in packages:
+            print(f"{pkg.name} @ {pkg.commit[:7]} — {pkg.repo}")
+            for name in pkg.skills:
+                print(f"  {name:<30} {'pool' if name in in_pool else 'user only'}")
+    except (ValueError, RuntimeError) as err:
+        print(err)
+        return 1
     return 0
 
 

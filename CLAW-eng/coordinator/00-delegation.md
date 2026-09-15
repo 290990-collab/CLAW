@@ -10,6 +10,16 @@ Content actionable **only by the coordinator**. Subagents do NOT read this file.
 - **Direct execution:** small changes (≤2-3 files, a few dozen lines, no contract touched) are executed directly: delegating costs more.
 - **Subagents:** execute the task and report to the coordinator, and spawn no subagents. Who communicates with whom is set by the orchestration model, in the section of this guide that names it.
 
+## External skills
+
+The connected skills live in `.claude/skills/`. The ones you may invoke on your own are the ones you are listed: the others stay with the user, and the settings hide them from you.
+
+- **Rarely, and only if needed:** a skill is long and good for one task. Invoking one out of habit is context the whole session pays for.
+- **You do not run it:** you delegate to `skill-runner`, which invokes it and reports. Its instructions stay in that agent's context and leave with it; you verify the report like any other.
+- **If the user launches it, you run it:** they chose it, and going through a subagent would lose what they had in mind.
+- **Personal and plugin skills are not invoked on your own initiative:** this project did not choose them.
+- **What holds only for that skill dies there:** it is not saved to memory, not written into the state files, not quoted as a general rule.
+
 ## Token economy — the ten rules of delegation
 
 Canonical and complete list, it lives **only here**. The obligations of whoever executes are in `CLAUDE.md` and are a different thing, not a renumbered subset of these.

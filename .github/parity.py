@@ -41,11 +41,18 @@ LOCALIZED_CONSTANTS = {"METHOD_HEADING", "DOMAIN_HEADING", "PLACEHOLDER_RE"}
 
 
 def files(root: Path) -> set[str]:
-    return {
-        p.relative_to(root).as_posix()
-        for p in root.rglob("*")
-        if p.is_file() and "__pycache__" not in p.parts
-    }
+    out = set()
+    for p in root.rglob("*"):
+        if not p.is_file() or "__pycache__" in p.parts:
+            continue
+        rel = p.relative_to(root).as_posix()
+        # Connected skill packages belong to other authors and never reach git:
+        # they are local material, and one edition having them is not a
+        # divergence. Only the framework's own skills are published.
+        if rel.startswith("skills/") and not rel.startswith("skills/framework-"):
+            continue
+        out.add(rel)
+    return out
 
 
 def check_inventory() -> list[str]:

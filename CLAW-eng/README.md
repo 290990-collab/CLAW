@@ -9,13 +9,14 @@ method/              COMMON kernel → CLAUDE.md, read by everyone at every spaw
 coordinator/         COORDINATOR kernel → shared/orchestration.md, on demand
 orchestrations/      orchestration models: one is appended to the guide, orchestrator-worker by default
 cycles/              domain cycles, appended to the guide if the profile asks
-agents/              28 agents: method + project [TO FILL IN] block
+agents/              29 agents: method + project [TO FILL IN] block
 shared/core/         generic guides, loaded on demand
 shared/domain/       domain guides (design, research, data, llm)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions
 templates/           the state files, generated empty but structured
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
 skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
+                     plus the packages connected with `fwbuild skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
 tools/tests/         218 tests
@@ -71,8 +72,8 @@ The destination is named `framework/` because that is one of the three places
 Step 0 looks in; to leave it where it is, point at it with `$CLAUDE_FRAMEWORK`.
 
 **Copied into the project** — this folder, renamed `framework/`, in the
-project root, plus `cp -r framework/skills/* .claude/skills/`. Step 0 finds
-it first.
+project root, plus `cp -r framework/skills/framework-* .claude/skills/`. Step 0
+finds it first.
 
 From then on, every new project is **only** `/framework-install`: Step 0
 validates the source before writing anything, Step 6 checks the result with

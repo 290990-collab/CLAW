@@ -400,6 +400,23 @@ def check(root: Path) -> list[Finding]:
                 )
             )
 
+    # The skills of the connected packages: the manifest says which ones the
+    # project received, and the check reads from there because the source may
+    # not be reachable from here. A package disconnected at the source and not
+    # yet synced leaves no findings: the entry goes from the manifest.
+    declared = manifest.get("skills") if isinstance(manifest, dict) else None
+    if isinstance(declared, dict):
+        for skill, package in sorted(declared.items()):
+            if not (root / ".claude" / "skills" / str(skill) / "SKILL.md").is_file():
+                out.append(
+                    Finding(
+                        "SKILLS_MISSING",
+                        "WARN",
+                        f".claude/skills/{skill}/ absent: the skill of package "
+                        f"{package} is not invocable in this project",
+                    )
+                )
+
     if present and not (root / ".claude" / "settings.json").is_file():
         out.append(
             Finding(

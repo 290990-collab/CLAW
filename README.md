@@ -220,6 +220,20 @@ Once per machine. Needs Claude Code and Python 3.11+ — nothing else to install
 Every mode that writes shows the plan first and waits for your ok. The same
 skill moves a project to another profile or orchestration model.
 
+### External skills
+
+Skills written by other people stay on your machine: the framework ships the
+socket, not the packages. `fwbuild skills add <repo>` connects a repository,
+pinned to a commit, under `<source>/skills/<package>/`; `remove` disconnects it;
+the skills reach your projects at the next `--down` or `--repair`.
+
+`skills/pool.toml` names the ones the coordinator may invoke on its own —
+rarely, and only when they earn it. Everything else stays yours to launch: the
+model neither sees nor calls it. When the coordinator does invoke one, it
+delegates the run to `skill-runner`, the only agent with the Skill tool, so
+those instructions leave with that subagent instead of sitting in the session
+for the rest of the day.
+
 ### From the shell — in `<source>/tools`
 
 | Command | What it does |
@@ -229,6 +243,9 @@ skill moves a project to another profile or orchestration model.
 | `python -m fwbuild cost <project> [--spawns N] [--devs N] [--price USD]` | Estimated cost of `CLAUDE.md`: its tokens × spawns a day × people × price per million input tokens. Defaults: 100 spawns, 1 person, $5 |
 | `python -m fwbuild report <folder>` | Which method versions run where, across repos; `--depth`, `--strict`, `--json` |
 | `python -m fwbuild source [path]` | Validates a source and says whether it was promoted with `--up` |
+| `python -m fwbuild skills list` | The connected skill packages, their skills and which are in the pool |
+| `python -m fwbuild skills add <repo> [--commit <sha>]` | Connects a repository of skills, pinned to a commit |
+| `python -m fwbuild skills remove <package>` | Disconnects it and takes its skills out of the pool |
 
 ### Settings
 
@@ -247,6 +264,6 @@ code, build and dependencies stay untouched.
 
 ---
 
-## Version 1.5.2
+## Version 1.5.4
 
 MIT — see [LICENSE](LICENSE).

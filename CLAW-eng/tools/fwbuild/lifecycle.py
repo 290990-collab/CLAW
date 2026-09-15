@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import assemble, doctor, kernel, profile, settings, source
+from . import assemble, doctor, kernel, profile, settings, skills, source
 
 CREATE = "create"
 OVERWRITE = "overwrite"
@@ -175,7 +175,10 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
     for area in ("skills", "hooks"):
         for p in _files(prj / ".claude" / area):
             rel = p.relative_to(prj).as_posix()
-            original = fw / area / p.relative_to(prj / ".claude" / area)
+            inside = p.relative_to(prj / ".claude" / area)
+            original = (
+                _skill_source(fw, inside.as_posix()) if area == "skills" else fw / area / inside
+            )
             if not original.is_file():
                 ops.append(_op(prj, rel, KEEP, "not from the source: stays"))
             elif original.read_bytes() == p.read_bytes():
@@ -392,6 +395,13 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
     if MANIFEST in paths:
         data = dict(manifest)
         data["version"] = _version(fw)
+        # What the project received from the packages: the only place where the
+        # doctor reads it without having to reach the source.
+        connected = skills.installed(fw)
+        if connected:
+            data["skills"] = connected
+        else:
+            data.pop("skills", None)
         if added:
             record = data.get("settings_added")
             data["settings_added"] = settings.merge(
@@ -413,13 +423,36 @@ def _files(directory: Path) -> list[Path]:
 
 
 def _skill_files(fw: Path) -> list[tuple[str, Path]]:
-    """The files of the lifecycle skills: path in the project, original."""
+    """The skill files to install: path in the project, original.
+
+    The lifecycle ones already sit at one level; those of the connected
+    packages lose the package level, because Claude Code only discovers
+    `.claude/skills/<skill>/`.
+    """
     base = fw / "skills"
-    return [
+    out = [
         (f".claude/skills/{p.relative_to(base).as_posix()}", p)
         for skill in doctor.LIFECYCLE_SKILLS
         for p in _files(base / skill)
     ]
+    for skill, package in skills.installed(fw).items():
+        out += [
+            (f".claude/skills/{p.relative_to(base / package).as_posix()}", p)
+            for p in _files(base / package / skill)
+        ]
+    return out
+
+
+def _skill_source(fw: Path, rest: str) -> Path:
+    """The source file of an installed skill, given `<skill>/...`.
+
+    It is the inverse of the flattening: without it the uninstall does not
+    recognise a package skill as its own and leaves it in the project, and
+    `--repair` does not know where to copy it back from.
+    """
+    base = fw / "skills"
+    package = skills.installed(fw).get(rest.split("/", 1)[0])
+    return base / package / rest if package else base / rest
 
 
 def _hook_source(fw: Path, name: str) -> Path:
@@ -471,6 +504,8 @@ def _source_of(fw: Path, rel: str) -> Path:
         (".claude/output-styles/", "output-styles"),
     ):
         if rel.startswith(prefix):
+            if area == "skills":
+                return _skill_source(fw, rel[len(prefix) :])
             return fw / area / rel[len(prefix) :]
     name = rel.removeprefix("docs/")
     if rel.startswith("docs/") and name in doctor.STATE_FILES:
@@ -495,7 +530,11 @@ def _removable(prj: Path, fw: Path, rel: str) -> bool:
     for area in ("skills", "hooks"):
         prefix = f".claude/{area}/"
         if rel.startswith(prefix):
-            original = fw / area / rel[len(prefix) :]
+            original = (
+                _skill_source(fw, rel[len(prefix) :])
+                if area == "skills"
+                else fw / area / rel[len(prefix) :]
+            )
             p = prj / rel
             return original.is_file() and p.is_file() and original.read_bytes() == p.read_bytes()
     return False
@@ -698,6 +737,13 @@ def _framework_settings(
     )
     if conflicts:
         raise ValueError(f"orchestration conflicts on: {', '.join(conflicts)}")
+    # The skills connected and outside the pool: invocable by the user,
+    # invisible to the coordinator. Without this entry the pool does not exist —
+    # the model sees them all, and "only the pool ones" stays a sentence in a
+    # guide.
+    merged, _, conflicts = settings.merge(merged, skills.overrides(fw))
+    if conflicts:
+        raise ValueError(f"the skill pool conflicts on: {', '.join(conflicts)}")
     return merged
 
 

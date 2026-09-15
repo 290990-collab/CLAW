@@ -296,6 +296,8 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 **Lifecycle skills** — copy `<FW>/skills/framework-doctor`, `framework-sync` and `framework-memory` into `.claude/skills/`. Without them they are not invocable and the doctor flags it (`SKILLS_MISSING`).
 
+**Skills of the connected packages** — `skills.installed(F)` says which ones there are (empty is the normal case). They are copied **flattened**, from `<FW>/skills/<package>/<skill>/` to `.claude/skills/<skill>/`: Claude Code does not discover a skill nested any deeper. With a package connected, `skill-runner` is to be activated as well — the only agent that may invoke them.
+
 **Reply style** — copy `<FW>/output-styles/reporting.md` into `.claude/output-styles/` and **fill in the `## This project` block** with the answer to question 3. Left unfilled it is a `PLACEHOLDER`: the doctor reads every `.md` under `.claude/` except the skills.
 
 **Hooks** — copy `<FW>/hooks/<name>.py` into `.claude/hooks/` for every name in `<HOOKS>`. An entry in the settings without its script, for a closed hook, blocks every edit or every command.
@@ -305,6 +307,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 ```python
 fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOKS>))   # c not empty: a defect in the source, stop
 fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get('<ORCHESTRATION>', {}))   # same
+fw_settings, _, c = settings.merge(fw_settings, skills.overrides(F))   # the pool: outside it, they stay with the user
 merged, added, conflicts = settings.merge(<existing settings.json, or {}>, fw_settings)
 ```
 
@@ -313,8 +316,10 @@ merged, added, conflicts = settings.merge(<existing settings.json, or {}>, fw_se
 **`.claude/framework.json`** — `source`, `version`, `profile`: it is how the two skills find the source again, and the only place that records **what** the installation is made of. Without the profile, "regenerate the permissions of the project's profile" cannot be carried out. `settings_added` is `added`: the only piece of `settings.json` that `framework-sync --uninstall` will be able to remove. The shape **is not written by you**: `source.manifest` makes the path relative when the source sits inside the project and absolute only when it sits outside — an absolute path to an internal source is the machine of whoever installed it, and it dies at the first clone.
 
 ```python
-source.manifest(PRJ, FW, version, prof.name, settings_added=added)
+source.manifest(PRJ, FW, version, prof.name, settings_added=added, skills=skills.installed(FW))
 ```
+
+`skills` is `skill name → package`: in the project the package skills all sit at one level, and without this line the doctor cannot say which package is missing.
 
 The `accepted` field **is not written at installation**: it is born empty and is added by whoever decides to live with a warning (→ `framework-doctor` skill).
 

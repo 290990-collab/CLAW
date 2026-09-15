@@ -17,7 +17,7 @@ DOMAIN_HEADING = "## Project context"
 # the `TOKEN_BUDGET` finding stays silent until the assembled file reaches at
 # least the ceiling the framework sets itself for the method alone.
 METHOD_WORD_BUDGET = 2000
-COORDINATOR_WORD_BUDGET = 2900
+COORDINATOR_WORD_BUDGET = 3000
 
 # The orchestration of whoever does not choose one.
 DEFAULT_ORCHESTRATION = "orchestrator-worker"
