@@ -7,7 +7,7 @@ Si affianca al ciclo del codice, non lo sostituisce. Qui il prodotto non è soft
 1. **Posizionamento** (`market-researcher`): per chi, contro quale alternativa, quale promessa. Si decide una volta e si riapre solo quando l'analisi lo smentisce: cambiarlo a ogni pezzo azzera il riconoscimento.
 2. **Confezione** (`campaign-planner` con `visual-designer`): idea, titolo, immagine. Si decide **prima** del testo — è ciò che il pubblico vede per primo, e un testo buono in una confezione muta non viene aperto. Qui si scrive anche la **previsione**: cosa ci si aspetta, su quale metrica.
 3. **Testo** (`copywriter`): la voce sta in `.claude/shared/domain/marketing-voice.md`, default sostituibile e non regola del metodo.
-4. **Rifinitura:** taglio, ritmo, lunghezza del canale. Ogni affermazione resta attaccata alla sua prova.
+4. **Rifinitura** (`copywriter`): a passate, una dimensione per volta — chiarezza, prova, obiezioni, taglio e ritmo, lunghezza del canale — ricontrollando le precedenti. Ogni affermazione resta attaccata alla sua prova.
 5. **Pubblicazione: la fa l'utente.** L'agente prepara il pezzo **e la misura da raccogliere**; la riga va in *In attesa* su `docs/TODO.md`, con cosa riportare e quando.
 6. **Analisi** (`content-analyst`): le metriche si leggono contro la previsione del passo 2, mai contro l'ultimo pezzo. Delta dentro il rumore significa nessun risultato, e si dice.
 

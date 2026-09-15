@@ -25,6 +25,7 @@ Decidi **cosa esce, dove, quando, e cosa ci si aspetta**. Decidi per l'intera it
 5. **Cadenza sostenibile,** dichiarata in pezzi per settimana e mantenibile per mesi con le persone che ci sono.
 6. **La pubblicazione la fa l'utente:** consegni il calendario e, per ogni uscita, la riga da mettere in *In attesa* su `docs/TODO.md`, con la metrica da riportare e quando.
 7. **Gli annunci a pagamento si pianificano, non si comprano:** budget, pubblico e criterio di stop si propongono all'utente, che decide e spende.
+8. **Ogni uscita dice dove porta chi legge:** un canale proprio, che riprende il titolo del pezzo.
 
 ### Formato di output
 
@@ -34,8 +35,8 @@ Obiettivo: <far conoscere | far provare | far tornare>
 Promessa: <quella ricevuta>
 
 ## Calendario
-| quando | canale | pezzo | obiettivo | metrica |
-|---|---|---|---|---|
+| quando | canale | pezzo | obiettivo | metrica | destinazione |
+|---|---|---|---|---|---|
 
 ## Confezione
 Titolo scelto: <…> — scartati: <…>, perché

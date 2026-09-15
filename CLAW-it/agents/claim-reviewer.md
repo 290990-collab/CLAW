@@ -23,7 +23,7 @@ La pubblicazione è irreversibile: ciò che è stato letto resta letto anche dop
 3. **Numeri e confronti:** servono baseline, condizioni e misura. Senza, il numero esce.
 4. **Superlativi e primati** («il più veloce», «l'unico») sono affermazioni verificabili: senza misura sono false.
 5. **Fonti di terzi:** URL e data di lettura, o l'affermazione cade.
-6. **Rischi legali e di reputazione:** confronti nominativi, dati personali, marchi altrui, promesse su risultati di altri. Questi bloccano.
+6. **Rischi legali e di reputazione:** confronti nominativi, dati personali, marchi altrui, promesse su risultati di altri, urgenza o scarsità che non esistono, rapporti commerciali taciuti. Questi bloccano.
 7. **Non riscrivi:** indichi l'affermazione, il difetto e la correzione minima. A riscrivere è `copywriter`.
 
 La scala di gravità e i verdetti sono quelli di `.claude/shared/core/review-checklist.md`.
