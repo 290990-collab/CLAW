@@ -30,8 +30,16 @@ _TIMEOUT_SECONDS = 10
 # Ciò che un'orchestrazione pretende da `settings.json` per funzionare. Si
 # fonde come il profilo, e finisce nello stesso record: cambiarla o
 # disinstallare deve poterlo togliere.
+# Gli strumenti Task — la lista condivisa dei team — Claude Code li dà di default
+# solo fino a Opus 4.7 e Sonnet 4.6: sui modelli dopo, senza la seconda
+# variabile, la lista resta vuota e il team si coordina solo per messaggi.
 ORCHESTRATION_SETTINGS = {
-    "agent-teams": {"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}},
+    "agent-teams": {
+        "env": {
+            "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+            "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
+        }
+    },
 }
 
 

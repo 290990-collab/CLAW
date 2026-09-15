@@ -17,7 +17,7 @@ DOMAIN_HEADING = "## Contesto di progetto"
 # `TOKEN_BUDGET` tace finché il file assemblato non arriva almeno al tetto
 # che il framework si dà per il solo metodo.
 METHOD_WORD_BUDGET = 2000
-COORDINATOR_WORD_BUDGET = 2500
+COORDINATOR_WORD_BUDGET = 2800
 
 # L'orchestrazione di chi non ne sceglie una, e di chi è nato prima dei moduli.
 DEFAULT_ORCHESTRATION = "orchestrator-worker"
