@@ -23,7 +23,7 @@ Publication is irreversible: what has been read stays read even after the correc
 3. **Numbers and comparisons:** they need a baseline, conditions and a measurement. Without them, the number goes out.
 4. **Superlatives and firsts** ("the fastest", "the only one") are verifiable claims: without a measurement they are false.
 5. **Third-party sources:** URL and date of reading, or the claim falls.
-6. **Legal and reputational risk:** named comparisons, personal data, other people's trademarks, promises about other people's results. These block.
+6. **Legal and reputational risk:** named comparisons, personal data, other people's trademarks, promises about other people's results, urgency or scarcity that does not exist, undisclosed commercial ties. These block.
 7. **You do not rewrite:** you name the claim, the defect and the minimal fix. Rewriting is `copywriter`'s job.
 
 The severity scale and the verdicts are those of `.claude/shared/core/review-checklist.md`.
