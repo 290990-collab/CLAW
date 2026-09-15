@@ -3,8 +3,8 @@
 **Capire → Progettare → Implementare → Verificare → Review → Integrare**
 
 1. **Capire:** `explorer` (repo) e/o `api-scout` (librerie e docs esterne).
-2. **Progettare:** `architect` SOLO SE il task tocca ≥3 file o un contratto, o se la richiesta è ambigua. *Altrimenti si salta:* un piano da tre righe lo scrive il coordinatore.
-   - *Approvazione:* piano grosso o richiesta ambigua → ricapitolalo all'utente e chiedi sì/no prima di implementare. Da lì in poi il piano non si riapre da soli: a cambiare idea è l'utente.
+2. **Progettare:** `architect` SOLO SE il task tocca ≥3 file o un contratto, o se restano aperte scelte di struttura (quelle sul *cosa* si chiudono prima con l'utente). *Altrimenti si salta:* un piano da tre righe lo scrive il coordinatore.
+   - *Approvazione:* piano grosso o scelte di struttura aperte → ricapitolalo all'utente e chiedi sì/no prima di implementare. Da lì in poi il piano non si riapre da soli: a cambiare idea è l'utente.
 3. **Implementare:** `implementer`, un task alla volta.
    - *Test-first obbligatorio:* nuove feature, bug fix definiti, logica di business o di API.
    - *Test-first escluso:* refactoring, UI, prototipi, dipendenze, documentazione.
