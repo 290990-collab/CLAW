@@ -19,7 +19,7 @@ DOMAIN_HEADING = "## Contesto di progetto"
 METHOD_WORD_BUDGET = 2000
 COORDINATOR_WORD_BUDGET = 2800
 
-# L'orchestrazione di chi non ne sceglie una, e di chi è nato prima dei moduli.
+# L'orchestrazione di chi non ne sceglie una.
 DEFAULT_ORCHESTRATION = "orchestrator-worker"
 
 
@@ -111,21 +111,25 @@ def installed_orchestration(region_body: str, framework_root: Path) -> Path:
     """L'orchestrazione già presente in una regione kernel installata.
 
     Stessa ragione di `installed_cycles`, stesso riconoscimento dal primo
-    titolo. Nessuna presente è una regione nata prima dei moduli, che lavorava
-    già come il default: la riceve. Due presenti non sono una scelta da
-    indovinare — il progetto ne ha una sola.
+    titolo. Il progetto ne ha esattamente una: nessuna riconosciuta vuol dire
+    di solito un titolo rinominato nel sorgente, e ripiegare sul default
+    riscriverebbe in silenzio il modello sbagliato; due non sono una scelta da
+    indovinare.
     """
     found = []
     for p in sorted((framework_root / "orchestrations").glob("*.md")):
         heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
         if heading and heading in region_body:
             found.append(p)
+    if not found:
+        raise ValueError(
+            "nessuna orchestrazione riconosciuta nella regione: sceglila e "
+            "passala con assemble.orchestration_file"
+        )
     if len(found) > 1:
         names = ", ".join(p.stem for p in found)
         raise ValueError(f"più di un'orchestrazione nella regione: {names}")
-    if found:
-        return found[0]
-    return orchestration_file(framework_root, DEFAULT_ORCHESTRATION)
+    return found[0]
 
 
 def build_agent(

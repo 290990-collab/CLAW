@@ -326,6 +326,38 @@ class TestRepair(unittest.TestCase):
             record = read_json(root / source.MANIFEST)["settings_added"]
             self.assertEqual(settings.unmerge(data, record)[0], {})
 
+    def test_repair_restores_the_variables_of_the_installed_orchestration(self):
+        """L'orchestrazione non è nel manifesto: se il ricalcolo dei settings
+        guarda solo profilo e hook, un progetto `agent-teams` che ha perso una
+        variabile resta con il modello spento, e il repair dice che è tutto a
+        posto."""
+        env = settings.ORCHESTRATION_SETTINGS["agent-teams"]["env"]
+        lost = sorted(env)[0]
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prova"
+            with redirect_stdout(io.StringIO()):
+                trial_install.install(root, orchestration="agent-teams")
+            data = read_json(root / SETTINGS)
+            del data["env"][lost]
+            write_json(root / SETTINGS, data)
+
+            ops = lifecycle.plan_repair(root, FRAMEWORK)
+            self.assertEqual(actions(ops).get(SETTINGS), lifecycle.MERGE)
+            lifecycle.apply_update(root, FRAMEWORK, ops)
+
+            self.assertEqual(read_json(root / SETTINGS)["env"], env)
+            self.assertEqual(doctor.check(root), [])
+
+    def test_repair_refuses_without_the_coordinator_guide(self):
+        """Senza guida l'orchestrazione installata non si sa: ricalcolare i
+        settings senza le sue variabili le perderebbe in silenzio."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            (root / lifecycle.ORCHESTRATION).unlink()
+            with self.assertRaises(ValueError) as e:
+                lifecycle.plan_repair(root, FRAMEWORK)
+            self.assertIn(lifecycle.ORCHESTRATION, str(e.exception))
+
     def test_repair_overwrites_nothing_and_refuses_an_old_install(self):
         """Il repair rimette ciò che manca, non riporta al sorgente ciò che
         l'utente ha cambiato; e su un'installazione di un'altra versione

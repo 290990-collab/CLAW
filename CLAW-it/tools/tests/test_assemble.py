@@ -125,11 +125,13 @@ class TestInstalledOrchestration(unittest.TestCase):
         found = assemble.installed_orchestration(self._module("agent-teams"), self.ROOT)
         self.assertEqual(found.stem, "agent-teams")
 
-    def test_region_without_a_module_gets_the_default(self):
-        """Una regione installata prima dei moduli lavorava già come il default:
-        riassemblarla senza modulo le toglierebbe il modello di delega."""
-        found = assemble.installed_orchestration("## Delega", self.ROOT)
-        self.assertEqual(found.stem, assemble.DEFAULT_ORCHESTRATION)
+    def test_region_without_a_module_is_an_error(self):
+        """Nessun modulo riconosciuto è di solito un titolo rinominato nel
+        sorgente: ripiegare sul default riscriverebbe al `--down` il modello
+        sbagliato, in silenzio. La scelta torna a chi riassembla."""
+        with self.assertRaises(ValueError) as e:
+            assemble.installed_orchestration("## Delega", self.ROOT)
+        self.assertIn("orchestration_file", str(e.exception))
 
     def test_two_modules_are_an_error(self):
         """Un'orchestrazione per progetto: con due, sceglierne una sarebbe

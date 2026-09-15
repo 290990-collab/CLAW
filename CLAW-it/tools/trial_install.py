@@ -269,8 +269,12 @@ def choices() -> tuple[profile.Profile, list[str], list[str], tuple[str, ...]]:
     return prof, roster, profile.guides(FRAMEWORK, prof, roster), settings.HOOKS
 
 
-def install(out: Path) -> int:
-    """Installa il progetto finto e restituisce il numero di agenti."""
+def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
+    """Installa il progetto finto e restituisce il numero di agenti.
+
+    `orchestration` resta fuori da `choices()`: il piano dei file non cambia
+    con lei, cambiano solo il contenuto della guida e i settings.
+    """
     if out.exists():
         shutil.rmtree(out)
     (out / ".claude" / "agents").mkdir(parents=True)
@@ -296,7 +300,7 @@ def install(out: Path) -> int:
             VERSION,
             ROUTING,
             extra=[
-                assemble.orchestration_file(FRAMEWORK, ORCHESTRATION),
+                assemble.orchestration_file(FRAMEWORK, orchestration),
                 *assemble.cycle_files(FRAMEWORK, prof.cycles),
             ],
         ),
@@ -325,7 +329,7 @@ def install(out: Path) -> int:
     if conflicts:
         raise SystemExit(f"profilo e hook in conflitto su: {', '.join(conflicts)}")
     framework_settings, _, conflicts = settings.merge(
-        framework_settings, settings.ORCHESTRATION_SETTINGS.get(ORCHESTRATION, {})
+        framework_settings, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
     )
     if conflicts:
         raise SystemExit(f"orchestrazione in conflitto su: {', '.join(conflicts)}")

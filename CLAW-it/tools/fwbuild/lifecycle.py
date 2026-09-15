@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import doctor, kernel, profile, settings, source
+from . import assemble, doctor, kernel, profile, settings, source
 
 CREATE = "crea"
 OVERWRITE = "sovrascrive"
@@ -656,8 +656,13 @@ def _hook_after(prj: Path, name: str, ops: Sequence[Operation]) -> bool:
 def _framework_settings(
     prj: Path, fw: Path, manifest: dict, ops: Sequence[Operation], current: dict
 ) -> dict:
-    """Le voci che il framework vuole in `settings.json`: il profilo, più una
-    voce per ogni hook il cui script ci sarà e che nessuna voce lancia già.
+    """Le voci che il framework vuole in `settings.json`: il profilo, quelle
+    dell'orchestrazione installata, più una voce per ogni hook il cui script ci
+    sarà e che nessuna voce lancia già.
+
+    L'orchestrazione non sta nel manifesto: si ricava dalla regione kernel della
+    guida del coordinatore. Senza guida non si sa quale sia, e ricalcolare
+    senza le sue variabili lascerebbe spento un modello che il progetto usa.
 
     Un hook già nominato non si riaggiunge: se il comando è cambiato fra una
     release e l'altra, la voce nuova si accoderebbe a quella vecchia e l'hook
@@ -670,11 +675,25 @@ def _framework_settings(
             f"profilo {name!r} assente dal sorgente: le voci di settings.json "
             "non si possono ricalcolare"
         )
+    guide = prj / ORCHESTRATION
+    region = kernel.parse(guide.read_text(encoding="utf-8")) if guide.is_file() else None
+    if region is None:
+        raise ValueError(
+            f"{ORCHESTRATION} assente o senza regione kernel: l'orchestrazione "
+            "installata non si ricava e le voci di settings.json non si possono "
+            "ricalcolare — riassembla la guida con assemble.orchestration_file, poi riprova"
+        )
+    orchestration = assemble.installed_orchestration(region.body, fw).stem
     referenced = _referenced_hooks(current)
     names = [n for n in settings.HOOKS if n not in referenced and _hook_after(prj, n, ops)]
     merged, _, conflicts = settings.merge(profile.load(path).settings, settings.hooks(names))
     if conflicts:
         raise ValueError(f"profilo e hook in conflitto su: {', '.join(conflicts)}")
+    merged, _, conflicts = settings.merge(
+        merged, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
+    )
+    if conflicts:
+        raise ValueError(f"orchestrazione in conflitto su: {', '.join(conflicts)}")
     return merged
 
 

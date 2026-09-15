@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 import trial_install
-from fwbuild import assemble, cli, doctor, kernel, profile, settings, source
+from fwbuild import assemble, cli, doctor, kernel, lifecycle, profile, settings, source
 
 FRAMEWORK = Path(__file__).resolve().parents[2]
 SURFACE_ONLY = {"compliance-reviewer", "perf-analyst"}
@@ -212,7 +212,9 @@ class TestRealFramework(unittest.TestCase):
         """`installed_orchestration` riconosce un modulo dal primo titolo dentro
         la regione: se quel titolo comparisse nel kernel del coordinatore, in un
         ciclo o in un altro modulo, `--down` troverebbe un'orchestrazione che il
-        progetto non ha, o due, e riscriverebbe la guida sbagliata."""
+        progetto non ha, o due, e riscriverebbe la guida sbagliata. Vale anche
+        il verso opposto: il titolo di un ciclo dentro un modulo farebbe
+        trovare a `installed_cycles` un ciclo che il profilo non ha."""
         modules = sorted((FRAMEWORK / "orchestrations").glob("*.md"))
         self.assertGreaterEqual(len(modules), 2)
         coordinator = assemble.read_method(FRAMEWORK / "coordinator")
@@ -229,6 +231,10 @@ class TestRealFramework(unittest.TestCase):
                 ("altri moduli", others),
             ):
                 self.assertNotIn(heading, text, f"{p.name} in {where}")
+        all_modules = assemble.read_method(FRAMEWORK / "orchestrations")
+        for c in sorted((FRAMEWORK / "cycles").glob("*.md")):
+            heading = c.read_text(encoding="utf-8").lstrip().splitlines()[0]
+            self.assertNotIn(heading, all_modules, f"{c.name} in orchestrations/")
 
     def test_every_profile_shared_guide_exists(self):
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
@@ -493,8 +499,9 @@ class TestRealFramework(unittest.TestCase):
     def test_sync_down_preserves_the_orchestration(self):
         """Come i cicli, l'orchestrazione sta dentro la regione e nessun file
         dice quale sia: `--down` la deve ritrovare, nello stesso ordine, perché
-        la regione riassemblata verifichi. Una regione nata prima dei moduli
-        riceve il default, che è come lavorava già."""
+        la regione riassemblata verifichi. Una regione in cui non se ne
+        riconosce nessuna si rifiuta: il default al suo posto nasconderebbe un
+        titolo rinominato."""
         version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
         prof = profile.load(FRAMEWORK / "profiles" / "web.toml")
         teams = assemble.orchestration_file(FRAMEWORK, "agent-teams")
@@ -519,13 +526,11 @@ class TestRealFramework(unittest.TestCase):
         self.assertEqual(kernel.verify(rebuilt), "OK")
         self.assertEqual(kernel.parse(rebuilt).body, region.body)
 
-        old = assemble.build_document(
+        without = assemble.build_document(
             FRAMEWORK / "coordinator", version, "## Roster di questo progetto"
         )
-        self.assertEqual(
-            assemble.installed_orchestration(kernel.parse(old).body, FRAMEWORK),
-            assemble.orchestration_file(FRAMEWORK, assemble.DEFAULT_ORCHESTRATION),
-        )
+        with self.assertRaises(ValueError):
+            assemble.installed_orchestration(kernel.parse(without).body, FRAMEWORK)
 
     def test_unfilled_roadmap_is_detectable(self):
         """Un template di stato con scheletro non compilato è indistinguibile
@@ -803,6 +808,40 @@ class TestRealInstall(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 trial_install.install(root)
             self.assertEqual(doctor.check(root), [])
+
+    def test_agent_teams_settings_go_in_and_come_out(self):
+        """Le variabili di `agent-teams` sono l'unica parte dell'orchestrazione
+        che vive fuori dalla guida: entrano in `settings.json` e nel record, o la
+        disinstallazione le lascia accese in un progetto che non ha più il
+        framework."""
+        env = settings.ORCHESTRATION_SETTINGS["agent-teams"]["env"]
+        self.assertTrue(env)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prova"
+            with redirect_stdout(io.StringIO()):
+                trial_install.install(root, orchestration="agent-teams")
+            data = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            record = json.loads(
+                (root / ".claude" / "framework.json").read_text(encoding="utf-8")
+            )["settings_added"]
+            for key, value in env.items():
+                self.assertEqual(data["env"][key], value, key)
+                self.assertEqual(record["env"][key], value, key)
+            guide = (root / ".claude" / "shared" / "orchestration.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(
+                assemble.installed_orchestration(kernel.parse(guide).body, FRAMEWORK).stem,
+                "agent-teams",
+            )
+            self.assertEqual(doctor.check(root), [])
+
+            ops = lifecycle.plan_uninstall(root, FRAMEWORK)
+            lifecycle.apply_uninstall(root, FRAMEWORK, ops)
+
+            left = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            for key in env:
+                self.assertNotIn(key, left.get("env", {}), key)
 
 
 if __name__ == "__main__":

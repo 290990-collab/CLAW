@@ -99,7 +99,7 @@ Si riscrivono nella forma **più compressa che conserva il senso**: sono parole 
 
 **Una domanda alla volta**, non un blocco unico: ogni risposta può cambiare le successive. Proponi opzioni concrete e una raccomandazione motivata dal codice o dall'idea.
 
-**Proposta** — una volta per installazione, prima della domanda 1: profilo, agenti e guide extra, hook, ciascuno con la sua evidenza — i segnali del punto 8 di `explorer` con `file:riga`, o la frase dell'idea che lo motiva. Sta **accanto** alle domande, mai al loro posto: si fanno tutte, e ognuna conferma o corregge la sua parte.
+**Proposta** — una volta per installazione, prima della domanda 1: profilo, agenti e guide extra, hook, orchestrazione, ciascuno con la sua evidenza — i segnali del punto 8 di `explorer` con `file:riga`, o la frase dell'idea che lo motiva. Sta **accanto** alle domande, mai al loro posto: si fanno tutte, e ognuna conferma o corregge la sua parte.
 
 ### Sempre — cinque domande
 
@@ -302,7 +302,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 ```python
 fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOK>))   # c non vuoto: difetto del sorgente, fermati
-fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get(ORCH, {}))   # idem
+fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get('<ORCHESTRAZIONE>', {}))   # idem
 merged, added, conflitti = settings.merge(<settings.json esistente, o {}>, fw_settings)
 ```
 
