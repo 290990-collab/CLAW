@@ -107,6 +107,15 @@ core roster:
 | `security-reviewer` | Reviews untrusted input, secrets, auth and data exposure |
 | `final-reviewer` | Rereads the diff from scratch and re-runs the tests before anything is called done |
 
+### How they work together
+
+One orchestration model per project, chosen at install:
+
+| Model | How it runs |
+|---|---|
+| `orchestrator-worker` | The default. The coordinator spawns subagents and collects their reports; subagents never talk to each other |
+| `agent-teams` | Experimental, on Claude Code's Agent teams. Teammates share a task list, message each other directly and keep a shared memory in `docs/team/`. Needs an interactive session. Suggested by the `web`, `research` and `marketing` profiles |
+
 ---
 
 ## Install
@@ -208,7 +217,8 @@ Once per machine. Needs Claude Code and Python 3.11+ — nothing else to install
 | `--repair` | Puts back missing skills, hooks, guides and state files; overwrites nothing |
 | `--uninstall` | Deletes what matches the source, archives what you adapted |
 
-Every mode that writes shows the plan first and waits for your ok.
+Every mode that writes shows the plan first and waits for your ok. The same
+skill moves a project to another profile or orchestration model.
 
 ### From the shell — in `<source>/tools`
 
