@@ -4,6 +4,7 @@ critical_surface = "The validity of the conclusion: a number produced by a wrong
 
 agents = ["debugger", "api-scout", "results-analyst", "literature", "scientific-reviewer", "silent-failure-hunter", "conversation-analyzer"]
 cycles = ["research"]
+recommended_orchestrations = ["agent-teams"]
 
 shared = [
   "core/conventions.md",

@@ -28,6 +28,21 @@ _MATCHER = {
 
 _TIMEOUT_SECONDS = 10
 
+# What an orchestration requires from `settings.json` in order to work. It is
+# merged like the profile and ends up in the same record: changing it or
+# uninstalling has to be able to remove it.
+# The Task tools — the teams' shared list — are given by Claude Code by default
+# only up to Opus 4.7 and Sonnet 4.6: on later models, without the second
+# variable, the list stays empty and the team coordinates by messages alone.
+ORCHESTRATION_SETTINGS = {
+    "agent-teams": {
+        "env": {
+            "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+            "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
+        }
+    },
+}
+
 
 def merge(existing: dict, framework: dict) -> tuple[dict, dict, list[str]]:
     """`(merged, added, conflicts)`: the framework's entries on top of the user's.

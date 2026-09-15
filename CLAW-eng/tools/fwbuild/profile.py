@@ -3,7 +3,7 @@
 import re
 import tomllib
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ALWAYS = [
@@ -43,6 +43,9 @@ class Profile:
     cycles: list[str]
     settings: dict
     critical_surface: str = ""
+    # Only a hint for the questionnaire: whoever installs chooses the
+    # orchestration, one per project, and the default holds for every field.
+    recommended_orchestrations: list[str] = field(default_factory=list)
 
 
 def load(path: Path) -> Profile:
@@ -54,6 +57,7 @@ def load(path: Path) -> Profile:
         cycles=list(data.get("cycles", [])),
         settings=dict(data.get("settings", {})),
         critical_surface=data.get("critical_surface", ""),
+        recommended_orchestrations=list(data.get("recommended_orchestrations", [])),
     )
 
 

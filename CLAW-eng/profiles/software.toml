@@ -4,6 +4,7 @@ critical_surface = "Runtime behaviour in the face of input the project does not 
 
 agents = ["debugger", "security-reviewer", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

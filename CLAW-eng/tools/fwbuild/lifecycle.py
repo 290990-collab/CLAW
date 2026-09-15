@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import doctor, kernel, profile, settings, source
+from . import assemble, doctor, kernel, profile, settings, source
 
 CREATE = "create"
 OVERWRITE = "overwrite"
@@ -659,9 +659,14 @@ def _hook_after(prj: Path, name: str, ops: Sequence[Operation]) -> bool:
 def _framework_settings(
     prj: Path, fw: Path, manifest: dict, ops: Sequence[Operation], current: dict
 ) -> dict:
-    """The entries the framework wants in `settings.json`: the profile, plus one
-    entry for every hook whose script will be there and that no entry launches
-    yet.
+    """The entries the framework wants in `settings.json`: the profile, those of
+    the installed orchestration, plus one entry for every hook whose script will
+    be there and that no entry launches yet.
+
+    The orchestration is not in the manifest: it is derived from the kernel
+    region of the coordinator's guide. Without the guide nobody knows which one
+    it is, and recomputing without its variables would leave switched off a
+    model the project uses.
 
     A hook already named is not added again: if the command changed between one
     release and the next, the new entry would be appended to the old one and
@@ -674,11 +679,25 @@ def _framework_settings(
             f"profile {name!r} missing from the source: the settings.json entries "
             "cannot be recomputed"
         )
+    guide = prj / ORCHESTRATION
+    region = kernel.parse(guide.read_text(encoding="utf-8")) if guide.is_file() else None
+    if region is None:
+        raise ValueError(
+            f"{ORCHESTRATION} missing or without a kernel region: the installed "
+            "orchestration cannot be derived and the settings.json entries cannot "
+            "be recomputed — reassemble the guide with assemble.orchestration_file, then retry"
+        )
+    orchestration = assemble.installed_orchestration(region.body, fw).stem
     referenced = _referenced_hooks(current)
     names = [n for n in settings.HOOKS if n not in referenced and _hook_after(prj, n, ops)]
     merged, _, conflicts = settings.merge(profile.load(path).settings, settings.hooks(names))
     if conflicts:
         raise ValueError(f"profile and hooks conflict on: {', '.join(conflicts)}")
+    merged, _, conflicts = settings.merge(
+        merged, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
+    )
+    if conflicts:
+        raise ValueError(f"orchestration conflicts on: {', '.join(conflicts)}")
     return merged
 
 

@@ -4,6 +4,7 @@ critical_surface = "What the user sees and what an outsider reaches: visual rend
 
 agents = ["frontend", "deploy", "security-reviewer", "api-scout", "debugger", "silent-failure-hunter", "conversation-analyzer"]
 cycles = ["design"]
+recommended_orchestrations = ["agent-teams"]
 
 shared = [
   "core/conventions.md",

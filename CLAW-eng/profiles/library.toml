@@ -4,6 +4,7 @@ critical_surface = "The public contract — signatures, semantics, behaviour acr
 
 agents = ["debugger", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

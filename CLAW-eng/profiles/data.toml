@@ -4,6 +4,7 @@ critical_surface = "The correctness of what comes in: a pipeline that runs says 
 
 agents = ["debugger", "data-ingestion", "data-quality-reviewer", "infra", "api-scout", "silent-failure-hunter", "conversation-analyzer"]
 cycles = []
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

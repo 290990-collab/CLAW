@@ -15,6 +15,7 @@ REQUIRED = (
     "VERSION",
     "method",
     "coordinator",
+    "orchestrations",
     "agents",
     "profiles",
     "templates",

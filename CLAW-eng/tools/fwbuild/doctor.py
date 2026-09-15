@@ -79,6 +79,8 @@ COORDINATOR_ONLY = (
     "State that keeps itself up to date",
     "Choosing between agents that look close",
     "This project's roster",
+    "Orchestration: orchestrator and worker",
+    "Orchestration: Agent teams",
 )
 
 

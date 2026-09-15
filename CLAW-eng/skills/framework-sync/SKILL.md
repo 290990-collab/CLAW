@@ -4,7 +4,7 @@ description: >
   Aligns an installation with the source framework: brings a new version of the
   method down while preserving the adaptation, promotes a local change up so
   the next project inherits it, activates or deactivates an agent or a guide,
-  puts back what is missing, uninstalls. Use when a new version comes out, when
+  changes the orchestration, puts back what is missing, uninstalls. Use when a new version comes out, when
   a local change deserves to become general, when an installation has lost
   files or must be removed.
 ---
@@ -77,7 +77,7 @@ p.write_text(assemble.build_document(Path('../method'), version, sections), enco
 "
 ```
 
-4. **Same operation on `.claude/shared/orchestration.md`**, with the kernel from `<FW>/coordinator/`: the versioned documents are **two**, updating only one leaves them misaligned. There the domain cycles are **inside** the region and the project does not record which profile it was born from: they must be passed again with `extra=assemble.installed_cycles(region.body, Path('..'))`, or they disappear without any finding seeing it.
+4. **Same operation on `.claude/shared/orchestration.md`**, with the kernel from `<FW>/coordinator/`: the versioned documents are **two**, updating only one leaves them misaligned. There orchestration and domain cycles are **inside** the region and the project does not record what it was born from: they must be passed again, in this order, with `extra=[assemble.installed_orchestration(region.body, Path('..')), *assemble.installed_cycles(region.body, Path('..'))]`, or they disappear without any finding seeing it. A region without a recognisable orchestration is a `ValueError`: the orchestration is chosen explicitly with `assemble.orchestration_file`, not guessed.
 5. **Same operation on every installed agent**, with `split_source` and `build_agent`: front matter and the `## Project context` block stay the project's, the method comes from the master. If the plan names a `model` or `effort` different from the source, ask: yes → that front-matter line takes the source's value.
 6. **Run the plan** from step 0 with `apply_update`: it copies skills and hooks, merges `settings.json`, writes `version` into `.claude/framework.json` and appends the new delta to `settings_added`. It skips the kernel regions: steps 3-5 have already rewritten them.
 7. **Verify** with `doctor`: it must exit 0.
@@ -255,7 +255,22 @@ A project does not stay where it was born: a library grows a demo, a tool become
 
 1. **Roster** — `--activate` what the new field implies, `--deactivate` the rest. Check for conflicts afterwards.
 2. **Guides** — copy those of `profile.guides` on the new profile and the roster after the change, and add the line in `CLAUDE.md § Shared guides`: what the guide holds, taken from the line under its title. The doctor demands that the path be cited (`SHARED_ORPHAN`), not that the line be written well: that is on whoever installs.
-3. **Cycles** — reassemble the coordinator's guide appending the new field's (`assemble.cycle_files`), or without them if it drops them. They live **inside** the kernel region: no finding sees them vanish.
-4. **Permissions** — `settings.unmerge(current, settings_added)` removes what the old field had added and is still equal; then `settings.merge(rest, new)`, with `new` = the new profile's `Profile.settings` merged with `settings.hooks` of the hooks in `.claude/hooks/`. Show `kept` and the conflicts before writing. Without a record, `merge` only: the old `deny` stays until the user removes it. A flat regeneration deletes permissions no profile ever wrote.
+3. **Cycles** — reassemble the coordinator's guide appending, after the installed orchestration (`assemble.installed_orchestration`), the new field's (`assemble.cycle_files`), or none if it drops them. They live **inside** the kernel region: no finding sees them vanish. Same precondition as § Change of orchestration.
+4. **Permissions** — `settings.unmerge(current, settings_added)` removes what the old field had added and is still equal; then `settings.merge(rest, new)`, with `new` = the new profile's `Profile.settings` merged with `settings.hooks` of the hooks in `.claude/hooks/` and with `settings.ORCHESTRATION_SETTINGS` of the installed orchestration (`installed_orchestration`): the record contains them, and without merging them again the change of field switches the team off. Show `kept` and the conflicts before writing. Without a record, `merge` only: the old `deny` stays until the user removes it. A flat regeneration deletes permissions no profile ever wrote.
 
 Then update `profile` in `framework.json`; `settings_added` becomes what the `merge` added. Skipping it leaves the project declaring a field it no longer has: the next maintenance regenerates the wrong permissions and no finding notices — the file declares, it does not verify.
+
+---
+
+## Change of orchestration
+
+One per project, inside the kernel region of the coordinator's guide. No dedicated mode.
+
+**Precondition:** `version` in `framework.json` equal to `<FW>/VERSION` and no `KERNEL_DRIFT` on `orchestration.md`; otherwise `--down` first. Reassembling the guide alone would bring it to the source's version while `CLAUDE.md` stays behind (`VERSION_MISMATCH`), and a local change in the region would vanish silently.
+
+`old` and `new` are the `settings.ORCHESTRATION_SETTINGS` entries of the two orchestrations, `{}` if they have none.
+
+1. **Guide** — reassemble `.claude/shared/orchestration.md` as in step 4 of `--down`, with `assemble.orchestration_file(Path('..'), '<new>')` instead of `installed_orchestration`; the cycles are passed again unchanged.
+2. **Settings** — remove only what the installation really added: `rec = settings.unmerge(old, settings.unmerge(old, settings_added)[0])[0]` is the part of `old` still in the record. `settings.unmerge(current, rec)` removes it — a variable the user already had stays —, then `settings.merge(rest, new)` adds the new one's. Conflicts and `kept` are shown before writing.
+3. **Manifest** — `settings_added` becomes `settings.merge(settings.unmerge(settings_added, rec)[0], added)[0]`, with `added` the second value of the `merge` in step 2: without it, `--uninstall` leaves on a variable no orchestration asks for any more.
+4. **Verify** with `doctor`.

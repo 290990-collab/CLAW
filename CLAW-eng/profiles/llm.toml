@@ -4,6 +4,7 @@ critical_surface = "The model's behaviour is not in the code: a prompt that hold
 
 agents = ["debugger", "api-scout", "scientific-reviewer", "results-analyst", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
 cycles = ["research"]
+recommended_orchestrations = []
 
 shared = [
   "core/conventions.md",

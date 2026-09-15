@@ -1,0 +1,14 @@
+## Orchestration: Agent teams
+
+This project's model: the coordinator is the *lead* of Claude Code's Agent teams; the teammates — the cards in `.claude/agents/` work as types — share a task list and write to each other directly. Experimental: it needs an interactive session and, in `.claude/settings.json`, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` for the team and `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` for the task list, which after Opus 4.7 and Sonnet 4.6 stays empty without it and requires Claude Code v2.1.233 or later. Those variables apply only once the folder has been trusted. Teammates that do not form, or an empty list → stop and tell the user.
+
+- **When:** research and review through different lenses, modules on disjoint files, work across several layers. In sequence, on the same file or with many dependencies: one agent at a time.
+- **Communication:** direct between teammates, under the rules of communication between agents; the standard report goes to the lead, and so does the judgment. A message about a result already written points to the shared-memory file, it does not repeat its content.
+- **Shared memory:** `docs/team/<goal>/`, one file per teammate (`<name>.md`), created by the lead together with the team. Each teammate appends its own results in the standard report format, with `file:line`, as soon as it has them and not only at the end of the task, and does not touch the others' files. Before a task, read the files of the teammates it depends on; the others only if the task asks for them. A teammate without `Write` sends its report to the lead, who appends it to its file. It is not a state level: once the work is closed, the lead carries what closed into `docs/status.md` and `docs/TODO.md`, and the folder is deleted with the user's ok. Teammates do not read this guide: the lead puts the path of their file and these rules in the spawn prompt.
+- **Cost:** every teammate is a whole context and counts as a copy under the caps of rule 1. With the variable on, a subagent given a name starts as a teammate.
+- **Files:** one teammate per file, decided in the plan: two overwrite each other.
+- **Tasks:** atomic, verifiable, with their dependencies (rule 7). The project state is written by the lead.
+- **Plans:** in plan mode the lead approves a teammate's plan automatically, without reading it. Whoever implements does not start in plan mode: the plan is the `architect`'s and the user approves it.
+- **The lead waits** for the teammates at work, it does not do their task.
+- **Stall:** a stuck task or a blocked queue is neither worked around nor replanned on one's own: the lead checks in the shared memory and in the diff whether the work is done, and reports to the user what is stuck and why.
+- **Limits:** `/resume` does not bring teammates back, the shared memory does: a new teammate restarts from the file of the one it replaces. No nested teams; teammates' permissions are approved in the lead's session.

@@ -100,9 +100,9 @@ They are rewritten in the **most compressed form that keeps the meaning**: these
 
 **One question at a time**, not a single block: every answer can change the following ones. Offer concrete options and a recommendation motivated by the code or by the idea.
 
-**Proposal** — once per installation, before question 1: profile, extra agents and guides, hooks, each with its evidence — the signals of `explorer`'s point 8 with `file:line`, or the sentence of the idea that motivates it. It sits **next to** the questions, never in their place: they are all asked, and each one confirms or corrects its part.
+**Proposal** — once per installation, before question 1: profile, extra agents and guides, hooks, orchestration, each with its evidence — the signals of `explorer`'s point 8 with `file:line`, or the sentence of the idea that motivates it. It sits **next to** the questions, never in their place: they are all asked, and each one confirms or corrects its part.
 
-### Always — four questions
+### Always — five questions
 
 **1. Field of the project** → profile in `<FW>/profiles/`:
 
@@ -141,6 +141,8 @@ Two reviewers only if the project really has two distinct critical surfaces.
 **4. Autonomy** — what can be done without asking. Conservative default: **none of this**. Commits · publication · installing dependencies · long or expensive runs · irreversible changes.
 
 In the same question, **`gateguard` yes or no**: it denies the first touch of every file in a session until the facts are presented — who imports it, what public surface changes — and it costs one extra turn per file; `FRAMEWORK_GATEGUARD=off` turns it off. The other hooks in `settings.HOOKS` are always installed.
+
+**5. Orchestration** → a file from `<FW>/orchestrations/`, **one** per project. Propose `assemble.DEFAULT_ORCHESTRATION`; name as useful for the field those in the profile's `recommended_orchestrations`, with the **When** point of their module, and the others as available. `agent-teams` is experimental and needs an interactive session: say so before the choice. It is changed later with `framework-sync` (§ Change of orchestration).
 
 ### Conditional — only for what the profile does not already install
 
@@ -278,14 +280,17 @@ for d in ('.claude/shared', '.claude/agents', '.claude/skills', '.claude/output-
     P.joinpath(d).mkdir(parents=True, exist_ok=True)
 P.joinpath('CLAUDE.md').write_text(
     assemble.build_document(F/'method', V, PROJECT_SECTIONS), encoding='utf-8')
+ORCH = '<ORCHESTRATION>'; CYCLES = [<profile cycles>]
 P.joinpath('.claude/shared/orchestration.md').write_text(
-    assemble.build_document(F/'coordinator', V, ROSTER_SECTIONS), encoding='utf-8')
+    assemble.build_document(F/'coordinator', V, ROSTER_SECTIONS,
+        extra=[assemble.orchestration_file(F, ORCH), *assemble.cycle_files(F, CYCLES)]),
+    encoding='utf-8')
 "
 ```
 
 **Active agents** — for each one: read the source with `assemble.split_source`, **fill in the `## Project context` block** with the specific directives (every placeholder declares what to put there), reassemble with `assemble.build_agent`, write into `.claude/agents/`.
 
-**Domain cycles** — if the profile declares `cycles`, the files from `<FW>/cycles/` are appended to the kernel region of the coordinator's guide (`extra=assemble.cycle_files(...)`): they are orchestration, not execution, so never in `CLAUDE.md`.
+**Orchestration and domain cycles** — the module from question 5, then the cycles if the profile declares `cycles`, are appended **in this order** to the kernel region of the coordinator's guide: `--down` passes them again the same way. They are orchestration, not execution, so never in `CLAUDE.md`.
 
 **Guides** — copy from `<FW>/shared/` the list from `profile.guides` at Step 4, filling in the project block there too. An extra agent brings its own: without them the card goes out with a dead pointer that the doctor sees only once the installation is already written (`SHARED_MISSING`).
 
@@ -299,6 +304,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 ```python
 fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOKS>))   # c not empty: a defect in the source, stop
+fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get('<ORCHESTRATION>', {}))   # same
 merged, added, conflicts = settings.merge(<existing settings.json, or {}>, fw_settings)
 ```
 

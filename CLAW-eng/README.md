@@ -7,6 +7,7 @@ the project. Everything needed is in here, tooling included.
 VERSION              kernel version (semantics: patch · minor · major)
 method/              COMMON kernel → CLAUDE.md, read by everyone at every spawn
 coordinator/         COORDINATOR kernel → shared/orchestration.md, on demand
+orchestrations/      orchestration models: one is appended to the guide, orchestrator-worker by default
 cycles/              domain cycles, appended to the guide if the profile asks
 agents/              28 agents: method + project [TO FILL IN] block
 shared/core/         generic guides, loaded on demand

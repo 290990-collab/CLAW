@@ -116,5 +116,31 @@ class TestInstalledCycles(unittest.TestCase):
         self.assertEqual(assemble.installed_cycles("## Delegation", root), [])
 
 
+class TestInstalledOrchestration(unittest.TestCase):
+    ROOT = Path(__file__).resolve().parents[2]
+
+    def _module(self, name):
+        return (self.ROOT / "orchestrations" / f"{name}.md").read_text(encoding="utf-8")
+
+    def test_detects_the_one_present(self):
+        found = assemble.installed_orchestration(self._module("agent-teams"), self.ROOT)
+        self.assertEqual(found.stem, "agent-teams")
+
+    def test_region_without_a_module_is_an_error(self):
+        """No module recognised usually means a heading renamed in the source:
+        falling back on the default would rewrite the wrong model at `--down`,
+        in silence. The choice goes back to whoever reassembles."""
+        with self.assertRaises(ValueError) as e:
+            assemble.installed_orchestration("## Delegation", self.ROOT)
+        self.assertIn("orchestration_file", str(e.exception))
+
+    def test_two_modules_are_an_error(self):
+        """One orchestration per project: with two, picking one would be
+        guessing which one the user wanted."""
+        body = self._module("agent-teams") + self._module("orchestrator-worker")
+        with self.assertRaises(ValueError):
+            assemble.installed_orchestration(body, self.ROOT)
+
+
 if __name__ == "__main__":
     unittest.main()

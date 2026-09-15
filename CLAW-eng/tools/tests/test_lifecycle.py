@@ -328,6 +328,38 @@ class TestRepair(unittest.TestCase):
             record = read_json(root / source.MANIFEST)["settings_added"]
             self.assertEqual(settings.unmerge(data, record)[0], {})
 
+    def test_repair_restores_the_variables_of_the_installed_orchestration(self):
+        """The orchestration is not in the manifest: if recomputing the settings
+        looks only at profile and hooks, an `agent-teams` project that lost a
+        variable stays with the model switched off, and the repair says all is
+        well."""
+        env = settings.ORCHESTRATION_SETTINGS["agent-teams"]["env"]
+        lost = sorted(env)[0]
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "trial"
+            with redirect_stdout(io.StringIO()):
+                trial_install.install(root, orchestration="agent-teams")
+            data = read_json(root / SETTINGS)
+            del data["env"][lost]
+            write_json(root / SETTINGS, data)
+
+            ops = lifecycle.plan_repair(root, FRAMEWORK)
+            self.assertEqual(actions(ops).get(SETTINGS), lifecycle.MERGE)
+            lifecycle.apply_update(root, FRAMEWORK, ops)
+
+            self.assertEqual(read_json(root / SETTINGS)["env"], env)
+            self.assertEqual(doctor.check(root), [])
+
+    def test_repair_refuses_without_the_coordinator_guide(self):
+        """Without the guide the installed orchestration is unknown: recomputing
+        the settings without its variables would lose them in silence."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            (root / lifecycle.ORCHESTRATION).unlink()
+            with self.assertRaises(ValueError) as e:
+                lifecycle.plan_repair(root, FRAMEWORK)
+            self.assertIn(lifecycle.ORCHESTRATION, str(e.exception))
+
     def test_repair_overwrites_nothing_and_refuses_an_old_install(self):
         """The repair puts back what is missing, it does not bring back to the
         source what the user changed; and on an installation of another version

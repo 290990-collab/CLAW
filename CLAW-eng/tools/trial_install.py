@@ -18,6 +18,8 @@ FRAMEWORK = Path(__file__).resolve().parents[1]
 # Outside the source: the package ships the code that runs the trial, not the trial.
 DEFAULT_OUT = FRAMEWORK.parent / "_build" / "trial"
 VERSION = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
+# The answer to question 5: `software` recommends none, the default holds.
+ORCHESTRATION = assemble.DEFAULT_ORCHESTRATION
 
 DOMAIN = {
     "explorer": (
@@ -269,8 +271,12 @@ def choices() -> tuple[profile.Profile, list[str], list[str], tuple[str, ...]]:
     return prof, roster, profile.guides(FRAMEWORK, prof, roster), settings.HOOKS
 
 
-def install(out: Path) -> int:
-    """Installs the fake project and returns the number of agents."""
+def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
+    """Installs the fake project and returns the number of agents.
+
+    `orchestration` stays out of `choices()`: the file plan does not change
+    with it, only the guide's content and the settings do.
+    """
     if out.exists():
         shutil.rmtree(out)
     (out / ".claude" / "agents").mkdir(parents=True)
@@ -287,14 +293,18 @@ def install(out: Path) -> int:
     )
 
     # The coordinator's guide: same mechanics, different recipient. It does not
-    # go into CLAUDE.md, so subagents do not pay for it. The cycles declared by
-    # the profile are appended here: they are orchestration, not execution.
+    # go into CLAUDE.md, so subagents do not pay for it. The chosen
+    # orchestration and the cycles declared by the profile are appended here, in
+    # this order: they are orchestration, not execution.
     (out / ".claude" / "shared" / "orchestration.md").write_text(
         assemble.build_document(
             FRAMEWORK / "coordinator",
             VERSION,
             ROUTING,
-            extra=assemble.cycle_files(FRAMEWORK, prof.cycles),
+            extra=[
+                assemble.orchestration_file(FRAMEWORK, orchestration),
+                *assemble.cycle_files(FRAMEWORK, prof.cycles),
+            ],
         ),
         encoding="utf-8",
     )
@@ -320,6 +330,11 @@ def install(out: Path) -> int:
     framework_settings, _, conflicts = settings.merge(prof.settings, settings.hooks(hooks))
     if conflicts:
         raise SystemExit(f"profile and hooks conflict on: {', '.join(conflicts)}")
+    framework_settings, _, conflicts = settings.merge(
+        framework_settings, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
+    )
+    if conflicts:
+        raise SystemExit(f"orchestration conflicts on: {', '.join(conflicts)}")
     merged, added, conflicts = settings.merge({}, framework_settings)
     if conflicts:
         raise SystemExit(f"settings.json conflicts on: {', '.join(conflicts)}")

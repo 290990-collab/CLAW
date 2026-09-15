@@ -17,7 +17,10 @@ DOMAIN_HEADING = "## Project context"
 # the `TOKEN_BUDGET` finding stays silent until the assembled file reaches at
 # least the ceiling the framework sets itself for the method alone.
 METHOD_WORD_BUDGET = 2000
-COORDINATOR_WORD_BUDGET = 2500
+COORDINATOR_WORD_BUDGET = 2800
+
+# The orchestration of whoever does not choose one.
+DEFAULT_ORCHESTRATION = "orchestrator-worker"
 
 
 def read_method(method_dir: Path, extra: Sequence[Path] = ()) -> str:
@@ -89,6 +92,44 @@ def installed_cycles(region_body: str, framework_root: Path) -> list[Path]:
         if heading and heading in region_body:
             out.append(p)
     return out
+
+
+def orchestration_file(framework_root: Path, name: str) -> Path:
+    """Resolves the chosen orchestration into a file in `orchestrations/`.
+
+    As with cycles: a name that does not exist, passed silently, would leave the
+    coordinator's guide without a delegation model, and no finding would see it.
+    """
+    p = framework_root / "orchestrations" / f"{name}.md"
+    if not p.is_file():
+        raise FileNotFoundError(
+            f"orchestration declared but absent: orchestrations/{name}.md"
+        )
+    return p
+
+
+def installed_orchestration(region_body: str, framework_root: Path) -> Path:
+    """The orchestration already present in an installed kernel region.
+
+    Same reason as `installed_cycles`, same recognition by first heading. The
+    project has exactly one: none recognised usually means a heading renamed in
+    the source, and falling back on the default would silently rewrite the
+    wrong model; two are not a choice to guess.
+    """
+    found = []
+    for p in sorted((framework_root / "orchestrations").glob("*.md")):
+        heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
+        if heading and heading in region_body:
+            found.append(p)
+    if not found:
+        raise ValueError(
+            "no orchestration recognised in the region: choose one and pass it "
+            "with assemble.orchestration_file"
+        )
+    if len(found) > 1:
+        names = ", ".join(p.stem for p in found)
+        raise ValueError(f"more than one orchestration in the region: {names}")
+    return found[0]
 
 
 def build_agent(

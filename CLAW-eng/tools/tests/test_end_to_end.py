@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 import trial_install
-from fwbuild import assemble, cli, doctor, kernel, profile, source
+from fwbuild import assemble, cli, doctor, kernel, lifecycle, profile, settings, source
 
 FRAMEWORK = Path(__file__).resolve().parents[2]
 SURFACE_ONLY = {"compliance-reviewer", "perf-analyst"}
@@ -122,9 +122,13 @@ class TestRealFramework(unittest.TestCase):
         """COORDINATOR_LEAK compares strings: if a title is renamed at the
         source, the check stops seeing the section without anything failing.
         This test is what makes the rename visible."""
-        sources = assemble.read_method(FRAMEWORK / "coordinator") + (
-            FRAMEWORK / "skills" / "framework-install" / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        sources = (
+            assemble.read_method(FRAMEWORK / "coordinator")
+            + (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+                encoding="utf-8"
+            )
+            + assemble.read_method(FRAMEWORK / "orchestrations")
+        )
         for heading in doctor.COORDINATOR_ONLY:
             self.assertIn(heading, sources, heading)
 
@@ -132,15 +136,20 @@ class TestRealFramework(unittest.TestCase):
         """The coordinator's guide has a ceiling too: it is on demand, not paid
         at every spawn, but without a threshold it is the next place where the
         method swells. The real artefact is measured, profile cycles
-        included."""
+        included, with every orchestration: whoever installs chooses it, not
+        the profile."""
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
             prof = profile.load(path)
-            text = assemble.read_method(
-                FRAMEWORK / "coordinator", assemble.cycle_files(FRAMEWORK, prof.cycles)
-            )
-            self.assertLess(
-                len(text.split()), assemble.COORDINATOR_WORD_BUDGET, prof.name
-            )
+            for orch in sorted((FRAMEWORK / "orchestrations").glob("*.md")):
+                text = assemble.read_method(
+                    FRAMEWORK / "coordinator",
+                    [orch, *assemble.cycle_files(FRAMEWORK, prof.cycles)],
+                )
+                self.assertLess(
+                    len(text.split()),
+                    assemble.COORDINATOR_WORD_BUDGET,
+                    f"{prof.name} + {orch.stem}",
+                )
 
     def test_common_kernel_stays_under_budget(self):
         """Threshold on the cost paid at every spawn. If it goes over, you do
@@ -189,6 +198,46 @@ class TestRealFramework(unittest.TestCase):
             declared |= set(profile.load(path).cycles)
         on_disk = {p.stem for p in (FRAMEWORK / "cycles").glob("*.md")}
         self.assertEqual(on_disk - declared, set(), "cycles on disk no profile uses")
+
+    def test_every_named_orchestration_exists(self):
+        """The default, the profiles' recommendations and the settings keys
+        name modules by name: a name without a file breaks the installation of
+        whoever chooses it, and orphan keys would switch on a variable for an
+        orchestration nobody can install."""
+        assemble.orchestration_file(FRAMEWORK, assemble.DEFAULT_ORCHESTRATION)
+        for path in (FRAMEWORK / "profiles").glob("*.toml"):
+            for name in profile.load(path).recommended_orchestrations:
+                assemble.orchestration_file(FRAMEWORK, name)  # raises if missing
+        for name in settings.ORCHESTRATION_SETTINGS:
+            assemble.orchestration_file(FRAMEWORK, name)
+
+    def test_orchestration_headings_are_recognizable(self):
+        """`installed_orchestration` recognises a module by its first heading
+        inside the region: if that heading appeared in the coordinator's kernel,
+        in a cycle or in another module, `--down` would find an orchestration
+        the project does not have, or two, and would rewrite the wrong guide.
+        The opposite direction holds too: a cycle's heading inside a module
+        would make `installed_cycles` find a cycle the profile does not have."""
+        modules = sorted((FRAMEWORK / "orchestrations").glob("*.md"))
+        self.assertGreaterEqual(len(modules), 2)
+        coordinator = assemble.read_method(FRAMEWORK / "coordinator")
+        cycles = assemble.read_method(FRAMEWORK / "cycles")
+        for p in modules:
+            heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
+            self.assertTrue(heading.startswith("## "), p.name)
+            others = "\n".join(
+                q.read_text(encoding="utf-8") for q in modules if q != p
+            )
+            for where, text in (
+                ("coordinator/", coordinator),
+                ("cycles/", cycles),
+                ("other modules", others),
+            ):
+                self.assertNotIn(heading, text, f"{p.name} in {where}")
+        all_modules = assemble.read_method(FRAMEWORK / "orchestrations")
+        for c in sorted((FRAMEWORK / "cycles").glob("*.md")):
+            heading = c.read_text(encoding="utf-8").lstrip().splitlines()[0]
+            self.assertNotIn(heading, all_modules, f"{c.name} in orchestrations/")
 
     def test_every_profile_shared_guide_exists(self):
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
@@ -452,6 +501,42 @@ class TestRealFramework(unittest.TestCase):
             extra=assemble.installed_cycles(region.body, FRAMEWORK),
         )
         self.assertIn("The design cycle", rebuilt)
+
+    def test_sync_down_preserves_the_orchestration(self):
+        """Like the cycles, the orchestration sits inside the region and no file
+        says which one it is: `--down` has to find it again, in the same order,
+        for the reassembled region to verify. A region in which none is
+        recognised is refused: the default in its place would hide a renamed
+        heading."""
+        version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
+        prof = profile.load(FRAMEWORK / "profiles" / "web.toml")
+        teams = assemble.orchestration_file(FRAMEWORK, "agent-teams")
+        installed = assemble.build_document(
+            FRAMEWORK / "coordinator",
+            version,
+            "## This project's roster",
+            extra=[teams, *assemble.cycle_files(FRAMEWORK, prof.cycles)],
+        )
+        region = kernel.parse(installed)
+        rebuilt = assemble.build_document(
+            FRAMEWORK / "coordinator",
+            version,
+            installed[region.end :],
+            extra=[
+                assemble.installed_orchestration(region.body, FRAMEWORK),
+                *assemble.installed_cycles(region.body, FRAMEWORK),
+            ],
+        )
+        self.assertIn("## Orchestration: Agent teams", rebuilt)
+        self.assertIn("The design cycle", rebuilt)
+        self.assertEqual(kernel.verify(rebuilt), "OK")
+        self.assertEqual(kernel.parse(rebuilt).body, region.body)
+
+        without = assemble.build_document(
+            FRAMEWORK / "coordinator", version, "## This project's roster"
+        )
+        with self.assertRaises(ValueError):
+            assemble.installed_orchestration(kernel.parse(without).body, FRAMEWORK)
 
     def test_unfilled_roadmap_is_detectable(self):
         """A state template with an unfilled skeleton is indistinguishable from
@@ -730,6 +815,40 @@ class TestRealInstall(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 trial_install.install(root)
             self.assertEqual(doctor.check(root), [])
+
+    def test_agent_teams_settings_go_in_and_come_out(self):
+        """The `agent-teams` variables are the only part of the orchestration
+        that lives outside the guide: they go into `settings.json` and into the
+        record, or the uninstall leaves them switched on in a project that no
+        longer has the framework."""
+        env = settings.ORCHESTRATION_SETTINGS["agent-teams"]["env"]
+        self.assertTrue(env)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "trial"
+            with redirect_stdout(io.StringIO()):
+                trial_install.install(root, orchestration="agent-teams")
+            data = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            record = json.loads(
+                (root / ".claude" / "framework.json").read_text(encoding="utf-8")
+            )["settings_added"]
+            for key, value in env.items():
+                self.assertEqual(data["env"][key], value, key)
+                self.assertEqual(record["env"][key], value, key)
+            guide = (root / ".claude" / "shared" / "orchestration.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(
+                assemble.installed_orchestration(kernel.parse(guide).body, FRAMEWORK).stem,
+                "agent-teams",
+            )
+            self.assertEqual(doctor.check(root), [])
+
+            ops = lifecycle.plan_uninstall(root, FRAMEWORK)
+            lifecycle.apply_uninstall(root, FRAMEWORK, ops)
+
+            left = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            for key in env:
+                self.assertNotIn(key, left.get("env", {}), key)
 
 
 if __name__ == "__main__":
