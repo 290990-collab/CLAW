@@ -463,6 +463,71 @@ class TestDown(unittest.TestCase):
             self.assertIn(rel, str(e.exception))
             self.assertEqual(tree(root), before)
 
+    def test_down_brings_guides_and_style_keeping_the_project_block(self):
+        """Guides and the style have no kernel region, and `--down` never touched
+        them: a new rule in a guide reached no installed project. The text comes
+        from the source, the block the project filled in stays."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            cases = {}
+            for rel, src in (
+                (".claude/shared/core/review-checklist.md", "shared/core/review-checklist.md"),
+                (".claude/output-styles/reporting.md", "output-styles/reporting.md"),
+            ):
+                text = (FRAMEWORK / src).read_text(encoding="utf-8")
+                heading = lifecycle.project_heading(text)
+                self.assertIsNotNone(heading, src)
+                p = root / rel
+                installed = p.read_text(encoding="utf-8")
+                block = installed[installed.rindex(heading) :]
+                self.assertIsNone(doctor.PLACEHOLDER_RE.search(block), rel)
+                p.write_text("# Old version\n\nearlier rule\n\n" + block, encoding="utf-8")
+                cases[rel] = text[: text.rindex(heading)] + block
+
+            ops = lifecycle.plan_down(root, FRAMEWORK)
+            for rel in cases:
+                self.assertEqual(actions(ops)[rel], lifecycle.MERGE, rel)
+
+            lifecycle.apply_update(root, FRAMEWORK, ops)
+
+            for rel, expected in cases.items():
+                self.assertEqual((root / rel).read_text(encoding="utf-8"), expected, rel)
+
+    def test_down_keeps_a_guide_whose_project_block_is_gone(self):
+        """Without the block's heading `--down` cannot tell what belongs to the
+        project, and replacing the whole file would erase the adaptation: it stays
+        as it is, and the plan names it."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            rel = ".claude/shared/core/testing-guide.md"
+            heading = lifecycle.project_heading(
+                (FRAMEWORK / "shared" / "core" / "testing-guide.md").read_text(encoding="utf-8")
+            )
+            p = root / rel
+            p.write_text(p.read_text(encoding="utf-8").replace(heading, "## My notes"), encoding="utf-8")
+            before = p.read_bytes()
+
+            ops = lifecycle.plan_down(root, FRAMEWORK)
+            got = {op.path: op for op in ops}
+            self.assertEqual(got[rel].action, lifecycle.KEEP)
+            self.assertIn("by hand", got[rel].reason)
+
+            lifecycle.apply_update(root, FRAMEWORK, ops)
+            self.assertEqual(p.read_bytes(), before)
+
+    def test_every_placeholder_in_a_guide_sits_in_its_last_section(self):
+        """`--down` recognises the project block by the placeholder in the last
+        section. A section added after the block would move it, and that guide
+        would stop updating in projects without anything failing."""
+        paths = sorted((FRAMEWORK / "shared").rglob("*.md")) + sorted(
+            (FRAMEWORK / "output-styles").glob("*.md")
+        )
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            if doctor.PLACEHOLDER_RE.search(text):
+                with self.subTest(path=path.relative_to(FRAMEWORK).as_posix()):
+                    self.assertIsNotNone(lifecycle.project_heading(text))
+
 
 if __name__ == "__main__":
     unittest.main()

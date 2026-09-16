@@ -6,6 +6,7 @@ Cross-cutting rules of form.
 
 - Messages in English, imperative, first line ≤ 72 characters (`Fix …`, `Add …`, `Remove …`).
 - One commit = one logical change.
+- When a defect is fixed, the repro that failed goes into the history **before** the fix: whoever reads the log sees the proof, not just the outcome.
 - The body explains the **why**, not the what (the what is in the diff).
 - Never rewrite shared history, never force a push, never skip the automated checks.
 

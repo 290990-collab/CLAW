@@ -46,6 +46,8 @@ An invariant covers infinite cases and does not age:
 
 Visual rendering, performance on real hardware, integration with an external service, behaviour under load: you do not compensate with unit tests that miss the point. The risk goes into `UNVERIFIED` with the **manual verification steps**, repeatable by anyone.
 
+The same holds for an impractical test-first — heavy harness, state that exists only in production, vague reproduction: it is not skipped silently. You say why and name the nearest executable check — a targeted script, a command that reproduces, an output comparison — which is worth more than a test written to respect the form.
+
 ## In this project
 
 [TO FILL IN — test run command, framework in use, where the tests live and how

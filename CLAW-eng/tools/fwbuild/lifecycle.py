@@ -54,6 +54,12 @@ SHARED_DIRS = ("agents", "skills", "output-styles", "hooks", "shared")
 # whole command text: that changes between releases, and the user touches it up.
 HOOK_PATH_RE = re.compile(r"\.claude[\\/]+hooks[\\/]+([A-Za-z0-9_-]+)\.py")
 
+# Guides and styles have no kernel region: the text belongs to the framework,
+# the last section to the project. The source marks it with the placeholder,
+# which sits there and only there, and the heading is read from the file: no
+# per-language constant.
+SECTION_RE = re.compile(r"^## .*$", re.MULTILINE)
+
 
 @dataclass(frozen=True)
 class Operation:
@@ -312,11 +318,14 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
 def plan_down(
     project_root: Path, framework_root: Path, hooks: Sequence[str] | None = None
 ) -> list[Operation]:
-    """What a new version brings: kernel regions, skills, hooks, settings.
+    """What a new version brings: kernel regions, guides and styles, skills,
+    hooks, settings.
 
     The kernel regions are reassembled by the skill's steps, not by
     `apply_update`: here they are listed, and a touched-up region says the
-    change will be lost. `hooks` are the hooks to have afterwards; `None` means
+    change will be lost. Guides and styles take the source text and keep their
+    project block; without a recognisable block they stay as they are, and the
+    plan says so. `hooks` are the hooks to have afterwards; `None` means
     those the project already uses — a project born without hooks does not get
     any in silence.
     """
@@ -340,6 +349,16 @@ def plan_down(
                            f"edited by hand: the local change is lost{note}"))
         else:
             ops.append(_op(prj, rel, MERGE, f"v{region.version} → v{version}, rest unchanged{note}"))
+
+    for rel, original in _adapted_files(prj, fw):
+        installed = (prj / rel).read_text(encoding="utf-8")
+        text = original.read_text(encoding="utf-8")
+        merged = with_project_block(text, installed)
+        if merged is None and installed != text:
+            why = "project block not found" if project_heading(text) else "no project block"
+            ops.append(_op(prj, rel, KEEP, f"{why}: differs from the source, update it by hand"))
+        elif merged is not None and merged != installed:
+            ops.append(_op(prj, rel, MERGE, "text from the source, project block unchanged"))
 
     overwrite = (OVERWRITE, "differs from the source: updated")
     for rel, original in _skill_files(fw):
@@ -365,8 +384,9 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
     Files with a kernel region are skipped: the skill's steps rewrite them,
     keeping the project sections, and by the time this function runs they have
     already changed. For everything else the digests are re-checked before
-    writing. Then: copies from the source, missing entries in `settings.json`,
-    manifest — the source's version and the new delta appended to the record.
+    writing. Then: copies from the source, guides and styles re-merged with
+    their project block, missing entries in `settings.json`, manifest — the
+    source's version and the new delta appended to the record.
     """
     prj, fw = Path(project_root), Path(framework_root)
     active = [op for op in ops if op.action != KEEP and not _is_kernel_file(op.path)]
@@ -378,11 +398,27 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
         if op.action in (CREATE, OVERWRITE) and op.path not in (SETTINGS, MANIFEST)
     ]
     paths = {op.path for op in active}
+    rewrites = []
+    for op in active:
+        if op.action != MERGE or op.path in (SETTINGS, MANIFEST):
+            continue
+        merged = with_project_block(
+            _source_of(fw, op.path).read_text(encoding="utf-8"),
+            (prj / op.path).read_text(encoding="utf-8"),
+        )
+        if merged is None:
+            raise ValueError(
+                f"{op.path}: the project block is no longer recognisable, "
+                "nothing was written — redo the plan"
+            )
+        rewrites.append((prj / op.path, merged))
 
     for rel, original in copies:
         dest = prj / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(original, dest)
+    for dest, merged in rewrites:
+        dest.write_text(merged, encoding="utf-8")
 
     added: dict = {}
     if SETTINGS in paths:
@@ -408,6 +444,49 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
                 record if isinstance(record, dict) else {}, added
             )[0]
         _write_json(prj / MANIFEST, data)
+
+
+def project_heading(text: str) -> str | None:
+    """The heading of the project block of a guide or style in the source: the
+    last `## ` section, if it holds every placeholder of the file. `None`
+    without placeholders, or with one outside the last section: there `--down`
+    could not tell what belongs to the project."""
+    heads = list(SECTION_RE.finditer(text))
+    total = len(doctor.PLACEHOLDER_RE.findall(text))
+    if not heads or not total:
+        return None
+    if len(doctor.PLACEHOLDER_RE.findall(text[heads[-1].start() :])) != total:
+        return None
+    return heads[-1].group(0).rstrip()
+
+
+def with_project_block(original: str, installed: str) -> str | None:
+    """The source text up to the project block, then the block as it is in the
+    installation. `None` if the source has no block or the installation no
+    longer has that heading."""
+    heading = project_heading(original)
+    if heading is None:
+        return None
+
+    def start(text: str) -> int | None:
+        found = [m.start() for m in SECTION_RE.finditer(text) if m.group(0).rstrip() == heading]
+        return found[-1] if found else None
+
+    at = start(installed)
+    return None if at is None else original[: start(original)] + installed[at:]
+
+
+def _adapted_files(prj: Path, fw: Path) -> list[tuple[str, Path]]:
+    """Installed guides and styles that come from the source. `orchestration.md`
+    lives in `shared/` but has a kernel region: it belongs to the skill's steps."""
+    out = []
+    for area in ("shared", "output-styles"):
+        for p in _files(prj / ".claude" / area):
+            rel = p.relative_to(prj).as_posix()
+            original = fw / area / p.relative_to(prj / ".claude" / area)
+            if rel != ORCHESTRATION and p.suffix == ".md" and original.is_file():
+                out.append((rel, original))
+    return out
 
 
 def _digest(path: Path) -> str:

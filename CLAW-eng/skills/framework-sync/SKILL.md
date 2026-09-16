@@ -59,7 +59,7 @@ In the other modes the plan is the list of files and of what happens to them, wr
 
 Updates the method while preserving the adaptation.
 
-0. **Plan** with `plan_down`: kernel regions to reassemble, skills and hooks to update, missing entries in `settings.json`, the manifest's version. `hooks=None` keeps the hooks the project uses; if it uses none, **one single question** — does it want them, `gateguard` included? — and a yes becomes `hooks=[…]` with the chosen names from `settings.HOOKS`.
+0. **Plan** with `plan_down`: kernel regions to reassemble, guides and the response style to re-merge, skills and hooks to update, missing entries in `settings.json`, the manifest's version. `hooks=None` keeps the hooks the project uses; if it uses none, **one single question** — does it want them, `gateguard` included? — and a yes becomes `hooks=[…]` with the chosen names from `settings.HOOKS`.
 1. **Compare the versions:** the project's is in the kernel region's marker, the source's in `<FW>/VERSION`.
 2. **Diagnosis first.** `KERNEL_DRIFT` findings must be resolved *first*: updating over a local change erases it silently.
 3. **Reassemble** with the new method and the existing project sections, extracted from the current installation and rewritten unchanged.
@@ -79,7 +79,7 @@ p.write_text(assemble.build_document(Path('../method'), version, sections), enco
 
 4. **Same operation on `.claude/shared/orchestration.md`**, with the kernel from `<FW>/coordinator/`: the versioned documents are **two**, updating only one leaves them misaligned. There orchestration and domain cycles are **inside** the region and the project does not record what it was born from: they must be passed again, in this order, with `extra=[assemble.installed_orchestration(region.body, Path('..')), *assemble.installed_cycles(region.body, Path('..'))]`, or they disappear without any finding seeing it. A region without a recognisable orchestration is a `ValueError`: the orchestration is chosen explicitly with `assemble.orchestration_file`, not guessed.
 5. **Same operation on every installed agent**, with `split_source` and `build_agent`: front matter and the `## Project context` block stay the project's, the method comes from the master. If the plan names a `model` or `effort` different from the source, ask: yes → that front-matter line takes the source's value.
-6. **Run the plan** from step 0 with `apply_update`: it copies skills and hooks, merges `settings.json`, writes `version` into `.claude/framework.json` and appends the new delta to `settings_added`. It skips the kernel regions: steps 3-5 have already rewritten them.
+6. **Run the plan** from step 0 with `apply_update`: it copies skills and hooks, re-merges guides and the style — text from the source, the last section (the project block, the one holding the placeholder in the source) stays the project's —, merges `settings.json`, writes `version` into `.claude/framework.json` and appends the new delta to `settings_added`. It skips the kernel regions: steps 3-5 have already rewritten them. A guide or style without a recognisable block appears in the plan as `keep`, with the reason: it is updated by hand, comparing it with the source — replacing it whole would erase the adaptation.
 7. **Verify** with `doctor`: it must exit 0.
 
 **Conflicts are presented, they do not resolve themselves:** on a region modified locally the user must see both versions and decide.

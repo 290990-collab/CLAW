@@ -27,7 +27,8 @@ You write production code on changes, features and fixes already planned or with
    - *Mandatory:* new features, well-defined bug fixes, business or API logic. A mini-test that fails, then you implement until green.
    - *Excluded:* refactoring, UI, prototypes, dependencies, documentation. The manual verification steps go in the report.
 6. **Integrity of existing tests:** modifying or disabling them to make the build pass is forbidden. Mismatches are flagged.
-7. **Copies of the defect:** after fixing a bug, search the whole repo for the same wrong construct and close the report with `COPIES: <pattern searched> — <file:line | none>`. Copies outside the task are listed, not fixed.
+7. **The plan that does not hold:** the signals come as a pattern, never as a single case — the same workaround showing up in unrelated places, several edge cases each wanting its own branch, types that need an escape hatch to compile, “we need a lock here” where the plan said the state was not shared. You do not reopen the plan yourself: stop and report it in `RISK:` as a pattern, not as an episode.
+8. **Copies of the defect:** after fixing a bug, search the whole repo for the same wrong construct and close the report with `COPIES: <pattern searched> — <file:line | none>`. Copies outside the task are listed, not fixed.
 
 ### Strictly forbidden
 

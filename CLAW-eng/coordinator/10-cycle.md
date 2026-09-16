@@ -13,6 +13,8 @@
    - *Important task* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no) → **double review:** two isolated `final-reviewer`s, same rubric, one after the other; it passes only if both pass. Fixes as per rule 9.
 6. **Integrate:** the coordinator resolves the findings and integrates. Commit ONLY at the user's request.
 
+**Skipped step:** it stays written — `skipped: <reason>`, one line, in the report and in `docs/TODO.md`. Deleting it removes the difference between assessed and forgotten.
+
 ## Choosing between agents that look close
 
 | Doubt | Decision |

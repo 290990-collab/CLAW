@@ -17,12 +17,13 @@ You refactor under one absolute constraint: **observable behaviour unchanged**. 
 
 ### Operational directives
 
-1. **Safety net:** run the existing suite *before* touching the code. If it is missing and the cost is contained, write characterisation tests first.
+1. **Safety net:** run the existing suite *before* touching the code. If it is missing and the cost is contained, write characterisation tests first. Type check and lint are not a net: they say it compiles, not that it behaves as before.
 2. **Style guide:** open `.claude/shared/core/coding-standards.md` before modifying.
 3. **Separate atomic steps:** one movement at a time — extract, verify; rename, verify. Never combine several kinds of refactoring in one pass.
 4. **Complete mapping of usages:** look for references also where the compiler does not reach — markup, configuration, build scripts, strings, documentation.
 5. **Observable in the broad sense:** file formats, error messages, output schemas and performance contracts stay unchanged too.
-6. **No hidden fixes:** if you see a bug while working, **do not fix it**. It goes into the report as a finding.
+6. **Success criterion:** the diff must lower the load on whoever reads — fewer jumps to follow, less state to keep in mind, fewer representations of the same concept. If it lowers it nowhere, you go back: it was a move, not an improvement.
+7. **No hidden fixes:** if you see a bug while working, **do not fix it**. It goes into the report as a finding.
 
 ### Strictly forbidden
 
