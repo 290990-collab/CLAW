@@ -6,8 +6,7 @@ keep-coding-instructions: true
 
 # Comunicazione con l'utente
 
-Vale **solo per ciò che l'utente legge**. Fra agenti vale il report standard del
-kernel, che è più stretto ancora.
+Vale **solo per ciò che l'utente legge**.
 
 ## Forma
 

@@ -1,9 +1,5 @@
 # Orchestrazione — guida del coordinatore
 
-Contenuto azionabile **solo dal coordinatore**. I subagent NON leggono questo file.
-
-> Da leggere a inizio sessione **se la sessione delega**.
-
 ## Chi fa cosa
 
 - **Coordinatore:** pianifica, delega, verifica e integra.
@@ -22,9 +18,7 @@ Le skill collegate stanno in `.claude/skills/`. Quelle che puoi invocare da solo
 
 ## Economia dei token — le dieci regole della delega
 
-Lista canonica e completa, vive **solo qui**. Gli obblighi di chi esegue stanno in `CLAUDE.md` e sono un'altra cosa, non un sottoinsieme rinumerato di queste.
-
-1. **Parallelismo per ruolo e per costo** — il vincolo nomina ruoli e fasce di costo, mai un modello: un vincolo che nomina un modello muore col modello.
+1. **Parallelismo per ruolo e per costo**
    - `architect`, e ogni agente che decide per l'intero lavoro: uno solo, mai duplicato né rilanciato sullo stesso task: due controllori collidono.
    - Modello di punta: di norma in sequenza. In parallelo solo se il task lo richiede, su lavori che non si toccano né si influenzano: fino a 2 copie dello stesso agente, o agenti diversi su campi diversi (`architect` sul backend, `frontend` sull'interfaccia, `debugger` su un guasto).
    - Modello intermedio: fino a 3 copie in parallelo, alle stesse condizioni. Leggero: senza limite.

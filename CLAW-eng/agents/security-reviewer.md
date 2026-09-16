@@ -2,8 +2,8 @@
 name: security-reviewer
 description: >
   Read-only security review of the code the project produces: untrusted input,
-  secret handling, authentication and authorisation, data exposure,
-  dependencies. Use when the changes touch a surface reachable by an attacker,
+  secrets, authentication and authorisation, data exposure, trust boundaries,
+  dependencies. Use when the task touches a surface reachable by an attacker,
   before the final check. Does not modify the code.
 model: opus
 effort: high

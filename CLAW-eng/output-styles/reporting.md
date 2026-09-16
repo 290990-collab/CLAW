@@ -6,8 +6,7 @@ keep-coding-instructions: true
 
 # Talking to the user
 
-This holds **only for what the user reads**. Between agents the kernel's standard
-report holds, which is tighter still.
+This holds **only for what the user reads**.
 
 ## Form
 

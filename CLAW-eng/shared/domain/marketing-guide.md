@@ -1,6 +1,6 @@
 # Guide to marketing a product
 
-For projects that must be found, not only work. Written for someone who does not know the field: what is here is what it takes to decide, not a course.
+For projects that must be found, not only work.
 
 ## Positioning
 

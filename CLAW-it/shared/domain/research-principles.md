@@ -1,6 +1,6 @@
 # Principi di ricerca
 
-Per i progetti il cui prodotto non è «software che gira» ma **evidenza riproducibile**. Linee guida su *come si ragiona*, non su quali competenze avere.
+Per i progetti il cui prodotto non è «software che gira» ma **evidenza riproducibile**.
 
 > **Principio guida.** Ogni decisione è motivata da dati, esperimenti o letteratura; ogni risultato è spiegabile, riproducibile e verificabile da altri.
 

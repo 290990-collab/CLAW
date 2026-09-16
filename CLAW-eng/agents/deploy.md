@@ -4,7 +4,7 @@ description: >
   Taking a project with simple hosting online repeatably: production build,
   static or edge hosting, integration pipeline, domain, environment variables
   and secrets, redirects, headers. Use when the heart of the task is
-  publication. Complex cloud infrastructure needs a different mandate.
+  publication. Complex cloud infrastructure needs `infra`.
 model: sonnet
 effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash

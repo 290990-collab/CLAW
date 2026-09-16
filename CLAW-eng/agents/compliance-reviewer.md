@@ -3,10 +3,8 @@ name: compliance-reviewer
 description: >
   Read-only review of regulatory aspects: personal data and legal basis,
   minimisation and retention, licences of the code and of dependencies, terms
-  of use of data sources. Use when the project declares compliance among its
-  critical surfaces and the task touches personal data, licences or a source's
-  terms of use: it reviews before the final check. Does not modify the code and
-  does not give legal advice.
+  of use of data sources. Use when the task touches personal data, licences or
+  a source's terms of use, before the final check. Does not modify the code.
 model: opus
 effort: high
 tools: Read, Grep, Glob

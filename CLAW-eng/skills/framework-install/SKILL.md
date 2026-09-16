@@ -120,7 +120,7 @@ A software project that also publishes content stays `software`: the marketing a
 
 If none fits, ask the user to describe the field and build the roster by hand from the closest profile.
 
-**2. Critical surface** — *"what is the critical surface of this work, that is, what makes it wrong even with perfect code?"* It determines the reviewer, and **one** is activated.
+**2. Critical surface** — *"what is the critical surface of this work?"* It determines the reviewer, and **one** is activated.
 
 The profile already declares one in `critical_surface`: it is the **field's**, known before the project. Read it to the user as a starting point, not as an answer given, and have it confirmed, narrowed or replaced — a project can have one that its field does not imply.
 

@@ -13,7 +13,7 @@ description: >
 
 Collega il **sorgente** (il master) alle **installazioni** (i progetti). Requisito: il sorgente dev'essere raggiungibile dalla macchina; se non lo è, solo `doctor` è utilizzabile.
 
-`--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` sono **modalità di questa skill**, non flag da shell: `fwbuild` ha `doctor`, `source`, `cost` e `report`. Il rapporto di divergenza su più repository — `python -m fwbuild report <cartella>` — è invece da shell: legge molti progetti e non ne modifica nessuno.
+`--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` sono **modalità di questa skill**, non flag da shell: `fwbuild` ha `doctor`, `source`, `cost`, `report` e `skills`. Il rapporto di divergenza su più repository — `python -m fwbuild report <cartella>` — è invece da shell: legge molti progetti e non ne modifica nessuno.
 
 I frammenti partono da `<FW>/tools`. `<PRJ>` è la root del progetto; `<FW>` è il campo `source` di `.claude/framework.json` (se manca, `./framework/`), che può essere **relativo alla root del progetto**, non alla directory da cui giri: scioglilo con `source.dereference(<PRJ>, source)`.
 
@@ -166,7 +166,7 @@ Serve solo a chi ha usato `--up`: un sorgente intatto si aggiorna sostituendolo.
    | `yours` | l'hai cambiato tu e a monte no | **si tiene il tuo** |
    | `conflict` | cambiato da tutti e due, in modo diverso | lo decide l'utente |
 
-4. **Mostra il piano prima di applicarlo**, coi conteggi e i percorsi in conflitto. `same`, `theirs` e `yours` sono meccanici: si applicano copiando dalla release i primi, non toccando i secondi.
+4. **Mostra il piano prima di applicarlo**, coi conteggi e i percorsi in conflitto. `same`, `theirs` e `yours` sono meccanici: si applicano copiando dalla release i secondi, non toccando i terzi.
 5. **Un conflitto per volta:** leggi le tre versioni — base, tua, nuova — e proponi una fusione che tenga la tua aggiunta *dentro* il testo nuovo, non accanto. Se la tua modifica è già coperta dal testo nuovo, si prende quello e lo si dice. Nessun conflitto si risolve senza mostrare all'utente cosa perde.
 6. **`VERSION` non è un conflitto:** si prende quella della release. Un sorgente che dichiara un numero mai pubblicato è ciò che ha creato il problema.
 7. **Riscrivi il record** con la release appena presa: è la base del prossimo aggiornamento.

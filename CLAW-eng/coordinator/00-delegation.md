@@ -1,9 +1,5 @@
 # Orchestration — coordinator's guide
 
-Content actionable **only by the coordinator**. Subagents do NOT read this file.
-
-> To be read at the start of a session **if the session delegates**.
-
 ## Who does what
 
 - **Coordinator:** plans, delegates, verifies and integrates.
@@ -22,9 +18,7 @@ The connected skills live in `.claude/skills/`. The ones you may invoke on your 
 
 ## Token economy — the ten rules of delegation
 
-Canonical and complete list, it lives **only here**. The obligations of whoever executes are in `CLAUDE.md` and are a different thing, not a renumbered subset of these.
-
-1. **Parallelism by role and by cost** — the constraint names roles and cost tiers, never a model: a constraint that names a model dies with the model.
+1. **Parallelism by role and by cost**
    - `architect`, and any agent that decides for the whole job: one only, never duplicated nor relaunched on the same task: two controllers collide.
    - Top-tier model: in sequence by default. In parallel only if the task requires it, on work that neither touches nor influences each other: up to 2 copies of the same agent, or different agents on different fields (`architect` on the backend, `frontend` on the interface, `debugger` on a fault).
    - Mid-tier model: up to 3 copies in parallel, under the same conditions. Light: no limit.

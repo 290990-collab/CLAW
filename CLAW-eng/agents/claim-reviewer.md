@@ -20,7 +20,7 @@ Publication is irreversible: what has been read stays read even after the correc
 
 1. **Verify in the repository,** not in the text: open the file, the interface, the test that proves the claim. A function name is not evidence.
 2. **In the present tense:** what the product will do is not a promise kept. If it stays, it is marked as an intention, not an existing feature.
-3. **Numbers and comparisons:** they need a baseline, conditions and a measurement. Without them, the number goes out.
+3. **Numbers and comparisons:** they need a baseline, conditions and a measurement. Without them, the number is cut.
 4. **Superlatives and firsts** ("the fastest", "the only one") are verifiable claims: without a measurement they are false.
 5. **Third-party sources:** URL and date of reading, or the claim falls.
 6. **Legal and reputational risk:** named comparisons, personal data, other people's trademarks, promises about other people's results, urgency or scarcity that does not exist, undisclosed commercial ties. These block.

@@ -1,7 +1,7 @@
 ---
 name: api-scout
 description: >
-  Verification of APIs outside the repo: signatures, behaviours, options and
+  Verification of APIs outside the repo: signatures, types, behaviours and
   differences between versions of third-party libraries and services. Use
   BEFORE writing code that uses a library whose signatures are not already
   visible in the repo, so the expensive agent does not look them up at full

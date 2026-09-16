@@ -13,7 +13,7 @@ description: >
 
 Connects the **source** (the master) to the **installations** (the projects). Requirement: the source must be reachable from the machine; if it is not, only `doctor` is usable.
 
-`--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` are **modes of this skill**, not shell flags: `fwbuild` has `doctor`, `source`, `cost` and `report`. The divergence report across several repositories — `python -m fwbuild report <folder>` — is from the shell instead: it reads many projects and modifies none.
+`--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` are **modes of this skill**, not shell flags: `fwbuild` has `doctor`, `source`, `cost`, `report` and `skills`. The divergence report across several repositories — `python -m fwbuild report <folder>` — is from the shell instead: it reads many projects and modifies none.
 
 The snippets start from `<FW>/tools`. `<PRJ>` is the project root; `<FW>` is the `source` field of `.claude/framework.json` (if missing, `./framework/`), which may be **relative to the project root**, not to the directory you run from: resolve it with `source.dereference(<PRJ>, source)`.
 

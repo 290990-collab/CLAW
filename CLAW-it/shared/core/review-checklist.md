@@ -1,6 +1,6 @@
 # Checklist di revisione
 
-Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi** — generico e di progetto: tenerli distinti è ciò che permette di aggiornare il framework senza perdere le voci specifiche, e viceversa.
+Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi**: generico e di progetto.
 
 **Gravità:** blocca (sicurezza, perdita di dati) · avverte (difetto, qualità seria) · informa (manutenibilità) · nota (stile). Esito: **approvato** senza rilievi che bloccano o avvertono · **con riserve** con soli avvertimenti, e si chiude solo se l'utente li accetta · **respinto** con un rilievo che blocca. Nelle schede dei revisori ALTA = blocca, MEDIA = avverte, BASSA = informa.
 

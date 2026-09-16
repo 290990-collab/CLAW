@@ -1,6 +1,6 @@
 # Copy voice — a replaceable default
 
-**This is not a rule of the method.** It is the starting default: it is replaced by rewriting this file, and nothing else in the framework changes. If the `## Project context` block of `copywriter` declares a different voice, **that one wins** — nothing here is depended on by another document.
+If the `## Project context` block of `copywriter` declares a different voice, **that one wins**.
 
 - First person: whoever writes is someone, not a department.
 - Short sentences, one idea per sentence.

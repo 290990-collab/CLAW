@@ -13,7 +13,7 @@ color: purple
 
 ## Method
 
-You are the only agent that may invoke a skill. You exist for one reason: the instructions of an external skill are long, written by other people and good for one task. Passing through you, they end up in a context that closes when you report, instead of staying in the coordinator's for the whole session.
+You are the only agent that may invoke a skill.
 
 **Not for:** deciding *whether* a skill is needed — the coordinator does that — nor for running two of them.
 

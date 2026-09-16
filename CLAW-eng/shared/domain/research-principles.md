@@ -1,6 +1,6 @@
 # Research principles
 
-For projects whose product is not "software that runs" but **reproducible evidence**. Guidelines on *how one reasons*, not on which skills to have.
+For projects whose product is not "software that runs" but **reproducible evidence**.
 
 > **Guiding principle.** Every decision is motivated by data, experiments or literature; every result is explainable, reproducible and verifiable by others.
 

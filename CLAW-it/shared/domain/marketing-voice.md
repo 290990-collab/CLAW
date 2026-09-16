@@ -1,6 +1,6 @@
 # Voce del copy — default sostituibile
 
-**Non è una regola del metodo.** È il default di partenza: si sostituisce riscrivendo questo file, e nient'altro nel framework cambia. Se il blocco `## Contesto di progetto` di `copywriter` dichiara una voce diversa, **vince quella** — qui non c'è niente da cui un altro documento dipenda.
+Se il blocco `## Contesto di progetto` di `copywriter` dichiara una voce diversa, **vince quella**.
 
 - Prima persona: chi scrive è qualcuno, non un reparto.
 - Frasi brevi, un'idea per frase.

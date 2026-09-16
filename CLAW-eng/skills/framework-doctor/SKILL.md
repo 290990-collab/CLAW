@@ -15,7 +15,7 @@ cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
 
 `<PRJ>` is the project root. `<FW>` is the `source` field of `.claude/framework.json` (if the file is missing, `./framework/`): it may be **relative to the project root**, and `source.dereference(<PRJ>, source)` resolves it.
 
-`fwbuild` has **four** subcommands — `doctor`, `source`, `cost`, `report`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `framework-sync`, they are not shell flags.
+`fwbuild` has **five** subcommands — `doctor`, `source`, `cost`, `report`, `skills`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `framework-sync`, they are not shell flags.
 
 - Complete installation → `OK — no findings`.
 - **Always use `--strict`**, in CI and by hand: without it the exit code is 0 even with warnings.

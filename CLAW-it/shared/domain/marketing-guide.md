@@ -1,6 +1,6 @@
 # Guida al marketing di un prodotto
 
-Per i progetti che devono farsi trovare, non solo funzionare. Scritta per chi il campo non lo conosce: qui c'è ciò che serve per decidere, non un corso.
+Per i progetti che devono farsi trovare, non solo funzionare.
 
 ## Posizionamento
 

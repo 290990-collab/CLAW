@@ -1,6 +1,6 @@
 # Review checklist
 
-Reference material for whoever reviews. Two blocks, **separate and not merged** — generic and project-specific: keeping them distinct is what makes it possible to update the framework without losing the specific entries, and vice versa.
+Reference material for whoever reviews. Two blocks, **separate and not merged**: generic and project-specific.
 
 **Severity:** blocks (security, data loss) · warns (defect, serious quality issue) · informs (maintainability) · note (style). Outcome: **approved** with no finding that blocks or warns · **approved with reservations** with warnings only, and it closes only if the user accepts them · **rejected** with a blocking finding. In the reviewer cards HIGH = blocks, MEDIUM = warns, LOW = informs.
 
@@ -56,7 +56,7 @@ Whoever holds the whole picture — the coordinator — discards these with a wr
 - Do formats already written to disk still read back?
 - Do external consumers stay compatible? If not, is the migration planned?
 - Do changed public signatures have every side updated?
-- Defect fixed: was the same wrong construct searched for in the rest of the repo? The `COPIES:` line names the pattern, and the search can be rerun.
+- Defect fixed: was the same wrong construct searched for in the rest of the repo? The `COPIES:` line names the pattern, and the search is rerun.
 - Text shortened, merged or moved: did the enforcement survive — obligations, checks, defaults? Compression removes it first, because it reads as repetition.
 
 ### Tests
