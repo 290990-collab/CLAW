@@ -13,6 +13,8 @@
    - *Task importante* — lungo, complesso, bloccante per un obiettivo di alto livello, o dichiarato tale dall'utente (correggere o cambiare una funzionalità esistente sì, ritoccare un'interfaccia no) → **doppia revisione:** due `final-reviewer` isolati, stessa rubrica, uno dopo l'altro; passa solo se passano entrambi. Correzioni come da regola 9.
 6. **Integrare:** il coordinatore risolve i finding e integra. Commit SOLO su richiesta dell'utente.
 
+**Passo saltato:** resta scritto — `saltato: <motivo>`, una riga, nel report e in `docs/TODO.md`. Cancellarlo toglie la differenza fra valutato e dimenticato.
+
 ## Scegliere fra agenti che sembrano vicini
 
 | Dubbio | Decisione |

@@ -2,7 +2,7 @@
 
 Solo lo **stato**: dove siamo adesso. Il piano sta in [roadmap.md](roadmap.md), i risultati chiusi in [status.md](status.md).
 
-> Primo file a inizio sessione, ultimo a fine task. Tetto ~60 righe: si comprime prima di aggiungere, la traccia lunga scende in `status.md`. Si aggiunge o si spunta, non si riscrive.
+> Primo file a inizio sessione, ultimo a fine task. Tetto ~60 righe: si comprime prima di aggiungere, la traccia lunga scende in `status.md`. Si aggiunge o si spunta, non si riscrive. Una casella si spunta con l'evidenza accanto (comando, `file:riga`, esito); un passo che si decide di non fare resta con `saltato: <motivo>`.
 
 ## In corso
 

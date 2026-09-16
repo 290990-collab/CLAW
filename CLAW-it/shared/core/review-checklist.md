@@ -4,6 +4,17 @@ Materiale di consultazione per chi rivede. Due blocchi **separati e non fusi** �
 
 **Gravità:** blocca (sicurezza, perdita di dati) · avverte (difetto, qualità seria) · informa (manutenibilità) · nota (stile). Esito: **approvato** senza rilievi che bloccano o avvertono · **con riserve** con soli avvertimenti, e si chiude solo se l'utente li accetta · **respinto** con un rilievo che blocca. Nelle schede dei revisori ALTA = blocca, MEDIA = avverte, BASSA = informa.
 
+## Cosa non è un rilievo
+
+Un revisore riempie lo spazio che ha: se i rilievi sono tutti di stile, la risposta onesta è «non ho trovato nulla di sostanziale», e si scrive.
+
+- **«Io l'avrei fatto diversamente»:** senza un problema concreto è una preferenza, non un rilievo.
+- **Ipotesi senza chiamante:** «e se qui arrivasse un nullo?» conta solo se esiste chi può passarlo. Traccia la chiamata prima di scriverlo.
+- **Astrazione chiesta a codice che funziona:** se il secondo caso d'uso non esiste, l'astrazione è il difetto.
+- **Rilievo che ignora il contesto:** un pattern coerente col resto del repo, codice che il task non ha toccato, un vincolo già deciso.
+
+Chi ha il quadro intero — il coordinatore — scarta questi con un motivo scritto, non con il silenzio.
+
 ---
 
 ## Blocco generico — correttezza (valido ovunque)

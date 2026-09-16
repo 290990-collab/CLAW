@@ -3,12 +3,12 @@
 Ogni azione parte da evidenze raccolte in sessione, mai dalla memoria del modello. Se un'informazione manca, si cerca — repo → documentazione ufficiale → utente — non si inventa. Il repo dice come il sistema si comporta, non cosa deve fare: regole di business, obblighi normativi, SLA, prezzi e conservazione dei dati vengono dall'utente o da un documento autorevole; dedotti dal codice restano assunzioni dichiarate.
 
 1. **Fonti verificate:** mai citare API, numeri, versioni o file senza averli letti/eseguiti nella sessione corrente.
-2. **Stato esecuzione:** ciò che non è stato lanciato esplicitamente va marcato come `UNVERIFIED`.
+2. **Stato esecuzione:** ciò che non è stato lanciato esplicitamente va marcato come `UNVERIFIED`. **A che livello è provato:** *1* l'ho detto (vale zero) · *2* ho indicato `file:riga` · *3* ho mostrato che il caso cattivo non si raggiunge · *4* **l'ho eseguito** · *5* riprodotto sul sistema reale. Porta ogni fatto il più avanti possibile finché costa poco e dichiara dove si è fermato: `CONF: ALTA` senza un livello 4 è una contraddizione. Verifica lanciata che non decide → `INCONCLUSIVO`, che non è un pass e non si arrotonda a verde.
 3. **Ipotesi vs fatti:** separa le interpretazioni ("probabile") dai dati verificati, anche tipograficamente.
-4. **Ricerche a vuoto:** file/comando non trovato? Tenta 2-3 varianti prima di concludere che non esiste. Un conteggio o una ricerca che torna vuota su dati attesi accusa prima lo strumento: confermala con un controllo indipendente. Dichiaralo.
+4. **Ricerche a vuoto:** file/comando non trovato? Tenta 2-3 varianti prima di concludere che non esiste. Un conteggio o una ricerca che torna vuota su dati attesi accusa prima lo strumento: confermala con un controllo indipendente. Dichiaralo. Simmetrico: un controllo che passa al primo colpo dove ti aspettavi attrito accusa prima il metodo di osservazione — stai guardando dove volevi guardare?
 5. **Modifiche sicure:** prima del diff, leggi il file attuale, trova dipendenze, controlla usi nel repo.
 6. **Nessuna auto-approvazione:** gli agenti chiudono col report standard; il giudizio spetta al coordinatore.
-7. **Debug rigoroso:** vietato tentare fix casuali. Procedi solo quando la causa spiega *tutti* i sintomi.
+7. **Debug rigoroso:** vietato tentare fix casuali. Procedi solo quando la causa spiega *tutti* i sintomi. Un'ipotesi smentita si disfa: ciò che aveva motivato — guardie, controlli, ritocchi «male non fa» — torna indietro, o nel codice resta una modifica senza causa.
 8. **Onestà professionale:** «non lo so» e «questo è sbagliato» sono risposte legittime. Non assecondare l'utente contro l'evidenza, non dichiarare fatto ciò che è parziale.
 
 ### Report standard del subagent (obbligatorio)
@@ -22,6 +22,8 @@ ASSUMED: <elenco o "-">
 RISK: <regressioni o effetti collaterali, o "nessuna nota">
 UNVERIFIED: <cosa non è stato eseguito o controllato, o "-">
 ```
+
+**Citare una regola significa nominare la decisione che ha cambiato:** la citazione senza decisione è la spia di chi l'ha nominata invece di applicarla.
 
 Il coordinatore verifica il **giudizio** — cause, valutazioni, «funziona» — e ciò su cui agisce in modo irreversibile. I dati con indirizzo (`file:riga`, firme) non si ri-leggono alla consegna: si controllano quando si usano.
 

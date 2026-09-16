@@ -6,6 +6,7 @@ Regole trasversali di forma.
 
 - Messaggi in inglese, imperativi, prima riga ≤ 72 caratteri (`Fix …`, `Add …`, `Remove …`).
 - Un commit = un cambiamento logico.
+- Corretto un difetto, il repro che falliva entra in cronologia **prima** del fix: chi legge il log vede la prova, non solo l'esito.
 - Il corpo spiega il **perché**, non il cosa (il cosa è nel diff).
 - Mai riscrivere storie condivise, mai forzare un push, mai saltare i controlli automatici.
 

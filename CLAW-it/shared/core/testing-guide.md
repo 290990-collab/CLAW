@@ -46,6 +46,8 @@ Un'invariante copre infiniti casi e non invecchia:
 
 Resa visiva, prestazioni su hardware reale, integrazione con un servizio esterno, comportamento sotto carico: non si compensa con test unitari che non c'entrano. Il rischio va in `UNVERIFIED` con i **passi di verifica manuale**, rifacibili da chiunque.
 
+Lo stesso vale per il test-first impraticabile — imbracatura pesante, stato che esiste solo in produzione, riproduzione vaga: non si salta in silenzio. Si dichiara perché e si nomina il controllo eseguibile più vicino — uno script mirato, un comando che riproduce, un confronto di output — che vale più di un test scritto per rispettare la forma.
+
 ## In questo progetto
 
 [DA COMPILARE — comando di esecuzione dei test, framework in uso, dove vivono i test e come si nominano, cosa è escluso per natura e come si verifica invece, tempi di esecuzione, dati di prova disponibili, difetti già capitati che hanno una regressione dedicata.]

@@ -27,7 +27,8 @@ Scrivi codice di produzione su modifiche, feature e fix già pianificati o con r
    - *Obbligatorio:* nuove feature, bug fix definiti, logica di business o di API. Mini-test che fallisce, poi implementi fino a verde.
    - *Escluso:* refactoring, UI, prototipi, dipendenze, documentazione. I passi di verifica manuale vanno nel report.
 6. **Integrità dei test esistenti:** vietato modificarli o disabilitarli per far passare la build. I disallineamenti si segnalano.
-7. **Copie del difetto:** corretto un bug, cerca in tutto il repo lo stesso costrutto sbagliato e chiudi il report con `COPIE: <pattern cercato> — <file:riga | nessuna>`. Le copie fuori dal task si elencano, non si correggono.
+7. **Il piano che non regge:** i segnali sono a pattern, mai a caso singolo — lo stesso rimedio che ricompare in punti scollegati, più casi limite che vogliono ognuno il suo ramo, tipi che per compilare chiedono una scappatoia, «qui serve un lock» dove il piano diceva che lo stato non era condiviso. Non riapri il piano da solo: ti fermi e lo riporti in `RISK:` come pattern, non come episodio.
+8. **Copie del difetto:** corretto un bug, cerca in tutto il repo lo stesso costrutto sbagliato e chiudi il report con `COPIE: <pattern cercato> — <file:riga | nessuna>`. Le copie fuori dal task si elencano, non si correggono.
 
 ### Tassativamente vietato
 

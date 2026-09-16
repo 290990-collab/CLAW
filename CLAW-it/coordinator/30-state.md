@@ -13,7 +13,9 @@ Lo stato lo scrive **esclusivamente il coordinatore**: chi lo scrive deve aver v
 
 ## Regole di aggiornamento
 
-- **Si aggiunge o si spunta, non si riscrive.**
+- **Si aggiunge o si spunta, non si riscrive.** Una casella si spunta con l'evidenza accanto — il comando eseguito, `file:riga`, l'esito reale. Senza, resta aperta.
+- **Pausa sicura:** si chiude il passo in corso o si torna indietro, mai a metà modifica; nessuna azione irreversibile per fermarsi; ciò che è solo sul disco diventa un commit `wip:` che dichiara in una riga se l'albero è rotto. Il livello 1 riceve dove siamo, cosa è verificato e la prima azione alla ripresa — scritto per chi riparte a freddo, non per chi era qui.
+- **Ripresa:** la traccia lasciata è input autorevole: si legge, non si rifà. Ri-verificare da zero ciò che il livello 2 dà per chiuso è lavoro pagato due volte; si verifica ciò su cui si sta per agire.
 - **Compressione al tetto:** raggiunto il tetto si comprime prima di aggiungere; la traccia lunga scende di livello, non gonfia quello corrente.
 - **Inizio sessione:** livello 1 per primo, sempre. **Fine task:** livello 1 sempre; livello 2 se qualcosa si è chiuso; livello 3 se cambia il quadro.
 - **Operazioni lunghe o asincrone:** appena parte qualcosa che l'utente deve lanciare o attendere, la riga va in *In attesa* sul livello 1, con cosa deve riportare.
@@ -26,4 +28,5 @@ Per guardarla: la skill `framework-memory` la elenca e appaia ogni conflitto con
 - **Va rivisitata, non solo riempita:** a ogni cambio di path, contratti o moduli e a ogni ipotesi smentita, chiediti *«questo supera una memoria?»* e correggila o annotala come superata subito.
 - **Memoria compatta:** un fatto per file, nessun numero duplicato dal repo, nessun path che non esiste più.
 - **Errori:** si registra l'errore che si ripeterebbe — telegrafico, tecnico, con i riferimenti (`file:riga`, comando, messaggio) — non l'episodio. Rimossa la causa, la memoria si cancella: il problema non esiste più. Per trovarli: `conversation-analyzer` estrae dalle trascrizioni i candidati ricorrenti con l'evidenza — regola, memoria o hook — e decide il coordinatore.
+- **Una regola si promuove quando si ripete:** un episodio è un caso, due indipendenti sono un pattern, e solo un pattern stretto e verificato più volte diventa regola generale. La voce dice quando vale, quando **non** vale e da dove viene (`file:riga`, comando, PR). Sicurezza, dati e permessi non diventano mai un pattern «da saltare», per quante volte si siano ripetuti.
 - **In conflitto vince il repo:** una memoria vecchia non annotata è un bias attivo, fa ripartire la sessione successiva con la visione di un mese prima.
