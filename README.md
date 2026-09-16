@@ -288,6 +288,6 @@ code, build and dependencies stay untouched.
 
 ---
 
-## Version 1.5.4
+## Version 1.5.5
 
 MIT — see [LICENSE](LICENSE).
