@@ -42,8 +42,14 @@ versioned, tested, generated into your project.
 ### Evidence before action
 
 - Nothing is cited unless it was read or run in the current session.
-- Anything not executed is marked `UNVERIFIED`.
-- No fix until the root cause explains every symptom.
+- Every fact says how far it is proven: said so · pointed at the line · showed
+  the bad case cannot happen · **ran it** · reproduced for real. High
+  confidence without a run is a contradiction.
+- Anything not executed is marked `UNVERIFIED`. A check that ran and decided
+  nothing is `INCONCLUSIVE`, never green.
+- A fact a command can settle is run, not asked of you.
+- No fix until the root cause explains every symptom, and a refuted hypothesis
+  takes back what it motivated.
 - Every agent closes with the same report: confidence, what would disprove it,
   what it did **not** check.
 
@@ -57,7 +63,19 @@ versioned, tested, generated into your project.
 | **Fail loudly** | No swallowed exceptions, no invented defaults. Security checks fail closed. |
 | **Hyrum's law** | Every observable behaviour is a contract. Find its consumers before changing it. |
 | **Least privilege** | Read-only reviewers get no shell. |
-| **No shortcut to green** | A check never passes by being weakened. |
+| **No shortcut to green** | A check never passes by being weakened. If the check is wrong, it is fixed on its own. |
+
+### Steer by name
+
+Every rule has a short name. Say it mid-task and the rule applies to the work in
+progress, and the reply names the decision it changed:
+
+```
+minimal change here · proof level? · don't ask, run it · not a finding · safe pause
+```
+
+35 names, from `strict scope` to `repro before the fix`, each pointing at the
+exact rule it calls up. The Italian edition has them in Italian.
 
 ### Hooks where prompts fall short
 
@@ -78,6 +96,8 @@ Progressive disclosure by design:
 - `CLAUDE.md` holds only what every agent needs, under a word budget the test
   suite enforces.
 - Delegation rules load for the coordinator only.
+- The response style — tone, aliases, rule names — loads in the main
+  conversation only. Subagents never pay for it.
 - Domain guides load when the task needs them.
 - `fwbuild cost` converts all of it into tokens and dollars.
 
@@ -87,11 +107,15 @@ The generated method sits in a hashed region. Edit it and the doctor reports it.
 Changes worth keeping go back to the source with `framework-sync --up`, and the
 next project inherits them.
 
+Guides and the response style carry no hash: their text comes from the source,
+their last section is yours. `framework-sync --down` refreshes the first and
+keeps the second.
+
 ---
 
 ## The team
 
-28 agents across 7 profiles. Each project installs only the ones it needs. The
+29 agents across 7 profiles. Each project installs only the ones it needs. The
 core roster:
 
 | Agent | What it does |
@@ -209,7 +233,7 @@ Once per machine. Needs Claude Code and Python 3.11+ — nothing else to install
 
 | Mode | What it does |
 |---|---|
-| `--down` | New source version into the project, your adaptation kept |
+| `--down` | New source version into the project — method, agents, guides, response style — with your project blocks kept |
 | `--up [what]` | A local change up into the source, so the next project inherits it |
 | `--upgrade` | A new release over a source you changed with `--up` |
 | `--activate <agent\|guide>` | Adds an agent or a guide at the source's current version |

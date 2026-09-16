@@ -11,15 +11,16 @@ orchestrations/      modelli di orchestrazione: se ne accoda uno alla guida, orc
 cycles/              cicli di dominio, accodati alla guida se il profilo li chiede
 agents/              29 agenti: metodo + blocco [DA COMPILARE] di progetto
 shared/core/         guide generiche, caricate on-demand
-shared/domain/       guide di dominio (design, ricerca, dati, llm)
+shared/domain/       guide di dominio (design, ricerca, dati, llm, marketing)
 profiles/            7 profili: dominio → roster, guide, cicli, permessi
 templates/           i file di stato, generati vuoti ma strutturati
+output-styles/       reporting.md: come si risponde all'utente, alias e nomi delle regole — solo conversazione principale
 hooks/               config_protection · block_no_verify (chiusi) · gateguard (aperto) → .claude/hooks/
 skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
                      più i pacchetti collegati con `fwbuild skills add` e pool.toml: locali, mai pubblicati
 tools/fwbuild/       assemblaggio, hash, verifiche — Python stdlib puro
 tools/trial_install.py  la prova: installa un progetto finto, che il doctor verifica
-tools/tests/         218 test
+tools/tests/         249 test
 ```
 
 ## La separazione che conta: per destinatario, non per argomento
@@ -120,6 +121,13 @@ fa divergere il metodo fra progetti.
 
 Il frontmatter degli agenti resta **fuori** dalla regione: cambiare `model:` è
 configurazione, non drift.
+
+**Guide e stile di risposta non hanno regione.** Il testo è del framework,
+l'ultima sezione — il blocco `[DA COMPILARE]` — è del progetto. `framework-sync
+--down` prende il testo nuovo dal sorgente e tiene quel blocco com'è; se
+l'intestazione del blocco non c'è più, il file resta intatto e il piano lo
+nomina, da aggiornare a mano. Per questo in una guida il segnaposto sta
+**solo** nell'ultima sezione: un test lo verifica.
 
 ## Regole di manutenzione
 

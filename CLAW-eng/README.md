@@ -11,15 +11,16 @@ orchestrations/      orchestration models: one is appended to the guide, orchest
 cycles/              domain cycles, appended to the guide if the profile asks
 agents/              29 agents: method + project [TO FILL IN] block
 shared/core/         generic guides, loaded on demand
-shared/domain/       domain guides (design, research, data, llm)
+shared/domain/       domain guides (design, research, data, llm, marketing)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions
 templates/           the state files, generated empty but structured
+output-styles/       reporting.md: how to answer the user, aliases and rule names — main conversation only
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
 skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
                      plus the packages connected with `fwbuild skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
-tools/tests/         218 tests
+tools/tests/         249 tests
 ```
 
 ## The separation that matters: by recipient, not by subject
@@ -121,6 +122,13 @@ projects.
 
 Agents' front matter stays **outside** the region: changing `model:` is
 configuration, not drift.
+
+**Guides and the response style have no region.** The text belongs to the
+framework, the last section — the `[TO FILL IN]` block — to the project.
+`framework-sync --down` takes the new text from the source and keeps that block
+as it is; if the block's heading is gone, the file is left untouched and the
+plan names it, to be updated by hand. That is why in a guide the placeholder
+sits **only** in the last section: a test checks it.
 
 ## Maintenance rules
 
