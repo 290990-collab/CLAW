@@ -44,49 +44,37 @@ versioned, tested, generated into your project.
 
 ## What it does
 
-### Evidence before action
+### Claude works from evidence
 
-- Nothing is cited unless it was read or run in the current session.
-- Every fact says how far it is proven: said so · pointed at the line · showed
-  the bad case cannot happen · **ran it** · reproduced for real. High
-  confidence without a run is a contradiction.
-- Anything not executed is marked `UNVERIFIED`. A check that ran and decided
-  nothing is `INCONCLUSIVE`, never green.
-- A fact a command can settle is run, not asked of you.
-- No fix until the root cause explains every symptom, and a refuted hypothesis
-  takes back what it motivated.
-- Every agent closes with the same report: confidence, what would disprove it,
-  what it did **not** check.
+- It cites only what it has read or run, and tells you what it did **not**
+  verify.
+- It runs a command instead of asking you something a command can answer.
+- It does not guess fixes: it finds the cause first.
+- When a request can be read in more than one way, it asks before starting.
 
-### Principles, applied
+### Clean, careful changes
 
-| Principle | In practice |
-|---|---|
-| **KISS, YAGNI** | The simplest code for today's requirement. Nothing for hypothetical needs. |
-| **Minimal safe change** | One problem per diff. No unrequested refactoring. |
-| **Single source of truth** | Two copies that can diverge will diverge. |
-| **Fail loudly** | No swallowed exceptions, no invented defaults. Security checks fail closed. |
-| **Hyrum's law** | Every observable behaviour is a contract. Find its consumers before changing it. |
-| **Least privilege** | Read-only reviewers get no shell. |
-| **No shortcut to green** | A check never passes by being weakened. If the check is wrong, it is fixed on its own. |
+- The smallest change that solves the problem, one problem at a time.
+- No unrequested refactoring, no code for hypothetical needs.
+- Tests are never weakened to go green.
+- Commits, installs and anything irreversible wait for your ok.
 
-### Context as a budget
+### A team of agents, sized to the task
 
-- `CLAUDE.md` holds only what every agent needs, under a word budget the test
-  suite enforces.
-- Delegation rules load for the coordinator only.
-- The response style loads in the main conversation only. Subagents never pay
-  for it.
-- Domain guides load when the task needs them.
-- `fwbuild cost` converts all of it into tokens and dollars.
+A coordinator plans and delegates to specialised agents: finding code,
+planning, writing, testing, reviewing. Small changes it does itself. The
+[agents](#agents) you get depend on your [profile](#profiles).
 
-### Drift detection
+### Low token use
 
-The generated method sits in a hashed region of `CLAUDE.md`, of the
-coordinator's guide and of every agent. Edit it and the doctor reports it.
-Changes worth keeping go back to the source with `framework-sync --up`, and the
-next project inherits them. Guides and the response style carry no hash: their
-text comes from the source, their last section is yours.
+Each agent receives only what its task needs. `fwbuild cost` shows what the
+method costs you per day.
+
+### Projects stay in step
+
+One source feeds all your projects. The doctor tells you when a project is out
+of date or its method was edited by hand; one command brings it up to date, and
+an improvement made in one project can be passed to all the others.
 
 ### Work state across sessions
 
@@ -103,14 +91,14 @@ them:
 
 ## Talking to it
 
-Three shortcuts work in the main conversation. They come with the `Reporting`
-response style, which the install selects for you.
+Three shortcuts work in your conversation with Claude, in every installed
+project.
 
 ### Rule names
 
-Write a rule's name anywhere in a message. Claude opens that rule, applies it to
-the current work and tells you which decision it changed. An unknown name is
-not guessed: it says so.
+Write a rule's name anywhere in a message. Claude applies that rule to the
+current work and tells you what it changed. If a name does not exist, it says
+so.
 
 ```
 minimal change here, please
@@ -185,28 +173,22 @@ ordinary words.
 
 ## Hooks
 
-A hook is a script Claude Code runs **before** a tool call; it can block the
-call. A rule written in a prompt is followed most of the time; a hook holds
-every time. CLAW installs three, in `.claude/hooks/`, registered in
-`.claude/settings.json`:
+Hooks are safety checks Claude Code runs before Claude acts: if the action
+breaks the rule, it is blocked and Claude is told why. CLAW installs three:
 
-| Hook | What it stops | Why |
+| Hook | What it blocks | What you get |
 |---|---|---|
-| `block_no_verify` | `git commit --no-verify`, `git commit -n` and any change to `core.hooksPath` | Your git hooks cannot be skipped to get a commit through |
-| `config_protection` | Edits to an **existing** linter or formatter config (`.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `biome.json`, `ruff.toml`, `.flake8`, `.pylintrc`, `mypy.ini`, …). Creating a new one is allowed | A failing check gets fixed in the code, not by loosening the rule |
-| `gateguard` | The **first** edit of each file in a session. It answers with what to check — who imports the file, what public surface changes — and the second attempt goes through | The edit starts from facts, not from a guess |
+| `block_no_verify` | `git commit --no-verify`, `git commit -n`, and changes to `core.hooksPath` | Your git hooks always run before a commit |
+| `config_protection` | Edits to an **existing** linter or formatter configuration (`.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `biome.json`, `ruff.toml`, `.flake8`, `.pylintrc`, `mypy.ini`, …). Creating a new one is allowed | A failing check gets fixed in the code, not by relaxing the rules |
+| `gateguard` | Claude's first edit of each file in a session, until it has checked who uses the file and what the change affects | Fewer edits that break something elsewhere |
 
-`block_no_verify` and `config_protection` are **closed**: if they cannot read
-the call, they block. `gateguard` is **open**: an internal error lets the edit
-through. It costs one extra turn per file, so the install asks whether you want
-it; turn it off any time with `FRAMEWORK_GATEGUARD=off`.
+`gateguard` adds one step per file, so the install asks whether you want it.
+You can turn it off at any time ([how](#everyday-use)).
 
-Not sure a rule needs a hook? `/framework-comply <rule>` measures how often
-Claude follows it. It runs the rule in real `claude -p` sessions on a throwaway
-copy of the project, with a prompt that reminds the rule, a neutral one and one
-that pushes to skip it, and counts each step. A step that is missed and visible
-in the tool call becomes a hook candidate. It asks before spending: 17 sessions
-by default, on your tokens.
+`/framework-comply <rule>` measures how often Claude actually follows a rule of
+the method, in test sessions on a throwaway copy of your project, and tells you
+which rules would hold better as a hook. It asks before starting, because the
+sessions use your tokens (17 by default).
 
 ---
 
@@ -291,7 +273,7 @@ install, changeable later ([how](#change-what-a-project-has)).
 | Model | How it runs |
 |---|---|
 | `orchestrator-worker` | The default. The coordinator spawns agents and collects their reports; agents never talk to each other |
-| `agent-teams` | Experimental, on Claude Code's Agent teams. Agents share a task list, message each other and keep notes in `docs/team/`. Needs an interactive session, a trusted folder and Claude Code 2.1.233 or later; the install writes the two environment variables it needs. Suggested for `web`, `research` and `marketing` |
+| `agent-teams` | Experimental, on Claude Code's Agent teams. Agents share a task list, message each other and keep notes in `docs/team/`. Needs an interactive session, a trusted folder and Claude Code 2.1.233 or later; the install sets it up for you. Suggested for `web`, `research` and `marketing` |
 
 ---
 
@@ -335,29 +317,47 @@ generated from. The other skills — `framework-doctor`, `framework-sync`,
 | Set up a project | Open Claude Code in the project folder and run `/framework-install` | It reads the code (or asks for your idea), asks five questions one at a time — profile, critical surface, what you already know, what it may do without asking, orchestration — shows every file it will write and waits for your ok. It ends with the doctor |
 | Keep the source inside one project | Copy the edition folder into the project as `framework/`, copy `framework/skills/framework-*` into `.claude/skills/`, run `/framework-install` | The install finds `./framework/` first. Search order: `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/` |
 | Check an installation | `/framework-doctor` | Every finding with its remedy; it fixes what it can. `OK — no findings` means healthy |
-| Accept a warning on purpose | Add it to `accepted` in `.claude/framework.json`, with a reason (example below) | It prints as a note and no longer fails the check. Errors cannot be accepted |
+| Keep a warning the doctor reports, because it is intended | See below | The warning is still shown, but the check passes |
 
 The install writes only `CLAUDE.md`, `.claude/` and `docs/`. Existing files
 there are merged or asked about, never silently overwritten; your code, build
 and dependencies stay untouched.
 
+**Keeping an intended warning.** Sometimes the doctor warns about something you
+chose on purpose — for example a long `CLAUDE.md` in a large project. The
+doctor prints it like this:
+
+```
+WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel — 4300 in all, ≈5700 tokens paid at every spawn
+```
+
+Tell the doctor it is intended: open `.claude/framework.json` in the project
+and add an `accepted` entry, with the code from that line and the reason in a
+sentence:
+
 ```json
-"accepted": {
-  "TOKEN_BUDGET": "monorepo, the contracts live in CLAUDE.md on purpose",
-  "KERNEL_DRIFT:CLAUDE.md": "deliberate: constraint X applies only here"
+{
+  "source": "...",
+  "version": "1.5.5",
+  "profile": "software",
+  "accepted": {
+    "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
+  }
 }
 ```
 
-The key is the finding code, or `CODE:file` to limit it to one file.
+From then on the warning is shown as a note and the check passes. To accept it
+for one file only, write the code and the file: `"KERNEL_DRIFT:CLAUDE.md"`.
+Errors cannot be accepted: they must be fixed.
 
 ### Change what a project has
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Add an agent | `/framework-sync --activate frontend` | The agent arrives at the source's current version, with its project block filled in |
+| Add an agent | `/framework-sync --activate frontend` | The agent is installed, up to date and adapted to your project |
 | Remove an agent | `/framework-sync --deactivate comment-analyzer` | Gone from the project; the source keeps it. The six code-cycle agents always stay |
 | Add or remove a guide | `/framework-sync --activate domain/llm-guide.md` (or `--deactivate`) | The guide is copied and listed in `CLAUDE.md`, or removed |
-| Change the orchestration | `/framework-sync`, then say `change the orchestration to agent-teams` | The coordinator's guide and the settings are rebuilt for the new model |
+| Change the orchestration | `/framework-sync`, then say `change the orchestration to agent-teams` | The project switches to the new model |
 | Change the profile | `/framework-sync`, then say `change the profile to web` | Agents, guides, work cycles and permissions follow the new field; permissions you added stay |
 | Put back missing files | `/framework-sync --repair` | Skills, hooks, state files, guides and settings that went missing come back. Nothing is overwritten |
 | Remove the framework | `/framework-sync --uninstall` | Files identical to the source are deleted, adapted ones go to `.claude/framework-archive/`. `docs/` and your sections of `CLAUDE.md` stay |
@@ -412,7 +412,7 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 | Clean up stale memory | `/framework-memory` | Each stale memory is paired with the repo line that contradicts it; nothing changes without your ok |
 | Check whether a rule is really followed | `/framework-comply <rule>` | See [Hooks](#hooks) |
 | Turn off `gateguard` | Set `FRAMEWORK_GATEGUARD=off` in the environment Claude Code starts from | Edits are no longer stopped on first touch |
-| Know what the method costs | `python -m fwbuild cost <project>` in `~/.claude/framework/tools` | Tokens of `CLAUDE.md` paid at every spawn, and the daily and monthly cost. Tune with `--spawns`, `--devs`, `--price` |
+| Know what the method costs | `python -m fwbuild cost <project>` in `~/.claude/framework/tools` | The tokens the method adds to every agent call, and the daily and monthly cost. Tune with `--spawns`, `--devs`, `--price` |
 | See which projects run old versions | `python -m fwbuild report <folder-with-your-repos>` in `~/.claude/framework/tools` | One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks deeper, `--json` is for CI |
 
 ---
