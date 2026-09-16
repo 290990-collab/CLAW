@@ -131,6 +131,14 @@ core roster:
 | `security-reviewer` | Reviews untrusted input, secrets, auth and data exposure |
 | `final-reviewer` | Rereads the diff from scratch and re-runs the tests before anything is called done |
 
+The rest joins by field or on request: `frontend`, `deploy` or `infra`,
+`data-ingestion`, `results-analyst`, `literature`, `comment-analyzer`,
+`conversation-analyzer`, `skill-runner`; for marketing `market-researcher`,
+`campaign-planner`, `copywriter`, `visual-designer`, `content-analyst`,
+`claim-reviewer`. At install you name the critical surface, and its reviewer
+joins: `security-reviewer`, `scientific-reviewer`, `data-quality-reviewer`,
+`compliance-reviewer` or `perf-analyst`.
+
 ### How they work together
 
 One orchestration model per project, chosen at install:
@@ -216,6 +224,9 @@ Once per machine. Needs Claude Code and Python 3.11+ — nothing else to install
 /framework-install
 ```
 
+To keep the source inside a single project instead, copy the edition there as
+`framework/` and its `skills/framework-*` into `.claude/skills/`.
+
 ---
 
 ## Use
@@ -228,6 +239,18 @@ Once per machine. Needs Claude Code and Python 3.11+ — nothing else to install
 | `/framework-doctor` | something looks off, before an update | Checks the installation; every finding comes with its remedy |
 | `/framework-memory` | long session, after a restructure | Pairs every stale memory with the repo line that contradicts it |
 | `/framework-comply <rule>` | a rule seems ignored | Counts how often each step of the rule is followed across `claude -p` runs — 17 by default, on your tokens |
+
+### In the conversation
+
+| You type | What happens |
+|---|---|
+| A rule name, e.g. `minimal change` | The rule is applied to the work in progress, and the reply says what it changed |
+| `keep D1, drop O2` | Long replies number findings, decisions, options, risks, questions and actions (`F` `D` `O` `R` `Q` `A`), so you answer by code |
+| `scr` · `foc` · `ref` · `eli` | Simplify and compress · cut to the real signal · rewrite with codes · explain simply, shorter |
+
+The coordinator keeps the work state in `docs/`: `TODO.md` (where we are),
+`status.md` (decisions and results), `roadmap.md` (goals). A new session
+resumes from there.
 
 ### Keeping in sync — `/framework-sync <mode>`
 
