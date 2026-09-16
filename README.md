@@ -241,7 +241,7 @@ call for.
 | `data-ingestion` | Pipelines that bring external data in |
 | `results-analyst` | Reads measured results: is the change real, and why |
 | `literature` | Finds and reads publications, places the project against them |
-| `skill-runner` | Runs an external skill for the coordinator (see [skills](#connect-someone-elses-skills)) |
+| `skill-runner` | Runs an external skill for the coordinator (see [skills](#use-other-peoples-skills)) |
 | `market-researcher` | Audience, alternatives, the promise the product keeps |
 | `campaign-planner` | Channel, cadence, headline, what to measure |
 | `copywriter` | Writes the copy, every claim with its proof |
@@ -266,7 +266,7 @@ work wrong even with perfect code, and adds the matching reviewer:
 
 The first install question picks one. The profile sets the extra agents, the
 guides, the work cycle and the file permissions. You can change it later
-([how](#change-the-profile)).
+([how](#change-what-a-project-has)).
 
 | Profile | For | Adds to the code cycle |
 |---|---|---|
@@ -286,7 +286,7 @@ marketing agents added on request.
 ## Orchestration
 
 How the coordinator and the agents work together. One per project, chosen at
-install, changeable later ([how](#change-the-orchestration)).
+install, changeable later ([how](#change-what-a-project-has)).
 
 | Model | How it runs |
 |---|---|
@@ -328,42 +328,18 @@ generated from. The other skills — `framework-doctor`, `framework-sync`,
 
 ## How do I…
 
-### Set up a project
+### Set up
 
-Open Claude Code in the project folder and run:
+| I want to… | Do this | What happens |
+|---|---|---|
+| Set up a project | Open Claude Code in the project folder and run `/framework-install` | It reads the code (or asks for your idea), asks five questions one at a time — profile, critical surface, what you already know, what it may do without asking, orchestration — shows every file it will write and waits for your ok. It ends with the doctor |
+| Keep the source inside one project | Copy the edition folder into the project as `framework/`, copy `framework/skills/framework-*` into `.claude/skills/`, run `/framework-install` | The install finds `./framework/` first. Search order: `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/` |
+| Check an installation | `/framework-doctor` | Every finding with its remedy; it fixes what it can. `OK — no findings` means healthy |
+| Accept a warning on purpose | Add it to `accepted` in `.claude/framework.json`, with a reason (example below) | It prints as a note and no longer fails the check. Errors cannot be accepted |
 
-```
-/framework-install
-```
-
-It reads the code (or asks for your idea, in an empty folder), proposes a setup
-and asks five questions, one at a time: the profile, the critical surface, what
-you already know, what it may do without asking (and whether you want
-`gateguard`), the orchestration. It then shows every file it will write or
-merge and waits for your ok. Your existing `CLAUDE.md`, `docs/` files,
-settings, hooks and skills are merged or asked about, never silently
-overwritten. It ends by running
-the doctor.
-
-It writes only `CLAUDE.md`, `.claude/` and `docs/`. Your code, build and
-dependencies stay untouched.
-
-### Keep the source inside one project
-
-Skip the machine install. Copy the edition folder into the project as
-`framework/`, then copy `framework/skills/framework-*` into `.claude/skills/`
-and run `/framework-install`. A source kept elsewhere can be pointed at with
-the `CLAUDE_FRAMEWORK` environment variable. Search order: `./framework/`,
-`$CLAUDE_FRAMEWORK`, `~/.claude/framework/`.
-
-### Check that an installation is healthy
-
-`/framework-doctor`. It lists every finding with its remedy, and fixes what it
-can. `OK — no findings` means healthy.
-
-### Live with a warning on purpose
-
-Add it to `accepted` in `.claude/framework.json`, with a reason:
+The install writes only `CLAUDE.md`, `.claude/` and `docs/`. Existing files
+there are merged or asked about, never silently overwritten; your code, build
+and dependencies stay untouched.
 
 ```json
 "accepted": {
@@ -372,146 +348,72 @@ Add it to `accepted` in `.claude/framework.json`, with a reason:
 }
 ```
 
-The key is the finding code, or `CODE:file` to limit it to one file. It keeps
-printing as a note and no longer fails the check. Errors cannot be accepted.
+The key is the finding code, or `CODE:file` to limit it to one file.
 
-### Update to a new release
+### Change what a project has
 
-1. Check whether you ever promoted changes into your source:
-   `cd ~/.claude/framework/tools && python -m fwbuild source ..`
-2. **It says "intact"**: `git -C ~/.claude/CLAW pull`, then replace
-   `~/.claude/framework` with a fresh copy of the edition folder. Connected
-   skill packages live inside it: reconnect them afterwards, or copy their
-   folders and `skills/pool.toml` back.
-3. **It says "modified with --up"**: run `/framework-sync --upgrade`. It merges
-   the release into your source, keeps your changes and asks on each conflict.
-4. In every project: `/framework-sync --down`. The method, agents, guides,
-   hooks and response style are updated; everything you filled in is kept.
+| I want to… | Do this | What happens |
+|---|---|---|
+| Add an agent | `/framework-sync --activate frontend` | The agent arrives at the source's current version, with its project block filled in |
+| Remove an agent | `/framework-sync --deactivate comment-analyzer` | Gone from the project; the source keeps it. The six code-cycle agents always stay |
+| Add or remove a guide | `/framework-sync --activate domain/llm-guide.md` (or `--deactivate`) | The guide is copied and listed in `CLAUDE.md`, or removed |
+| Change the orchestration | `/framework-sync`, then say `change the orchestration to agent-teams` | The coordinator's guide and the settings are rebuilt for the new model |
+| Change the profile | `/framework-sync`, then say `change the profile to web` | Agents, guides, work cycles and permissions follow the new field; permissions you added stay |
+| Put back missing files | `/framework-sync --repair` | Skills, hooks, state files, guides and settings that went missing come back. Nothing is overwritten |
+| Remove the framework | `/framework-sync --uninstall` | Files identical to the source are deleted, adapted ones go to `.claude/framework-archive/`. `docs/` and your sections of `CLAUDE.md` stay |
 
-### Make a change in one project count for all projects
+`deploy` and `infra` cannot be installed together. If the doctor reports
+`VERSION_MISMATCH` or `KERNEL_DRIFT`, run `/framework-sync --down` before
+changing the orchestration or the profile.
 
-Edit the method in the project, then run `/framework-sync --up`. It asks
-whether the change is for everyone or only this project, writes it into the
-source, raises the source version, and re-syncs the project. Other projects get
-it with `--down`. The other edition is a separate source: carry the change
-there by hand.
+### Update the framework
 
-### Add or remove an agent or a guide
+| I want to… | Do this | What happens |
+|---|---|---|
+| Get a new release | The steps below | Source and projects move to the new version, your changes kept |
+| Make a change in one project count for all | Edit the method in the project, then `/framework-sync --up` | It asks whether the change is for everyone, writes it into the source and raises its version. Other projects get it with `--down`. The other edition is a separate source: carry it there by hand |
 
-```
-/framework-sync --activate frontend
-/framework-sync --deactivate comment-analyzer
-/framework-sync --activate domain/llm-guide.md
-```
+**New release, step by step:**
 
-Activating takes the source's current version and fills in its project block.
-The six code-cycle agents cannot be removed; `deploy` and `infra` cannot be
-installed together.
+| Step | Do this |
+|---|---|
+| 1. Check the source | `cd ~/.claude/framework/tools && python -m fwbuild source ..` |
+| 2a. If it says `intact` | `git -C ~/.claude/CLAW pull`, then replace `~/.claude/framework` with a fresh copy of the edition folder. Connected skill packages live inside it: reconnect them, or copy their folders and `skills/pool.toml` back |
+| 2b. If it says `modified with --up` | `/framework-sync --upgrade`: the release is merged into your source, your changes are kept and each conflict is asked |
+| 3. Update every project | `/framework-sync --down` in each: method, agents, guides, hooks and response style are refreshed; what you filled in is kept |
 
-### Change the orchestration
+### Use other people's skills
 
-Run `/framework-sync` and say what you want, for example
-`change the orchestration to agent-teams`. It rebuilds the coordinator's guide
-and updates the settings (for `agent-teams`, the two environment variables). If
-the doctor reports `VERSION_MISMATCH` or `KERNEL_DRIFT`, run
-`/framework-sync --down` first.
+Skills written by other people are connected to the source, never published
+with CLAW. Read a skill before connecting it: it is instructions, sometimes
+scripts, that an agent will run. Shell commands run in `~/.claude/framework/tools`.
 
-### Change the profile
+| I want to… | Do this | What happens |
+|---|---|---|
+| Connect a repository of skills | `python -m fwbuild skills add <repo-url>` (add `--commit <sha>` to pin a version) | Every folder with a `SKILL.md` is connected, pinned to a commit |
+| Get them into a project | `/framework-sync --down` (or `--repair`) in the project | You run them as `/<skill-name>`; the coordinator cannot see them |
+| See what is connected | `python -m fwbuild skills list` | Packages, their skills, and which are in the pool |
+| Let the coordinator use one | The steps below | The coordinator may call it — rarely, and through `skill-runner` |
+| Disconnect a package | `python -m fwbuild skills remove <package>`, then `/framework-sync --down` in each project | The skills leave the source, the pool and the projects |
 
-Run `/framework-sync` and say, for example, `change the profile to web`. It
-adds and removes agents, guides and work cycles for the new field, swaps the
-profile's permissions (keeping any you added yourself) and records the new
-profile.
+**Pool, step by step:**
 
-### Put back files that went missing
+| Step | Do this |
+|---|---|
+| 1. Add it to the pool | Write the name in `~/.claude/framework/skills/pool.toml` (create it if missing): `skills = ["skill-name"]` |
+| 2. Update the project | `/framework-sync --down`. If the skill was already in the project, also delete its line under `skillOverrides` in `.claude/settings.json` |
+| 3. Enable the runner | Once per project: `/framework-sync --activate skill-runner` |
 
-`/framework-sync --repair`. It restores the lifecycle skills, hooks, state
-files, cited guides and missing settings. It overwrites nothing.
+### Everyday use
 
-### Remove the framework from a project
-
-`/framework-sync --uninstall`. Files identical to the source are deleted;
-anything you adapted is moved to `.claude/framework-archive/`. The project
-sections of `CLAUDE.md` and everything in `docs/` stay.
-
-### Connect someone else's skills
-
-Skills written by other people are connected to the source, not to a project,
-and are never published with CLAW. Read a skill before connecting it: it is
-instructions, sometimes scripts, that an agent will run.
-
-```bash
-cd ~/.claude/framework/tools
-python -m fwbuild skills add https://github.com/owner/repo            # latest commit
-python -m fwbuild skills add https://github.com/owner/repo --commit <sha>
-python -m fwbuild skills list                                         # packages, skills, pool
-```
-
-Every folder with a `SKILL.md` in that repository is connected, pinned to the
-commit. The skills reach a project at its next `/framework-sync --down` or
-`--repair`. There you run them yourself, as `/<skill-name>`; the coordinator
-cannot see them.
-
-### Let the coordinator use a skill on its own
-
-1. List it in `~/.claude/framework/skills/pool.toml` (create the file if
-   missing):
-
-   ```toml
-   skills = ["skill-name"]
-   ```
-
-2. Run `/framework-sync --down` in the project. If the skill was already there,
-   also delete its line under `skillOverrides` in `.claude/settings.json`.
-3. Once per project: `/framework-sync --activate skill-runner`.
-
-The coordinator uses pool skills rarely, and always through `skill-runner`, so
-the skill's instructions leave with that agent instead of filling the session.
-
-### Disconnect skills
-
-`python -m fwbuild skills remove <package>` (the name `skills list` prints). It
-also leaves the pool. Projects drop it at their next `/framework-sync --down`.
-
-### Pause and resume work
-
-Say `safe pause`: Claude stops at a clean point and writes in `docs/TODO.md`
-where things are, what is verified and the first step to take. A new session
-reads that file first and continues from there.
-
-### Clean up stale memory
-
-`/framework-memory`. It lists what Claude remembers about the project, pairs
-each stale memory with the repo line that contradicts it, and changes nothing
-without your ok.
-
-### Check whether a rule is really followed
-
-`/framework-comply <rule>` — see [Hooks](#hooks).
-
-### Turn off gateguard
-
-Set `FRAMEWORK_GATEGUARD=off` in the environment Claude Code starts from.
-
-### Know what the method costs
-
-```bash
-cd ~/.claude/framework/tools
-python -m fwbuild cost <project> --spawns 100 --devs 1 --price 5
-```
-
-It prints the tokens of `CLAUDE.md`, which every agent pays at every spawn, and
-the daily and monthly cost. The values shown are the defaults.
-
-### See which projects run old versions
-
-```bash
-cd ~/.claude/framework/tools
-python -m fwbuild report <folder-with-your-repos>
-```
-
-One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks
-deeper, `--json` is for CI.
+| I want to… | Do this | What happens |
+|---|---|---|
+| Stop and resume later | Say `safe pause` | Claude stops at a clean point and writes in `docs/TODO.md` where things are and the next step. A new session starts from there |
+| Clean up stale memory | `/framework-memory` | Each stale memory is paired with the repo line that contradicts it; nothing changes without your ok |
+| Check whether a rule is really followed | `/framework-comply <rule>` | See [Hooks](#hooks) |
+| Turn off `gateguard` | Set `FRAMEWORK_GATEGUARD=off` in the environment Claude Code starts from | Edits are no longer stopped on first touch |
+| Know what the method costs | `python -m fwbuild cost <project>` in `~/.claude/framework/tools` | Tokens of `CLAUDE.md` paid at every spawn, and the daily and monthly cost. Tune with `--spawns`, `--devs`, `--price` |
+| See which projects run old versions | `python -m fwbuild report <folder-with-your-repos>` in `~/.claude/framework/tools` | One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks deeper, `--json` is for CI |
 
 ---
 
