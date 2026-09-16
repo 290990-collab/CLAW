@@ -53,6 +53,11 @@ SHARED_DIRS = ("agents", "skills", "output-styles", "hooks", "shared")
 # testo intero del comando: quello cambia fra release, e l'utente lo ritocca.
 HOOK_PATH_RE = re.compile(r"\.claude[\\/]+hooks[\\/]+([A-Za-z0-9_-]+)\.py")
 
+# Guide e stili non hanno regione kernel: il testo è del framework, l'ultima
+# sezione del progetto. Il sorgente la riconosce dal segnaposto, che sta lì e
+# solo lì, e l'intestazione si legge dal file: nessuna costante per lingua.
+SECTION_RE = re.compile(r"^## .*$", re.MULTILINE)
+
 
 @dataclass(frozen=True)
 class Operation:
@@ -310,10 +315,14 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
 def plan_down(
     project_root: Path, framework_root: Path, hooks: Sequence[str] | None = None
 ) -> list[Operation]:
-    """Cosa porta una versione nuova: regioni kernel, skill, hook, settings.
+    """Cosa porta una versione nuova: regioni kernel, guide e stili, skill,
+    hook, settings.
 
     Le regioni kernel le riassemblano i passi della skill, non `apply_update`:
     qui si elencano, e una regione ritoccata dice che la modifica si perde.
+    Guide e stili prendono il testo del sorgente e tengono il loro blocco di
+    progetto; senza un blocco riconoscibile restano come sono, e il piano lo
+    dice.
     `hooks` sono gli hook da avere dopo; `None` vuol dire quelli che il
     progetto usa già — un progetto nato senza hook non ne riceve in silenzio.
     """
@@ -337,6 +346,16 @@ def plan_down(
                            f"modificata a mano: la modifica locale si perde{note}"))
         else:
             ops.append(_op(prj, rel, MERGE, f"v{region.version} → v{version}, resto invariato{note}"))
+
+    for rel, original in _adapted_files(prj, fw):
+        installed = (prj / rel).read_text(encoding="utf-8")
+        text = original.read_text(encoding="utf-8")
+        merged = with_project_block(text, installed)
+        if merged is None and installed != text:
+            why = "blocco di progetto non trovato" if project_heading(text) else "nessun blocco di progetto"
+            ops.append(_op(prj, rel, KEEP, f"{why}: diverso dal sorgente, si aggiorna a mano"))
+        elif merged is not None and merged != installed:
+            ops.append(_op(prj, rel, MERGE, "testo dal sorgente, blocco di progetto invariato"))
 
     overwrite = (OVERWRITE, "diverso dal sorgente: si aggiorna")
     for rel, original in _skill_files(fw):
@@ -362,8 +381,9 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
     I file con regione kernel si saltano: li riscrivono i passi della skill,
     che conservano le sezioni di progetto, e quando questa funzione gira sono
     già cambiati. Per tutto il resto i digest si ricontrollano prima di
-    scrivere. Poi: copie dal sorgente, voci mancanti in `settings.json`,
-    manifesto — versione del sorgente e il nuovo delta accodato al record.
+    scrivere. Poi: copie dal sorgente, guide e stili rifusi col loro blocco di
+    progetto, voci mancanti in `settings.json`, manifesto — versione del
+    sorgente e il nuovo delta accodato al record.
     """
     prj, fw = Path(project_root), Path(framework_root)
     active = [op for op in ops if op.action != KEEP and not _is_kernel_file(op.path)]
@@ -375,11 +395,27 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
         if op.action in (CREATE, OVERWRITE) and op.path not in (SETTINGS, MANIFEST)
     ]
     paths = {op.path for op in active}
+    rewrites = []
+    for op in active:
+        if op.action != MERGE or op.path in (SETTINGS, MANIFEST):
+            continue
+        merged = with_project_block(
+            _source_of(fw, op.path).read_text(encoding="utf-8"),
+            (prj / op.path).read_text(encoding="utf-8"),
+        )
+        if merged is None:
+            raise ValueError(
+                f"{op.path}: il blocco di progetto non si riconosce più, "
+                "niente è stato scritto — rifai il piano"
+            )
+        rewrites.append((prj / op.path, merged))
 
     for rel, original in copies:
         dest = prj / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(original, dest)
+    for dest, merged in rewrites:
+        dest.write_text(merged, encoding="utf-8")
 
     added: dict = {}
     if SETTINGS in paths:
@@ -405,6 +441,49 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
                 record if isinstance(record, dict) else {}, added
             )[0]
         _write_json(prj / MANIFEST, data)
+
+
+def project_heading(text: str) -> str | None:
+    """L'intestazione del blocco di progetto di una guida o di uno stile del
+    sorgente: l'ultima sezione `## `, se contiene tutti i segnaposto del file.
+    `None` senza segnaposto, o con un segnaposto fuori dall'ultima sezione:
+    lì `--down` non saprebbe cosa è del progetto."""
+    heads = list(SECTION_RE.finditer(text))
+    total = len(doctor.PLACEHOLDER_RE.findall(text))
+    if not heads or not total:
+        return None
+    if len(doctor.PLACEHOLDER_RE.findall(text[heads[-1].start() :])) != total:
+        return None
+    return heads[-1].group(0).rstrip()
+
+
+def with_project_block(original: str, installed: str) -> str | None:
+    """Il testo del sorgente fino al blocco di progetto, poi il blocco com'è
+    nell'installazione. `None` se il sorgente non ha blocco o l'installazione
+    non ha più quell'intestazione."""
+    heading = project_heading(original)
+    if heading is None:
+        return None
+
+    def start(text: str) -> int | None:
+        found = [m.start() for m in SECTION_RE.finditer(text) if m.group(0).rstrip() == heading]
+        return found[-1] if found else None
+
+    at = start(installed)
+    return None if at is None else original[: start(original)] + installed[at:]
+
+
+def _adapted_files(prj: Path, fw: Path) -> list[tuple[str, Path]]:
+    """Guide e stili installati che vengono dal sorgente. `orchestration.md`
+    sta in `shared/` ma ha una regione kernel: è dei passi della skill."""
+    out = []
+    for area in ("shared", "output-styles"):
+        for p in _files(prj / ".claude" / area):
+            rel = p.relative_to(prj).as_posix()
+            original = fw / area / p.relative_to(prj / ".claude" / area)
+            if rel != ORCHESTRATION and p.suffix == ".md" and original.is_file():
+                out.append((rel, original))
+    return out
 
 
 def _digest(path: Path) -> str:

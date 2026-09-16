@@ -59,7 +59,7 @@ Nelle altre modalità il piano è l'elenco dei file e di cosa gli succede, scrit
 
 Aggiorna il metodo preservando l'adattamento.
 
-0. **Piano** con `plan_down`: regioni kernel da riassemblare, skill e hook da aggiornare, voci mancanti in `settings.json`, versione del manifesto. `hooks=None` tiene gli hook che il progetto usa; se non ne usa nessuno, **una domanda sola** — li vuole, `gateguard` compreso? — e il sì diventa `hooks=[…]` coi nomi scelti di `settings.HOOKS`.
+0. **Piano** con `plan_down`: regioni kernel da riassemblare, guide e stile di risposta da rifondere, skill e hook da aggiornare, voci mancanti in `settings.json`, versione del manifesto. `hooks=None` tiene gli hook che il progetto usa; se non ne usa nessuno, **una domanda sola** — li vuole, `gateguard` compreso? — e il sì diventa `hooks=[…]` coi nomi scelti di `settings.HOOKS`.
 1. **Confronta le versioni:** quella del progetto sta nel marker della regione kernel, quella del sorgente in `<FW>/VERSION`.
 2. **Diagnosi prima.** I `KERNEL_DRIFT` vanno risolti *prima*: aggiornare sopra una modifica locale la cancella in silenzio.
 3. **Riassembla** col metodo nuovo e le sezioni di progetto esistenti, estratte dall'installazione corrente e riscritte invariate.
@@ -79,7 +79,7 @@ p.write_text(assemble.build_document(Path('../method'), version, sezioni), encod
 
 4. **Stessa operazione su `.claude/shared/orchestration.md`**, col kernel da `<FW>/coordinator/`: i documenti versionati sono **due**, aggiornarne uno solo li lascia disallineati. Lì orchestrazione e cicli di dominio stanno **dentro** la regione e il progetto non registra da cosa è nato: vanno ripassati, in quest'ordine, con `extra=[assemble.installed_orchestration(region.body, Path('..')), *assemble.installed_cycles(region.body, Path('..'))]`, o spariscono senza che nessun rilievo lo veda. Una regione senza orchestrazione riconoscibile è un `ValueError`: l'orchestrazione si sceglie esplicitamente con `assemble.orchestration_file`, non si indovina.
 5. **Stessa operazione su ogni agente installato**, con `split_source` e `build_agent`: frontmatter e blocco `## Contesto di progetto` restano del progetto, il metodo viene dal master. Se il piano nomina `model` o `effort` diversi dal sorgente, si chiede: sì → quella riga del frontmatter prende il valore del sorgente.
-6. **Esegui il piano** del passo 0 con `apply_update`: copia skill e hook, fonde `settings.json`, scrive `version` in `.claude/framework.json` e accoda il nuovo delta a `settings_added`. Le regioni kernel le salta: le hanno già riscritte i passi 3-5.
+6. **Esegui il piano** del passo 0 con `apply_update`: copia skill e hook, rifonde guide e stile — testo dal sorgente, l'ultima sezione (il blocco di progetto, quella che nel sorgente ha il segnaposto) resta del progetto —, fonde `settings.json`, scrive `version` in `.claude/framework.json` e accoda il nuovo delta a `settings_added`. Le regioni kernel le salta: le hanno già riscritte i passi 3-5. Una guida o uno stile senza blocco riconoscibile il piano lo dà come `lascia`, col motivo: si aggiorna a mano, confrontandolo col sorgente — sostituirlo intero cancellerebbe l'adattamento.
 7. **Verifica** con `doctor`: deve uscire con 0.
 
 **I conflitti si presentano, non si risolvono da soli:** su una regione modificata localmente l'utente deve vedere entrambe le versioni e decidere.
