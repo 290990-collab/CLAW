@@ -2,7 +2,7 @@
 
 Only the **state**: where we are now. The plan lives in [roadmap.md](roadmap.md), closed results in [status.md](status.md).
 
-> First file at session start, last at task end. Ceiling ~60 lines: compress before adding, the long trace goes down into `status.md`. You add or tick off, you do not rewrite. A box is ticked with the evidence next to it (command, `file:line`, outcome); a step you decide not to do stays with `skipped: <reason>`.
+> First file at session start, last at task end. Indicative ceiling ~120 lines: past it, compress at task end and the long trace goes down into `status.md`. You add or tick off, you do not rewrite. A box is ticked with the evidence next to it (command, `file:line`, outcome); a step you decide not to do stays with `skipped: <reason>`.
 
 ## In progress
 

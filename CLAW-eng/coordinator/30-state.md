@@ -4,7 +4,7 @@ The state is written **exclusively by the coordinator**: whoever writes it must 
 
 | Lvl | File | Content | Update | Ceiling |
 |---|---|---|---|---|
-| 1 | `docs/TODO.md` | immediate operational state: in progress, waiting, next step, blocked | at every step | ~60 lines |
+| 1 | `docs/TODO.md` | immediate operational state: in progress, waiting, next step, blocked | at every step | ~120 lines, indicative |
 | 2 | `docs/status.md` | closed decisions, measured results, hypotheses confirmed or refuted, intentional removals | when a task closes | telegraphic entry |
 | 3 | `CLAUDE.md § Current state` | the project's picture (it sits **outside the kernel region**: updating it must not produce drift) | only if the picture changes | ~25 lines |
 | 4 | persistent memory | facts between sessions: user directives, preferences, structural decisions, mistakes that would repeat | at every discovery or structural change | 1 fact per file |
@@ -16,7 +16,7 @@ The state is written **exclusively by the coordinator**: whoever writes it must 
 - **You add or tick off, you do not rewrite.** A box is ticked with the evidence next to it — the command run, `file:line`, the real outcome. Without it, it stays open.
 - **Safe pause:** close the step in progress or go back, never halfway through a change; no irreversible action in order to stop; what is only on disk becomes a `wip:` commit that says in one line whether the tree is broken. Level 1 receives where we are, what is verified and the first action on resuming — written for whoever restarts cold, not for whoever was here.
 - **Pickup:** the trail left behind is authoritative input: it is read, not redone. Re-verifying from scratch what level 2 records as closed is work paid twice; you verify what you are about to act on.
-- **Compression at the ceiling:** once the ceiling is reached you compress before adding; the long trace goes down a level, it does not inflate the current one.
+- **Compression at the ceiling:** past the ceiling you compress at task end, not before adding; the long trace goes down a level, it does not inflate the current one.
 - **Session start:** level 1 first, always. **Task end:** level 1 always; level 2 if something closed; level 3 if the picture changes.
 - **Long or asynchronous operations:** as soon as something starts that the user has to launch or wait for, the line goes into *Waiting* on level 1, with what they must report back.
 - **Zero duplication:** TODO = operational | `status.md` = results | `CLAUDE.md` = picture | memory = what survives the session.

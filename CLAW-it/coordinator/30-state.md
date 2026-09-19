@@ -4,7 +4,7 @@ Lo stato lo scrive **esclusivamente il coordinatore**: chi lo scrive deve aver v
 
 | Liv. | File | Contenuto | Aggiornamento | Tetto |
 |---|---|---|---|---|
-| 1 | `docs/TODO.md` | stato operativo immediato: in corso, in attesa, prossimo passo, bloccati | a ogni step | ~60 righe |
+| 1 | `docs/TODO.md` | stato operativo immediato: in corso, in attesa, prossimo passo, bloccati | a ogni step | ~120 righe, indicativo |
 | 2 | `docs/status.md` | decisioni chiuse, risultati misurati, ipotesi confermate o smentite, rimozioni intenzionali | quando un task si chiude | voce telegrafica |
 | 3 | `CLAUDE.md § Stato attuale` | il quadro del progetto (sta **fuori dalla regione kernel**: aggiornarlo non deve produrre drift) | solo se cambia il quadro | ~25 righe |
 | 4 | memoria persistente | fatti fra sessioni: direttive dell'utente, preferenze, decisioni strutturali, errori che si ripeterebbero | a ogni scoperta o cambio strutturale | 1 fatto per file |
@@ -16,7 +16,7 @@ Lo stato lo scrive **esclusivamente il coordinatore**: chi lo scrive deve aver v
 - **Si aggiunge o si spunta, non si riscrive.** Una casella si spunta con l'evidenza accanto — il comando eseguito, `file:riga`, l'esito reale. Senza, resta aperta.
 - **Pausa sicura:** si chiude il passo in corso o si torna indietro, mai a metà modifica; nessuna azione irreversibile per fermarsi; ciò che è solo sul disco diventa un commit `wip:` che dichiara in una riga se l'albero è rotto. Il livello 1 riceve dove siamo, cosa è verificato e la prima azione alla ripresa — scritto per chi riparte a freddo, non per chi era qui.
 - **Ripresa:** la traccia lasciata è input autorevole: si legge, non si rifà. Ri-verificare da zero ciò che il livello 2 dà per chiuso è lavoro pagato due volte; si verifica ciò su cui si sta per agire.
-- **Compressione al tetto:** raggiunto il tetto si comprime prima di aggiungere; la traccia lunga scende di livello, non gonfia quello corrente.
+- **Compressione al tetto:** oltre il tetto si comprime a fine task, non prima di aggiungere; la traccia lunga scende di livello, non gonfia quello corrente.
 - **Inizio sessione:** livello 1 per primo, sempre. **Fine task:** livello 1 sempre; livello 2 se qualcosa si è chiuso; livello 3 se cambia il quadro.
 - **Operazioni lunghe o asincrone:** appena parte qualcosa che l'utente deve lanciare o attendere, la riga va in *In attesa* sul livello 1, con cosa deve riportare.
 - **Zero duplicazione:** TODO = operativo | `status.md` = risultati | `CLAUDE.md` = quadro | memoria = ciò che sopravvive alla sessione.
