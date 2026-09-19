@@ -464,6 +464,6 @@ Every command that writes shows its plan first and waits for your ok.
 
 ---
 
-## Version 1.5.5
+## Version 1.5.6
 
 MIT — see [LICENSE](LICENSE).
