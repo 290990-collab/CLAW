@@ -16,7 +16,7 @@ profiles/            7 profiles: domain → roster, guides, cycles, permissions
 templates/           the state files, generated empty but structured
 output-styles/       reporting.md: how to answer the user, aliases and rule names — main conversation only
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
-skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
+skills/              claw-install · claw-doctor · claw-sync · claw-memory · claw-comply · claw-fair
                      plus the packages connected with `fwbuild skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
@@ -47,7 +47,7 @@ flags `COORDINATOR_LEAK` if the boundary gets lost again.
 ## Installation
 
 Claude Code looks for skills in `.claude/skills/` or in `~/.claude/skills/`,
-not in here: until `framework-install` is in one of the two, it does not exist.
+not in here: until `claw-install` is in one of the two, it does not exist.
 It is the only friction, and it is paid **once**, not per project.
 
 **Single master** — recommended: one source on the machine, personal skill.
@@ -58,25 +58,25 @@ The repository carries **two sources**, one per language:
 ```bash
 git clone <repo> ~/.claude/CLAW
 cp -r ~/.claude/CLAW/CLAW-eng ~/.claude/framework
-cp -r ~/.claude/framework/skills/framework-install ~/.claude/skills/
-cp -r ~/.claude/framework/skills/framework-comply ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-install ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-comply ~/.claude/skills/
 ```
 
 ```powershell
 git clone <repo> $HOME\.claude\CLAW
 Copy-Item -Recurse $HOME\.claude\CLAW\CLAW-eng $HOME\.claude\framework
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-install $HOME\.claude\skills\
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-comply $HOME\.claude\skills\
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-install $HOME\.claude\skills\
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-comply $HOME\.claude\skills\
 ```
 
 The destination is named `framework/` because that is one of the three places
 Step 0 looks in; to leave it where it is, point at it with `$CLAUDE_FRAMEWORK`.
 
 **Copied into the project** — this folder, renamed `framework/`, in the
-project root, plus `cp -r framework/skills/framework-* .claude/skills/`. Step 0
+project root, plus `cp -r framework/skills/claw-* .claude/skills/`. Step 0
 finds it first.
 
-From then on, every new project is **only** `/framework-install`: Step 0
+From then on, every new project is **only** `/claw-install`: Step 0
 validates the source before writing anything, Step 6 checks the result with
 `doctor --strict`. To check a candidate source by hand:
 
@@ -115,8 +115,8 @@ every agent, the method lives inside a delimited region:
 ```
 
 It is not locked: you can modify it. The hash stops matching and
-`framework-doctor` tells you, so a change to the method becomes **visible**
-instead of buried. From there `framework-sync` carries it up into the source —
+`claw-doctor` tells you, so a change to the method becomes **visible**
+instead of buried. From there `claw-sync` carries it up into the source —
 and that is the direction whose absence makes the method diverge between
 projects.
 
@@ -125,7 +125,7 @@ configuration, not drift.
 
 **Guides and the response style have no region.** The text belongs to the
 framework, the last section — the `[TO FILL IN]` block — to the project.
-`framework-sync --down` takes the new text from the source and keeps that block
+`claw-sync --down` takes the new text from the source and keeps that block
 as it is; if the block's heading is gone, the file is left untouched and the
 plan names it, to be updated by hand. That is why in a guide the placeholder
 sits **only** in the last section: a test checks it.
@@ -135,7 +135,7 @@ sits **only** in the last section: a test checks it.
 - **The method is not customised per project.** You fill in the context (the
   `[TO FILL IN]` blocks), you do not rewrite the method. If a change to the
   method is right, it is right for everyone: it goes up into the source with
-  `framework-sync`.
+  `claw-sync`.
 - **Only the active is installed.** An agent not chosen is not deleted, it is
   not yet installed: the master stays here and `--activate` takes it up to
   date.

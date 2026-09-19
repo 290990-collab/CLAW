@@ -1,5 +1,5 @@
 ---
-name: framework-doctor
+name: claw-doctor
 description: >
   Checks the integrity of a framework installation: unfilled placeholders, a
   roster inconsistent with the routing table, missing guides, drift of the
@@ -15,7 +15,7 @@ cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
 
 `<PRJ>` is the project root. `<FW>` is the `source` field of `.claude/framework.json` (if the file is missing, `./framework/`): it may be **relative to the project root**, and `source.dereference(<PRJ>, source)` resolves it.
 
-`fwbuild` has **five** subcommands — `doctor`, `source`, `cost`, `report`, `skills`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `framework-sync`, they are not shell flags.
+`fwbuild` has **five** subcommands — `doctor`, `source`, `cost`, `report`, `skills`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `claw-sync`, they are not shell flags.
 
 - Complete installation → `OK — no findings`.
 - **Always use `--strict`**, in CI and by hand: without it the exit code is 0 even with warnings.
@@ -34,13 +34,13 @@ A `[TO FILL IN — …]` block left unfilled: the agent reading it receives inst
 
 An agent is in the routing table of `.claude/shared/orchestration.md` (or of `CLAUDE.md`, if that guide is absent) but the file does not exist in `.claude/agents/`: the coordinator will delegate to something that is not there.
 
-**What to do:** install the agent (`framework-sync --activate <name>`, which takes the current version from the master) or remove the row from the table.
+**What to do:** install the agent (`claw-sync --activate <name>`, which takes the current version from the master) or remove the row from the table.
 
 ### `ROSTER_ORPHAN` — WARNING
 
 The agent's file exists but is not in the table: it costs context in every session and will never be chosen.
 
-**What to do:** add it to the table or deactivate it (`framework-sync --deactivate <name>`). No exceptions: either the agent is superfluous, or the table is incomplete.
+**What to do:** add it to the table or deactivate it (`claw-sync --deactivate <name>`). No exceptions: either the agent is superfluous, or the table is incomplete.
 
 ### `SHARED_MISSING` — ERROR
 
@@ -70,7 +70,7 @@ A guide installed in `.claude/shared/` that no file cites: context carried aroun
 
 The kernel region's markers have disappeared from a file that has one by construction — `CLAUDE.md`, `orchestration.md`, an agent. **More serious than drift:** without markers the check disappears, and a method rewritten by hand becomes indistinguishable from the generated one. It does not trigger if **no** tracked file has markers: that is the installation without tracking, and it is a choice.
 
-**What to do:** reassemble with `framework-sync --down`, after comparing the current content with the source — inside there may be a change worth promoting.
+**What to do:** reassemble with `claw-sync --down`, after comparing the current content with the source — inside there may be a change worth promoting.
 
 ### `KERNEL_DRIFT` — WARNING, and it is not an error
 
@@ -80,7 +80,7 @@ The kernel region was modified by hand. **This is information, not a fault:** th
 
 > "You modified the method in `<file>`. Is it an improvement that holds for all projects — so I promote it into the source — or is it a derogation specific to this project?"
 
-- **Improvement** → `framework-sync --up`: it goes up into the source, increments the version, the next project is born with it inside.
+- **Improvement** → `claw-sync --up`: it goes up into the source, increments the version, the next project is born with it inside.
 - **Local derogation** → it is noted in the project, so the next person to read the finding knows it is deliberate.
 
 Never "correct" a drift by overwriting it before having asked that question: you would throw away a change someone had a reason to make.
@@ -89,7 +89,7 @@ Never "correct" a drift by overwriting it before having asked that question: you
 
 The kernel regions do not all declare the same version, or the project is on a different version from the source. **No other finding sees it:** on an old method the hash matches, because it matches the old one. It is the fork between projects, the defect the framework exists to avoid.
 
-**What to do:** `framework-sync --down` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `--activate`, which takes the current master: it is closed with the same `--down`.
+**What to do:** `claw-sync --down` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `--activate`, which takes the current master: it is closed with the same `--down`.
 
 ### `SETTINGS_MISSING` — WARNING
 
@@ -101,7 +101,7 @@ The kernel regions do not all declare the same version, or the project is on a d
 
 ### `SKILLS_MISSING` — WARNING
 
-`framework-doctor`, `framework-sync` or `framework-memory` are not in `.claude/skills/`: they exist in the source but are not invocable here. Nobody notices until they are needed, that is, when something has already gone wrong.
+`claw-doctor`, `claw-sync`, `claw-memory` or `claw-fair` are not in `.claude/skills/`: they exist in the source but are not invocable here. Nobody notices until they are needed, that is, when something has already gone wrong.
 
 **What to do:** copy them from `<FW>/skills/`. No adaptation: they are framework files, copied verbatim.
 
@@ -113,7 +113,7 @@ One of `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md` is missing.
 
 ### `MANIFEST_MISSING` — ERROR if the file is missing, WARNING if incomplete
 
-`.claude/framework.json` absent, unreadable, or missing one of `source`, `version`, `profile`. It is the file that ties an installation to its source: without it `framework-sync` does not know where to update from, and `fwbuild report` does not even count the project — it disappears from the fleet report instead of showing up in it as broken.
+`.claude/framework.json` absent, unreadable, or missing one of `source`, `version`, `profile`. It is the file that ties an installation to its source: without it `claw-sync` does not know where to update from, and `fwbuild report` does not even count the project — it disappears from the fleet report instead of showing up in it as broken.
 
 **What to do:** rewrite it with `source.manifest(<PRJ>, <FW>, version, profile)`. The profile is the one chosen at Step 3; if nobody remembers it, deduce it from the installed agents and guides, and write it down **before** needing it again.
 
@@ -149,7 +149,7 @@ To turn it into a figure: `python -m fwbuild cost <PRJ> --spawns N --devs N`.
 
 The installed report schema still carries confidence as a percentage: previous format, fake precision in the field the coordinator reads first, while a model's self-reported confidence is poorly calibrated. No other finding sees it: the hash matches that very text, and the declared version is the one the project was born with.
 
-**What to do:** `framework-sync --down`. The current format is categorical and carries the falsifier (`REFUTE`) with it, which is what makes a judgement without numbers readable.
+**What to do:** `claw-sync --down`. The current format is categorical and carries the falsifier (`REFUTE`) with it, which is what makes a judgement without numbers readable.
 
 ### `UNSAFE_UNICODE` — WARNING
 
@@ -186,7 +186,7 @@ The key is the code, or `code:fragment` to limit it to one file. The value is th
 
 **Errors cannot be accepted.** A warning is a judgement, and on a judgement a project may be right against the default; an error is an installation that does not work, and an unfilled placeholder stays unfilled even if somebody writes that it is fine.
 
-Before adding a row here, the question is the drift one: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is `framework-sync --up`, not `accepted`.
+Before adding a row here, the question is the drift one: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is `claw-sync --up`, not `accepted`.
 
 ## Several projects at once
 

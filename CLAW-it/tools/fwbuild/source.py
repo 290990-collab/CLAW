@@ -76,7 +76,7 @@ def dereference(project_root: Path, recorded: str) -> Path:
     """L'inverso: il `source` letto da `framework.json` come percorso reale.
 
     Un relativo si scioglie contro la root del progetto, non contro la
-    directory di lavoro: `framework-doctor` e `framework-sync` girano da
+    directory di lavoro: `claw-doctor` e `claw-sync` girano da
     `<FW>/tools`, non da `<PRJ>`.
     """
     p = Path(recorded)
@@ -127,7 +127,7 @@ def read_manifest(project_root: Path) -> dict | None:
     """Il manifesto letto, o `None` se assente o illeggibile.
 
     Le due cose non si distinguono qui apposta: per chi legge il progetto sono
-    lo stesso guasto — `framework-sync` non trova il sorgente — e il doctor le
+    lo stesso guasto — `claw-sync` non trova il sorgente — e il doctor le
     riporta con lo stesso codice.
     """
     try:

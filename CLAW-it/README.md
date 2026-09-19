@@ -16,7 +16,7 @@ profiles/            7 profili: dominio → roster, guide, cicli, permessi
 templates/           i file di stato, generati vuoti ma strutturati
 output-styles/       reporting.md: come si risponde all'utente, alias e nomi delle regole — solo conversazione principale
 hooks/               config_protection · block_no_verify (chiusi) · gateguard (aperto) → .claude/hooks/
-skills/              framework-install · framework-doctor · framework-sync · framework-memory · framework-comply
+skills/              claw-install · claw-doctor · claw-sync · claw-memory · claw-comply · claw-fair
                      più i pacchetti collegati con `fwbuild skills add` e pool.toml: locali, mai pubblicati
 tools/fwbuild/       assemblaggio, hash, verifiche — Python stdlib puro
 tools/trial_install.py  la prova: installa un progetto finto, che il doctor verifica
@@ -47,7 +47,7 @@ doctor segnala con `COORDINATOR_LEAK` se il confine si riperde.
 ## Installazione
 
 Claude Code cerca le skill in `.claude/skills/` o in `~/.claude/skills/`, non
-qui dentro: finché `framework-install` non sta in una delle due, non esiste. È
+qui dentro: finché `claw-install` non sta in una delle due, non esiste. È
 l'unico attrito, e si paga **una volta**, non a ogni progetto.
 
 **Master unico** — consigliato: un sorgente solo sulla macchina, skill personale.
@@ -58,25 +58,25 @@ Il repository porta **due sorgenti**, uno per lingua: `CLAW-it/` e
 ```bash
 git clone <repo> ~/.claude/CLAW
 cp -r ~/.claude/CLAW/CLAW-it ~/.claude/framework
-cp -r ~/.claude/framework/skills/framework-install ~/.claude/skills/
-cp -r ~/.claude/framework/skills/framework-comply ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-install ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-comply ~/.claude/skills/
 ```
 
 ```powershell
 git clone <repo> $HOME\.claude\CLAW
 Copy-Item -Recurse $HOME\.claude\CLAW\CLAW-it $HOME\.claude\framework
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-install $HOME\.claude\skills\
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-comply $HOME\.claude\skills\
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-install $HOME\.claude\skills\
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-comply $HOME\.claude\skills\
 ```
 
 La destinazione si chiama `framework/` perché è uno dei tre posti in cui il
 Passo 0 guarda; per lasciarla dov'è, la si indica con `$CLAUDE_FRAMEWORK`.
 
 **Copiato nel progetto** — questa cartella, rinominata `framework/`, nella root
-del progetto, più `cp -r framework/skills/framework-* .claude/skills/`. Il
+del progetto, più `cp -r framework/skills/claw-* .claude/skills/`. Il
 Passo 0 la trova per prima.
 
-Da lì in poi, ogni progetto nuovo è **solo** `/framework-install`: il Passo 0
+Da lì in poi, ogni progetto nuovo è **solo** `/claw-install`: il Passo 0
 valida il sorgente prima di scrivere qualunque cosa, il Passo 6 verifica il
 risultato con `doctor --strict`. Per controllare a mano che un candidato sia
 valido:
@@ -114,16 +114,16 @@ agente, il metodo vive dentro una regione delimitata:
 <!-- /FRAMEWORK:KERNEL -->
 ```
 
-Non è bloccata: puoi modificarla. L'hash smette di tornare e `framework-doctor`
+Non è bloccata: puoi modificarla. L'hash smette di tornare e `claw-doctor`
 te lo dice, così una modifica al metodo diventa **visibile** invece che sepolta.
-Da lì `framework-sync` la porta su nel sorgente — ed è la direzione che, mancando,
+Da lì `claw-sync` la porta su nel sorgente — ed è la direzione che, mancando,
 fa divergere il metodo fra progetti.
 
 Il frontmatter degli agenti resta **fuori** dalla regione: cambiare `model:` è
 configurazione, non drift.
 
 **Guide e stile di risposta non hanno regione.** Il testo è del framework,
-l'ultima sezione — il blocco `[DA COMPILARE]` — è del progetto. `framework-sync
+l'ultima sezione — il blocco `[DA COMPILARE]` — è del progetto. `claw-sync
 --down` prende il testo nuovo dal sorgente e tiene quel blocco com'è; se
 l'intestazione del blocco non c'è più, il file resta intatto e il piano lo
 nomina, da aggiornare a mano. Per questo in una guida il segnaposto sta
@@ -133,7 +133,7 @@ nomina, da aggiornare a mano. Per questo in una guida il segnaposto sta
 
 - **Il metodo non si personalizza per progetto.** Si compila il contesto (i
   blocchi `[DA COMPILARE]`), non si riscrive il metodo. Se una modifica al metodo
-  è giusta, è giusta per tutti: sale nel sorgente con `framework-sync`.
+  è giusta, è giusta per tutti: sale nel sorgente con `claw-sync`.
 - **Si installa solo l'attivo.** Un agente non scelto non è cancellato, è non
   ancora installato: il master resta qui e `--activate` lo prende aggiornato.
 - **Contenuto non universale → `shared/`**, dietro un pointer. `CLAUDE.md` è

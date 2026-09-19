@@ -139,11 +139,11 @@ class TestDoctor(unittest.TestCase):
             self.assertIn("FABLE", codes(doctor.check(make_project(d, fable=True))))
 
     def test_skills_are_not_scanned_for_placeholders(self):
-        """framework-doctor spiega il rilievo PLACEHOLDER e contiene per forza
+        """claw-doctor spiega il rilievo PLACEHOLDER e contiene per forza
         quella stringa: scansionarlo produrrebbe un falso positivo a ogni run."""
         with tempfile.TemporaryDirectory() as d:
             root = make_project(d)
-            (root / ".claude" / "skills" / "framework-doctor" / "SKILL.md").write_text(
+            (root / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_text(
                 "Il rilievo `PLACEHOLDER` segnala un `[DA COMPILARE]` residuo.\n",
                 encoding="utf-8",
             )
@@ -260,7 +260,7 @@ class TestDoctor(unittest.TestCase):
             self.assertNotIn("SHARED_ORPHAN", codes(doctor.check(p)))
 
     def test_detects_missing_manifest(self):
-        """Senza `framework.json` `framework-sync` non ritrova il sorgente e il
+        """Senza `framework.json` `claw-sync` non ritrova il sorgente e il
         rapporto di flotta non conta il progetto: non è un'installazione pulita."""
         with tempfile.TemporaryDirectory() as d:
             found = doctor.check(make_project(d, manifest=False))
@@ -450,8 +450,8 @@ class TestDoctor(unittest.TestCase):
             hooks = p / ".claude" / "hooks"
             hooks.mkdir()
             (hooks / "mio.py").write_bytes(b"# citt\xe0\n")
-            (p / ".claude" / "skills" / "framework-doctor" / "SKILL.md").write_bytes(
-                b"name: framework-doctor\ncitt\xe0 " + home + b"\n"
+            (p / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_bytes(
+                b"name: claw-doctor\ncitt\xe0 " + home + b"\n"
             )
             self.assertEqual(codes(doctor.check(p)), {"PERSONAL_PATH"})
 

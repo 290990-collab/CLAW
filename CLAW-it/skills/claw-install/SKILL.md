@@ -1,10 +1,10 @@
 ---
-name: framework-install
+name: claw-install
 description: >
   Installa e adatta il framework in un progetto: rileva se il progetto è vuoto o
   ha già del codice, fa il questionario, sceglie il roster di agenti, genera
   CLAUDE.md, gli agenti attivi, le guide e i file di stato, e verifica il
-  risultato. Da usare una volta per progetto: `/framework-install`.
+  risultato. Da usare una volta per progetto: `/claw-install`.
 ---
 
 # Installazione e adattamento del framework
@@ -141,7 +141,7 @@ Due revisori solo se il progetto ha davvero due superfici critiche distinte.
 
 Nella stessa domanda, **`gateguard` sì o no**: nega il primo tocco di ogni file in una sessione finché non si presentano i fatti — chi lo importa, cosa cambia di pubblico — ed è un turno in più per file; `FRAMEWORK_GATEGUARD=off` lo spegne. Gli altri hook di `settings.HOOKS` si installano sempre.
 
-**5. Orchestrazione** → un file di `<FW>/orchestrations/`, **uno** per progetto. Proponi `assemble.DEFAULT_ORCHESTRATION`; nomina come utili per il campo quelle di `recommended_orchestrations` del profilo, col punto **Quando** del loro modulo, e le altre come disponibili. `agent-teams` è sperimentale e vuole una sessione interattiva: dillo prima della scelta. Si cambia dopo con `framework-sync` (§ Cambio di orchestrazione).
+**5. Orchestrazione** → un file di `<FW>/orchestrations/`, **uno** per progetto. Proponi `assemble.DEFAULT_ORCHESTRATION`; nomina come utili per il campo quelle di `recommended_orchestrations` del profilo, col punto **Quando** del loro modulo, e le altre come disponibili. `agent-teams` è sperimentale e vuole una sessione interattiva: dillo prima della scelta. Si cambia dopo con `claw-sync` (§ Cambio di orchestrazione).
 
 ### Condizionali — solo per ciò che il profilo non installa già
 
@@ -159,7 +159,7 @@ Vincoli normativi e requisiti di prestazione stanno nella **domanda 2**: sono su
 
 ## Passo 4 — Roster e installazione selettiva
 
-Si installa **solo l'attivo**. Il master resta in `<FW>/agents/`: un agente non scelto non è cancellato, è *non ancora installato*, e si aggiunge più tardi già aggiornato con `framework-sync --activate`. Motivo: nome e `description` di ogni file in `.claude/agents/` entrano nel contesto del coordinatore a ogni sessione.
+Si installa **solo l'attivo**. Il master resta in `<FW>/agents/`: un agente non scelto non è cancellato, è *non ancora installato*, e si aggiunge più tardi già aggiornato con `claw-sync --activate`. Motivo: nome e `description` di ogni file in `.claude/agents/` entrano nel contesto del coordinatore a ogni sessione.
 
 **Sei non si tolgono** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: sono il ciclo del codice, e `drop` li ignora di proposito. Tutti gli altri sono opzionali e si riprendono con `--activate`.
 
@@ -208,7 +208,7 @@ print(*(f'lascia      {o.path} — {o.reason}' for o in ops if o.action == 'lasc
 "
 ```
 
-`<HOOK>` è `settings.HOOKS`, senza `gateguard` se la domanda 4 ha detto no. `sovrascrive` e `fonde` si leggono per nome; `lascia` è materiale del progetto che resterà accanto al framework. `ValueError` su `framework.json` presente: il progetto è già installato → `framework-sync`.
+`<HOOK>` è `settings.HOOKS`, senza `gateguard` se la domanda 4 ha detto no. `sovrascrive` e `fonde` si leggono per nome; `lascia` è materiale del progetto che resterà accanto al framework. `ValueError` su `framework.json` presente: il progetto è già installato → `claw-sync`.
 
 - **`CLAUDE.md` che c'era già:** il suo contenuto è materiale di progetto. Le direttive tenute al Passo 2 vanno nelle sezioni di progetto, il resto (comandi, architettura, stato, vincoli) nella sezione che gli corrisponde. Solo allora si scrive il file nuovo, che ora contiene anche il vecchio. Ciò che non trova posto si chiede, non si butta.
 - **`docs/TODO.md`, `status.md`, `roadmap.md` che c'erano già:** si compila il template **col loro contenuto**, invece di copiarci sopra quello vuoto. Un TODO cancellato all'installazione è il primo file che il framework promette di far leggere a ogni sessione.
@@ -292,7 +292,7 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 **Guide** — copia da `<FW>/shared/` l'elenco di `profile.guides` del Passo 4, compilando anche lì il blocco di progetto. Un agente extra porta le sue: senza, la scheda esce con un pointer morto che il doctor vede solo a installazione già scritta (`SHARED_MISSING`).
 
-**Skill di ciclo di vita** — copia `<FW>/skills/framework-doctor`, `framework-sync` e `framework-memory` in `.claude/skills/`. Senza, non sono invocabili e il doctor lo segnala (`SKILLS_MISSING`).
+**Skill di ciclo di vita** — copia `<FW>/skills/claw-doctor`, `claw-sync`, `claw-memory` e `claw-fair` in `.claude/skills/`. Senza, non sono invocabili e il doctor lo segnala (`SKILLS_MISSING`).
 
 **Skill dei pacchetti collegati** — `skills.installed(F)` dice quali ci sono (vuoto è il caso normale). Si copiano **appiattite**, da `<FW>/skills/<pacchetto>/<skill>/` a `.claude/skills/<skill>/`: Claude Code non scopre una skill annidata più in basso. Con un pacchetto collegato va attivato anche `skill-runner`, l'unico agente che può invocarle.
 
@@ -311,7 +311,7 @@ merged, added, conflitti = settings.merge(<settings.json esistente, o {}>, fw_se
 
 `conflitti` si mostrano prima di scrivere `merged`. Porta `outputStyle`, cioè il nome dello stile appena copiato: senza, il file è installato e nessuno lo seleziona.
 
-**`.claude/framework.json`** — `source`, `version`, `profile`: è come le due skill ritrovano il sorgente, e l'unico posto in cui resta scritto **di cosa** è fatta l'installazione. Senza il profilo, «rigenera i permessi del profilo del progetto» non è eseguibile. `settings_added` è `added`: il solo pezzo di `settings.json` che `framework-sync --uninstall` potrà togliere. La forma **non la scrivi tu**: `source.manifest` rende il percorso relativo quando il sorgente sta dentro il progetto e assoluto solo quando sta fuori — un assoluto su un sorgente interno è la macchina di chi ha installato, e muore al primo clone.
+**`.claude/framework.json`** — `source`, `version`, `profile`: è come le due skill ritrovano il sorgente, e l'unico posto in cui resta scritto **di cosa** è fatta l'installazione. Senza il profilo, «rigenera i permessi del profilo del progetto» non è eseguibile. `settings_added` è `added`: il solo pezzo di `settings.json` che `claw-sync --uninstall` potrà togliere. La forma **non la scrivi tu**: `source.manifest` rende il percorso relativo quando il sorgente sta dentro il progetto e assoluto solo quando sta fuori — un assoluto su un sorgente interno è la macchina di chi ha installato, e muore al primo clone.
 
 ```python
 source.manifest(PRJ, FW, version, prof.name, settings_added=added, skills=skills.installed(FW))
@@ -319,7 +319,7 @@ source.manifest(PRJ, FW, version, prof.name, settings_added=added, skills=skills
 
 `skills` è `nome skill → pacchetto`: nel progetto le skill dei pacchetti stanno tutte a un livello, e senza questa riga il doctor non può dire quale pacchetto manca.
 
-Il campo `accepted` **non si scrive all'installazione**: nasce vuoto e lo aggiunge chi decide di convivere con un avviso (→ skill `framework-doctor`).
+Il campo `accepted` **non si scrive all'installazione**: nasce vuoto e lo aggiunge chi decide di convivere con un avviso (→ skill `claw-doctor`).
 
 **File di stato** — copia i tre template in `docs/` e compila **subito** ogni blocco `[DA COMPILARE — …]`: prima voce e primo passo in `TODO.md` con la data di oggi, primo obiettivo col suo criterio in `roadmap.md`. `status.md` nasce vuoto per costruzione — ci si scrive quando qualcosa si chiude. Le sezioni che possono restare vuote (in attesa, bloccati, decisioni aperte) non hanno segnaposto: portano già il testo giusto e si sostituisce quando ci sarà qualcosa. Va fatto qui: al Passo 6 un segnaposto residuo è un `PLACEHOLDER`, e `TODO.md` è il file che ogni sessione futura legge per primo.
 
@@ -331,4 +331,4 @@ Il campo `accepted` **non si scrive all'installazione**: nasce vuoto e lo aggiun
 cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
 ```
 
-Deve stampare `OK — nessun rilievo` e uscire con 0. `--strict` rende meccanica la regola: **finché resta un rilievo, di qualunque gravità, l'installazione non è completa.** Cosa significa ogni codice: skill `framework-doctor`.
+Deve stampare `OK — nessun rilievo` e uscire con 0. `--strict` rende meccanica la regola: **finché resta un rilievo, di qualunque gravità, l'installazione non è completa.** Cosa significa ogni codice: skill `claw-doctor`.

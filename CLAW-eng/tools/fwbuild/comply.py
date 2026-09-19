@@ -1,6 +1,6 @@
 """Reading the transcripts of `claude -p --output-format stream-json --verbose`.
 
-One JSON line per event. `framework-comply` takes the tool calls from them, in
+One JSON line per event. `claw-comply` takes the tool calls from them, in
 order, to label which steps of a rule were executed. The format belongs to the
 harness and changes with it: the test fixture is a real transcript, and an
 event without the expected shape is an error, not a skip — a step skipped in

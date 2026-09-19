@@ -2,7 +2,7 @@
 
 The file is the user's before it is the framework's: what the installation adds
 has to be recorded so it can be removed later, and nothing else is touched. It
-imports nothing from the package: the installation, `framework-sync` and the
+imports nothing from the package: the installation, `claw-sync` and the
 end-to-end trial use it, and none of them should drag the rest along to merge
 two dicts.
 """

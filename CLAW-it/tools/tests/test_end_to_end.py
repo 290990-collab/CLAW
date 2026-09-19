@@ -125,7 +125,7 @@ class TestRealFramework(unittest.TestCase):
         niente. Questo test è ciò che rende visibile il rinomino."""
         sources = (
             assemble.read_method(FRAMEWORK / "coordinator")
-            + (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+            + (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
                 encoding="utf-8"
             )
             + assemble.read_method(FRAMEWORK / "orchestrations")
@@ -256,7 +256,7 @@ class TestRealFramework(unittest.TestCase):
         """Fuori da ogni profilo, la domanda 2 è la loro **unica** via d'ingresso.
         Se una riga della tabella sparisce, l'agente resta in catalogo e non lo
         raggiunge più nessuno: installato mai, e nessun rilievo che lo dica."""
-        skill = (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = skill[skill.index("**2. Superficie critica**") : skill.index("**3. Base")]
@@ -268,7 +268,7 @@ class TestRealFramework(unittest.TestCase):
         scritta a mano: un profilo senza la sua riga non si
         può scegliere, e nessun rilievo lo vede — il difetto sta nella skill,
         prima che un'installazione esista."""
-        skill = (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = skill[
@@ -296,7 +296,7 @@ class TestRealFramework(unittest.TestCase):
         in piedi la riga che lo cita, e chi installa sceglie una risposta che non
         porta a nessun file. Il doctor qui non può aiutare: il difetto sta nella
         skill, prima che un'installazione esista."""
-        skill = (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = skill[skill.index("**2. Superficie critica**") : skill.index("**3. Base")]
@@ -314,7 +314,7 @@ class TestRealFramework(unittest.TestCase):
         progetto che aveva già istruzioni, la regola che lo impedisce vive solo
         nella prosa della skill — sparirebbe a una riscrittura, e il difetto si
         vedrebbe a file già persi, sulla macchina di chi installa."""
-        text = (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = text[
@@ -348,7 +348,7 @@ class TestRealFramework(unittest.TestCase):
         conflitto dichiarato senza la riga che lo smentisce diventa un allarme
         inventato che sopravvive alle sessioni. La colonna appaiata è l'unica
         cosa che lo impedisce, ed è prosa: sparirebbe a una riscrittura."""
-        text = (FRAMEWORK / "skills" / "framework-memory" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw-memory" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = text[text.index("## Passo 4") : text.index("## Passo 5")]
@@ -357,11 +357,12 @@ class TestRealFramework(unittest.TestCase):
 
     def test_every_skill_is_present_with_matching_name(self):
         for name in (
-            "framework-install",
-            "framework-doctor",
-            "framework-sync",
-            "framework-memory",
-            "framework-comply",
+            "claw-install",
+            "claw-doctor",
+            "claw-sync",
+            "claw-memory",
+            "claw-comply",
+            "claw-fair",
         ):
             p = FRAMEWORK / "skills" / name / "SKILL.md"
             self.assertTrue(p.is_file(), name)
@@ -377,7 +378,7 @@ class TestRealFramework(unittest.TestCase):
         Il drift copre solo cio' che ha una regione kernel: una guida nuova in
         `shared/` non ne ha, e senza la riga che la nomina resta invisibile
         proprio al caso piu' comune, l'aggiunta."""
-        text = (FRAMEWORK / "skills" / "framework-sync" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw-sync" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         blocco = text[text.index("## `--up") : text.index("## `--upgrade")]
@@ -636,7 +637,7 @@ class TestInstalledBudget(unittest.TestCase):
     def test_every_code_the_doctor_can_emit_is_documented(self):
         """Un rilievo senza una voce nella skill è un codice che chi lo riceve
         non sa cosa farne."""
-        skill = (FRAMEWORK / "skills" / "framework-doctor" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw-doctor" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         src = (FRAMEWORK / "tools" / "fwbuild" / "doctor.py").read_text(encoding="utf-8")
@@ -711,7 +712,7 @@ class TestProfilesAreDistinguishable(unittest.TestCase):
 
     def test_the_install_skill_starts_from_the_declared_surface(self):
         """Un campo che nessun passo legge è configurazione morta."""
-        text = (FRAMEWORK / "skills" / "framework-install" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("critical_surface", text)

@@ -2,7 +2,7 @@
 
 Il file è dell'utente prima che del framework: ciò che l'installazione aggiunge
 va registrato per poterlo togliere dopo, e nient'altro va toccato. Non importa
-nulla del pacchetto: lo usano l'installazione, `framework-sync` e la prova end
+nulla del pacchetto: lo usano l'installazione, `claw-sync` e la prova end
 to end, e nessuno di loro deve tirarsi dietro il resto per fondere due dict.
 """
 

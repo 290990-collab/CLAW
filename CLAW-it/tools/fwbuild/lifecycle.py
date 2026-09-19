@@ -104,7 +104,7 @@ def plan_install(project_root: Path, targets: Sequence[str]) -> list[Operation]:
     if (prj / MANIFEST).exists():
         raise ValueError(
             f"{MANIFEST} esiste già: il progetto è installato — "
-            "framework-sync --down o --repair, non una seconda installazione"
+            "claw-sync --down o --repair, non una seconda installazione"
         )
     mergeable = {CLAUDE_MD, SETTINGS} | {f"docs/{n}" for n in doctor.STATE_FILES}
     ops = []
@@ -202,7 +202,7 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
         if (prj / "docs" / name).is_file():
             ops.append(_op(prj, f"docs/{name}", KEEP, "stato del progetto"))
     ops.append(
-        _op(prj, MANIFEST, ARCHIVE, "per ultimo: finché c'è, framework-sync ritrova il sorgente")
+        _op(prj, MANIFEST, ARCHIVE, "per ultimo: finché c'è, claw-sync ritrova il sorgente")
     )
     return ops
 
@@ -283,7 +283,7 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
     if manifest.get("version") != version:
         raise ValueError(
             f"installazione a v{manifest.get('version')}, sorgente a v{version}: "
-            "prima framework-sync --down, poi --repair"
+            "prima claw-sync --down, poi --repair"
         )
     keep = (KEEP, "diverso dal sorgente: modifica locale, non si sovrascrive")
     ops = []

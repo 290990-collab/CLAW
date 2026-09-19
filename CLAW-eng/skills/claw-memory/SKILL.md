@@ -1,11 +1,11 @@
 ---
-name: framework-memory
+name: claw-memory
 description: >
   Shows what is in the project's persistent memory and what no longer holds:
   lists the facts, pairs them with the state of the repository and with the
   framework's rules, and proposes what to correct, mark as superseded or
   delete. To be used at the start of a long session, after a structural change,
-  or when a memory looks old: `/framework-memory`.
+  or when a memory looks old: `/claw-memory`.
 ---
 
 # Persistent memory — what it says, and what contradicts it

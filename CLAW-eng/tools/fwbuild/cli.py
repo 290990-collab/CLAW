@@ -161,7 +161,7 @@ def _skills(args) -> int:
     """`skills list | add | remove`: the socket other people's skills plug into.
 
     It writes into the **source**, not into the projects: installations receive
-    the packages at the next pass of `framework-sync`, like every other
+    the packages at the next pass of `claw-sync`, like every other
     framework file. Saying it here avoids believing that an `add` has already
     changed something in the projects that are open.
     """
@@ -184,12 +184,12 @@ def _skills(args) -> int:
                 f"outside the pool: invocable by you, not by the coordinator. "
                 f"To put them in the pool: skills/{skills.POOL_FILE}"
             )
-            print("they reach projects with framework-sync --down or --repair")
+            print("they reach projects with claw-sync --down or --repair")
             return 0
         if args.skills_command == "remove":
             gone = skills.remove(root, args.package)
             print(f"{args.package} disconnected: {', '.join(gone) or 'no skill'}")
-            print("in projects it stays until you run framework-sync --uninstall or --down")
+            print("in projects it stays until you run claw-sync --uninstall or --down")
             return 0
         in_pool = set(skills.pool(root))
         packages = skills.packages(root)
@@ -336,6 +336,6 @@ def _print_survey(s) -> None:
     )
     if s.behind:
         print(
-            "To realign with framework-sync --down: "
+            "To realign with claw-sync --down: "
             + ", ".join(sorted(p.name for p in s.behind))
         )

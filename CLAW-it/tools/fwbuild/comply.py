@@ -1,6 +1,6 @@
 """Leggere le trascrizioni di `claude -p --output-format stream-json --verbose`.
 
-Una riga JSON per evento. `framework-comply` ne prende le chiamate agli
+Una riga JSON per evento. `claw-comply` ne prende le chiamate agli
 strumenti, in ordine, per etichettare quali passi di una regola sono stati
 eseguiti. Il formato è dell'harness e cambia con lui: la fixture dei test è una
 trascrizione vera, e un evento che non ha la forma attesa è un errore, non un

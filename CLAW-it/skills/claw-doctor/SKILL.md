@@ -1,5 +1,5 @@
 ---
-name: framework-doctor
+name: claw-doctor
 description: >
   Verifica l'integrità di un'installazione del framework: segnaposto non
   compilati, roster incoerente con la tabella di routing, guide mancanti, drift
@@ -15,7 +15,7 @@ cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
 
 `<PRJ>` è la root del progetto. `<FW>` è il campo `source` di `.claude/framework.json` (se il file manca, `./framework/`): può essere **relativo alla root del progetto**, e `source.dereference(<PRJ>, source)` lo scioglie.
 
-I sottocomandi di `fwbuild` sono **cinque** — `doctor`, `source`, `cost`, `report`, `skills`. Le modalità `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` appartengono a `framework-sync`, non sono flag da shell.
+I sottocomandi di `fwbuild` sono **cinque** — `doctor`, `source`, `cost`, `report`, `skills`. Le modalità `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` appartengono a `claw-sync`, non sono flag da shell.
 
 - Installazione completa → `OK — nessun rilievo`.
 - **Usa sempre `--strict`**, in CI e a mano: senza, l'uscita è 0 anche con avvisi.
@@ -34,13 +34,13 @@ Un blocco `[DA COMPILARE — …]` non compilato: l'agente che lo legge riceve i
 
 Un agente è nella tabella di routing di `.claude/shared/orchestration.md` (o di `CLAUDE.md`, se quella guida non c'è) ma il file non esiste in `.claude/agents/`: il coordinatore delegherà a qualcosa che non c'è.
 
-**Cosa fare:** installa l'agente (`framework-sync --activate <nome>`, che prende la versione corrente dal master) o togli la riga dalla tabella.
+**Cosa fare:** installa l'agente (`claw-sync --activate <nome>`, che prende la versione corrente dal master) o togli la riga dalla tabella.
 
 ### `ROSTER_ORPHAN` — AVVISO
 
 Il file dell'agente esiste ma non è in tabella: costa contesto a ogni sessione e non verrà mai scelto.
 
-**Cosa fare:** aggiungilo alla tabella o disattivalo (`framework-sync --deactivate <nome>`). Nessuna eccezione: o l'agente è di troppo, o la tabella è incompleta.
+**Cosa fare:** aggiungilo alla tabella o disattivalo (`claw-sync --deactivate <nome>`). Nessuna eccezione: o l'agente è di troppo, o la tabella è incompleta.
 
 ### `SHARED_MISSING` — ERRORE
 
@@ -70,7 +70,7 @@ Guida installata in `.claude/shared/` che nessun file cita: contesto portato die
 
 I marker della regione kernel sono spariti da un file che ne ha una per costruzione — `CLAUDE.md`, `orchestration.md`, un agente. **Più grave di un drift:** senza marker sparisce il controllo, e il metodo riscritto a mano diventa indistinguibile da quello generato. Non scatta se **nessun** file tracciato ha marker: quella è l'installazione senza tracking, ed è una scelta.
 
-**Cosa fare:** riassembla con `framework-sync --down`, dopo aver confrontato il contenuto attuale col sorgente — dentro potrebbe esserci una modifica da promuovere.
+**Cosa fare:** riassembla con `claw-sync --down`, dopo aver confrontato il contenuto attuale col sorgente — dentro potrebbe esserci una modifica da promuovere.
 
 ### `KERNEL_DRIFT` — AVVISO, e non è un errore
 
@@ -80,7 +80,7 @@ La regione kernel è stata modificata a mano. **È informazione, non un guasto:*
 
 > «Hai modificato il metodo in `<file>`. È un miglioramento che vale per tutti i progetti — quindi lo promuovo nel sorgente — o è una deroga specifica di questo progetto?»
 
-- **Miglioramento** → `framework-sync --up`: risale nel sorgente, incrementa la versione, il prossimo progetto nasce con dentro.
+- **Miglioramento** → `claw-sync --up`: risale nel sorgente, incrementa la versione, il prossimo progetto nasce con dentro.
 - **Deroga locale** → si annota nel progetto, perché il prossimo che legge il rilievo sappia che è voluta.
 
 Non «correggere» mai un drift riscrivendoci sopra prima di aver posto quella domanda: butteresti via una modifica che qualcuno aveva ragione di fare.
@@ -89,7 +89,7 @@ Non «correggere» mai un drift riscrivendoci sopra prima di aver posto quella d
 
 Le regioni kernel non dichiarano tutte la stessa versione, oppure il progetto è a una versione diversa dal sorgente. **Nessun altro rilievo lo vede:** su un metodo vecchio l'hash torna, perché torna su quello vecchio. È la biforcazione fra progetti, il difetto che il framework esiste per evitare.
 
-**Cosa fare:** `framework-sync --down` su **entrambi** i documenti versionati e su ogni agente installato. Uno scarto fra un singolo agente e il resto è normale subito dopo un `--activate`, che prende il master corrente: si chiude con lo stesso `--down`.
+**Cosa fare:** `claw-sync --down` su **entrambi** i documenti versionati e su ogni agente installato. Uno scarto fra un singolo agente e il resto è normale subito dopo un `--activate`, che prende il master corrente: si chiude con lo stesso `--down`.
 
 ### `SETTINGS_MISSING` — AVVISO
 
@@ -101,7 +101,7 @@ Manca `.claude/settings.json` con agenti installati. È il file che porta i perm
 
 ### `SKILLS_MISSING` — AVVISO
 
-`framework-doctor`, `framework-sync` o `framework-memory` non sono in `.claude/skills/`: esistono nel sorgente ma non sono invocabili qui. Nessuno se ne accorge finché non servono, cioè quando qualcosa è già andato storto.
+`claw-doctor`, `claw-sync`, `claw-memory` o `claw-fair` non sono in `.claude/skills/`: esistono nel sorgente ma non sono invocabili qui. Nessuno se ne accorge finché non servono, cioè quando qualcosa è già andato storto.
 
 **Cosa fare:** copiale da `<FW>/skills/`. Non si adattano: sono file di framework, si copiano alla lettera.
 
@@ -113,7 +113,7 @@ Manca uno fra `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md`.
 
 ### `MANIFEST_MISSING` — ERRORE se il file manca, AVVISO se è incompleto
 
-`.claude/framework.json` assente, illeggibile, o senza uno fra `source`, `version`, `profile`. È il file che collega un'installazione al suo sorgente: senza, `framework-sync` non sa da dove aggiornare e `fwbuild report` non conta nemmeno il progetto — sparisce dal rapporto di flotta invece di comparirci come rotto.
+`.claude/framework.json` assente, illeggibile, o senza uno fra `source`, `version`, `profile`. È il file che collega un'installazione al suo sorgente: senza, `claw-sync` non sa da dove aggiornare e `fwbuild report` non conta nemmeno il progetto — sparisce dal rapporto di flotta invece di comparirci come rotto.
 
 **Cosa fare:** riscrivilo con `source.manifest(<PRJ>, <FW>, versione, profilo)`. Il profilo è quello scelto al Passo 3; se nessuno lo ricorda si deduce dagli agenti installati e dalle guide, e si scrive **prima** di averne di nuovo bisogno.
 
@@ -149,7 +149,7 @@ Per tradurlo in una cifra: `python -m fwbuild cost <PRJ> --spawns N --devs N`.
 
 Lo schema del report installato porta ancora la confidenza come percentuale: formato precedente, precisione finta nel campo che il coordinatore legge per primo, mentre la confidenza auto-riportata da un modello è mal calibrata. Nessun altro rilievo lo vede: l'hash torna su quel testo lì, e la versione dichiarata è quella con cui il progetto è nato.
 
-**Cosa fare:** `framework-sync --down`. Il formato attuale è categorico e porta con sé il falsificatore (`SMENTIRE`), che è ciò che rende leggibile un giudizio senza numeri.
+**Cosa fare:** `claw-sync --down`. Il formato attuale è categorico e porta con sé il falsificatore (`SMENTIRE`), che è ciò che rende leggibile un giudizio senza numeri.
 
 ### `UNSAFE_UNICODE` — AVVISO
 
@@ -186,7 +186,7 @@ La chiave è il codice, o `codice:frammento` per limitarla a un file. Il valore 
 
 **Gli ERROR non si accettano.** Un avviso è un giudizio, e su un giudizio un progetto può avere ragione contro il default; un errore è un'installazione che non funziona, e un segnaposto non compilato resta non compilato anche se qualcuno scrive che gli va bene.
 
-Prima di aggiungere una riga qui, la domanda è quella del drift: *deroga di questo progetto, o default sbagliato per tutti?* Nel secondo caso la strada è `framework-sync --up`, non `accepted`.
+Prima di aggiungere una riga qui, la domanda è quella del drift: *deroga di questo progetto, o default sbagliato per tutti?* Nel secondo caso la strada è `claw-sync --up`, non `accepted`.
 
 ## Più progetti insieme
 

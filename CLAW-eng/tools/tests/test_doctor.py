@@ -139,12 +139,12 @@ class TestDoctor(unittest.TestCase):
             self.assertIn("FABLE", codes(doctor.check(make_project(d, fable=True))))
 
     def test_skills_are_not_scanned_for_placeholders(self):
-        """framework-doctor explains the PLACEHOLDER finding and necessarily
+        """claw-doctor explains the PLACEHOLDER finding and necessarily
         contains that string: scanning it would produce a false positive on
         every run."""
         with tempfile.TemporaryDirectory() as d:
             root = make_project(d)
-            (root / ".claude" / "skills" / "framework-doctor" / "SKILL.md").write_text(
+            (root / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_text(
                 "The `PLACEHOLDER` finding flags a leftover `[TO FILL IN]`.\n",
                 encoding="utf-8",
             )
@@ -262,7 +262,7 @@ class TestDoctor(unittest.TestCase):
             self.assertNotIn("SHARED_ORPHAN", codes(doctor.check(p)))
 
     def test_detects_missing_manifest(self):
-        """Without `framework.json` `framework-sync` cannot find the source and
+        """Without `framework.json` `claw-sync` cannot find the source and
         the fleet report does not count the project: it is not a clean
         installation."""
         with tempfile.TemporaryDirectory() as d:
@@ -454,8 +454,8 @@ class TestDoctor(unittest.TestCase):
             hooks = p / ".claude" / "hooks"
             hooks.mkdir()
             (hooks / "mine.py").write_bytes(b"# citt\xe0\n")
-            (p / ".claude" / "skills" / "framework-doctor" / "SKILL.md").write_bytes(
-                b"name: framework-doctor\ncitt\xe0 " + home + b"\n"
+            (p / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_bytes(
+                b"name: claw-doctor\ncitt\xe0 " + home + b"\n"
             )
             self.assertEqual(codes(doctor.check(p)), {"PERSONAL_PATH"})
 

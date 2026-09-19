@@ -17,10 +17,10 @@
                             |    profile    |       |
                             +-------+-------+       |
                                     |               |
-  /framework-install -+     +-------+-------+       |
-  /framework-doctor  -+---->|    fwbuild    |       |
-  /framework-sync    -+     +-------+-------+       |
-  /framework-comply  -+             |               |
+  /claw-install      -+     +-------+-------+       |
+  /claw-doctor       -+---->|    fwbuild    |       |
+  /claw-sync         -+     +-------+-------+       |
+  /claw-comply       -+             |               |
 +-- project ------------------------+---------------+------+
 |      CLAUDE.md            .claude/agents       docs      |
 |      .claude/shared       .claude/hooks                  |
@@ -185,7 +185,7 @@ breaks the rule, it is blocked and Claude is told why. CLAW installs three:
 `gateguard` adds one step per file, so the install asks whether you want it.
 You can turn it off at any time ([how](#everyday-use)).
 
-`/framework-comply <rule>` measures how often Claude actually follows a rule of
+`/claw-comply <rule>` measures how often Claude actually follows a rule of
 the method, in test sessions on a throwaway copy of your project, and tells you
 which rules would hold better as a hook. It asks before starting, because the
 sessions use your tokens (17 by default).
@@ -288,8 +288,8 @@ install.
 git clone https://github.com/290990-collab/CLAW.git ~/.claude/CLAW
 cp -r ~/.claude/CLAW/CLAW-eng ~/.claude/framework        # or CLAW-it, in Italian
 mkdir -p ~/.claude/skills
-cp -r ~/.claude/framework/skills/framework-install ~/.claude/skills/
-cp -r ~/.claude/framework/skills/framework-comply ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-install ~/.claude/skills/
+cp -r ~/.claude/framework/skills/claw-comply ~/.claude/skills/
 ```
 
 ### Windows · PowerShell
@@ -298,13 +298,13 @@ cp -r ~/.claude/framework/skills/framework-comply ~/.claude/skills/
 git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
 Copy-Item -Recurse $HOME\.claude\CLAW\CLAW-eng $HOME\.claude\framework   # or CLAW-it, in Italian
 New-Item -ItemType Directory -Force $HOME\.claude\skills | Out-Null
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-install $HOME\.claude\skills\framework-install
-Copy-Item -Recurse $HOME\.claude\framework\skills\framework-comply $HOME\.claude\skills\framework-comply
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-install $HOME\.claude\skills\claw-install
+Copy-Item -Recurse $HOME\.claude\framework\skills\claw-comply $HOME\.claude\skills\claw-comply
 ```
 
 `~/.claude/framework` is the **source**: the master copy every project is
-generated from. The other skills — `framework-doctor`, `framework-sync`,
-`framework-memory` — are copied into each project by the install.
+generated from. The other skills — `claw-doctor`, `claw-sync`,
+`claw-memory`, `claw-fair` — are copied into each project by the install.
 
 ---
 
@@ -314,9 +314,9 @@ generated from. The other skills — `framework-doctor`, `framework-sync`,
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Set up a project | Open Claude Code in the project folder and run `/framework-install` | It reads the code (or asks for your idea), asks five questions one at a time — profile, critical surface, what you already know, what it may do without asking, orchestration — shows every file it will write and waits for your ok. It ends with the doctor |
-| Keep the source inside one project | Copy the edition folder into the project as `framework/`, copy `framework/skills/framework-*` into `.claude/skills/`, run `/framework-install` | The install finds `./framework/` first. Search order: `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/` |
-| Check an installation | `/framework-doctor` | Every finding with its remedy; it fixes what it can. `OK — no findings` means healthy |
+| Set up a project | Open Claude Code in the project folder and run `/claw-install` | It reads the code (or asks for your idea), asks five questions one at a time — profile, critical surface, what you already know, what it may do without asking, orchestration — shows every file it will write and waits for your ok. It ends with the doctor |
+| Keep the source inside one project | Copy the edition folder into the project as `framework/`, copy `framework/skills/claw-*` into `.claude/skills/`, run `/claw-install` | The install finds `./framework/` first. Search order: `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/` |
+| Check an installation | `/claw-doctor` | Every finding with its remedy; it fixes what it can. `OK — no findings` means healthy |
 | Keep a warning the doctor reports, because it is intended | See below | The warning is still shown, but the check passes |
 
 The install writes only `CLAUDE.md`, `.claude/` and `docs/`. Existing files
@@ -354,16 +354,17 @@ Errors cannot be accepted: they must be fixed.
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Add an agent | `/framework-sync --activate frontend` | The agent is installed, up to date and adapted to your project |
-| Remove an agent | `/framework-sync --deactivate comment-analyzer` | Gone from the project; the source keeps it. The six code-cycle agents always stay |
-| Add or remove a guide | `/framework-sync --activate domain/llm-guide.md` (or `--deactivate`) | The guide is copied and listed in `CLAUDE.md`, or removed |
-| Change the orchestration | `/framework-sync`, then say `change the orchestration to agent-teams` | The project switches to the new model |
-| Change the profile | `/framework-sync`, then say `change the profile to web` | Agents, guides, work cycles and permissions follow the new field; permissions you added stay |
-| Put back missing files | `/framework-sync --repair` | Skills, hooks, state files, guides and settings that went missing come back. Nothing is overwritten |
-| Remove the framework | `/framework-sync --uninstall` | Files identical to the source are deleted, adapted ones go to `.claude/framework-archive/`. `docs/` and your sections of `CLAUDE.md` stay |
+| Add an agent | `/claw-sync --activate frontend` | The agent is installed, up to date and adapted to your project |
+| Remove an agent | `/claw-sync --deactivate comment-analyzer` | Gone from the project; the source keeps it. The six code-cycle agents always stay |
+| Add or remove a guide | `/claw-sync --activate domain/llm-guide.md` (or `--deactivate`) | The guide is copied and listed in `CLAUDE.md`, or removed |
+| Change the orchestration | `/claw-sync`, then say `change the orchestration to agent-teams` | The project switches to the new model |
+| Change the profile | `/claw-sync`, then say `change the profile to web` | Agents, guides, work cycles and permissions follow the new field; permissions you added stay |
+| Tune each agent's model and effort to the project | `/claw-fair` | It reads what the project is and proposes a model and effort per agent, each change with a one-line reason. Nothing changes without your ok. Never above Opus with `xhigh` effort |
+| Put back missing files | `/claw-sync --repair` | Skills, hooks, state files, guides and settings that went missing come back. Nothing is overwritten |
+| Remove the framework | `/claw-sync --uninstall` | Files identical to the source are deleted, adapted ones go to `.claude/framework-archive/`. `docs/` and your sections of `CLAUDE.md` stay |
 
 `deploy` and `infra` cannot be installed together. If the doctor reports
-`VERSION_MISMATCH` or `KERNEL_DRIFT`, run `/framework-sync --down` before
+`VERSION_MISMATCH` or `KERNEL_DRIFT`, run `/claw-sync --down` before
 changing the orchestration or the profile.
 
 ### Update the framework
@@ -371,7 +372,7 @@ changing the orchestration or the profile.
 | I want to… | Do this | What happens |
 |---|---|---|
 | Get a new release | The steps below | Source and projects move to the new version, your changes kept |
-| Make a change in one project count for all | Edit the method in the project, then `/framework-sync --up` | It asks whether the change is for everyone, writes it into the source and raises its version. Other projects get it with `--down`. The other edition is a separate source: carry it there by hand |
+| Make a change in one project count for all | Edit the method in the project, then `/claw-sync --up` | It asks whether the change is for everyone, writes it into the source and raises its version. Other projects get it with `--down`. The other edition is a separate source: carry it there by hand |
 
 **New release, step by step:**
 
@@ -379,8 +380,8 @@ changing the orchestration or the profile.
 |---|---|
 | 1. Check the source | `cd ~/.claude/framework/tools && python -m fwbuild source ..` |
 | 2a. If it says `intact` | `git -C ~/.claude/CLAW pull`, then replace `~/.claude/framework` with a fresh copy of the edition folder. Connected skill packages live inside it: reconnect them, or copy their folders and `skills/pool.toml` back |
-| 2b. If it says `modified with --up` | `/framework-sync --upgrade`: the release is merged into your source, your changes are kept and each conflict is asked |
-| 3. Update every project | `/framework-sync --down` in each: method, agents, guides, hooks and response style are refreshed; what you filled in is kept |
+| 2b. If it says `modified with --up` | `/claw-sync --upgrade`: the release is merged into your source, your changes are kept and each conflict is asked |
+| 3. Update every project | `/claw-sync --down` in each: method, agents, guides, hooks and response style are refreshed; what you filled in is kept |
 
 ### Use other people's skills
 
@@ -391,26 +392,26 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 | I want to… | Do this | What happens |
 |---|---|---|
 | Connect a repository of skills | `python -m fwbuild skills add <repo-url>` (add `--commit <sha>` to pin a version) | Every folder with a `SKILL.md` is connected, pinned to a commit |
-| Get them into a project | `/framework-sync --down` (or `--repair`) in the project | You run them as `/<skill-name>`; the coordinator cannot see them |
+| Get them into a project | `/claw-sync --down` (or `--repair`) in the project | You run them as `/<skill-name>`; the coordinator cannot see them |
 | See what is connected | `python -m fwbuild skills list` | Packages, their skills, and which are in the pool |
 | Let the coordinator use one | The steps below | The coordinator may call it — rarely, and through `skill-runner` |
-| Disconnect a package | `python -m fwbuild skills remove <package>`, then `/framework-sync --down` in each project | The skills leave the source, the pool and the projects |
+| Disconnect a package | `python -m fwbuild skills remove <package>`, then `/claw-sync --down` in each project | The skills leave the source, the pool and the projects |
 
 **Pool, step by step:**
 
 | Step | Do this |
 |---|---|
 | 1. Add it to the pool | Write the name in `~/.claude/framework/skills/pool.toml` (create it if missing): `skills = ["skill-name"]` |
-| 2. Update the project | `/framework-sync --down`. If the skill was already in the project, also delete its line under `skillOverrides` in `.claude/settings.json` |
-| 3. Enable the runner | Once per project: `/framework-sync --activate skill-runner` |
+| 2. Update the project | `/claw-sync --down`. If the skill was already in the project, also delete its line under `skillOverrides` in `.claude/settings.json` |
+| 3. Enable the runner | Once per project: `/claw-sync --activate skill-runner` |
 
 ### Everyday use
 
 | I want to… | Do this | What happens |
 |---|---|---|
 | Stop and resume later | Say `safe pause` | Claude stops at a clean point and writes in `docs/TODO.md` where things are and the next step. A new session starts from there |
-| Clean up stale memory | `/framework-memory` | Each stale memory is paired with the repo line that contradicts it; nothing changes without your ok |
-| Check whether a rule is really followed | `/framework-comply <rule>` | See [Hooks](#hooks) |
+| Clean up stale memory | `/claw-memory` | Each stale memory is paired with the repo line that contradicts it; nothing changes without your ok |
+| Check whether a rule is really followed | `/claw-comply <rule>` | See [Hooks](#hooks) |
 | Turn off `gateguard` | Set `FRAMEWORK_GATEGUARD=off` in the environment Claude Code starts from | Edits are no longer stopped on first touch |
 | Know what the method costs | `python -m fwbuild cost <project>` in `~/.claude/framework/tools` | The tokens the method adds to every agent call, and the daily and monthly cost. Tune with `--spawns`, `--devs`, `--price` |
 | See which projects run old versions | `python -m fwbuild report <folder-with-your-repos>` in `~/.claude/framework/tools` | One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks deeper, `--json` is for CI |
@@ -423,18 +424,19 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 
 | Command | What it does |
 |---|---|
-| `/framework-install` | Sets up the framework in a project |
-| `/framework-doctor` | Checks an installation; every finding comes with its remedy |
-| `/framework-memory` | Finds and fixes stale project memory |
-| `/framework-comply <rule>` | Measures how often a rule is followed |
-| `/framework-sync --down` | Brings the source's version into the project |
-| `/framework-sync --up [what]` | Promotes a local change into the source |
-| `/framework-sync --upgrade` | Merges a new release into a source changed with `--up` |
-| `/framework-sync --activate <agent\|guide>` | Adds an agent or a guide |
-| `/framework-sync --deactivate <agent\|guide>` | Removes it from the project; the source keeps it |
-| `/framework-sync --repair` | Puts back missing files; overwrites nothing |
-| `/framework-sync --uninstall` | Removes the framework, archiving what you adapted |
-| `/framework-sync` + a request | Changes the profile or the orchestration |
+| `/claw-install` | Sets up the framework in a project |
+| `/claw-doctor` | Checks an installation; every finding comes with its remedy |
+| `/claw-memory` | Finds and fixes stale project memory |
+| `/claw-comply <rule>` | Measures how often a rule is followed |
+| `/claw-fair` | Tunes each agent's model and effort to the project |
+| `/claw-sync --down` | Brings the source's version into the project |
+| `/claw-sync --up [what]` | Promotes a local change into the source |
+| `/claw-sync --upgrade` | Merges a new release into a source changed with `--up` |
+| `/claw-sync --activate <agent\|guide>` | Adds an agent or a guide |
+| `/claw-sync --deactivate <agent\|guide>` | Removes it from the project; the source keeps it |
+| `/claw-sync --repair` | Puts back missing files; overwrites nothing |
+| `/claw-sync --uninstall` | Removes the framework, archiving what you adapted |
+| `/claw-sync` + a request | Changes the profile or the orchestration |
 
 Every command that writes shows its plan first and waits for your ok.
 

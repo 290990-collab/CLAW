@@ -49,7 +49,7 @@ def files(root: Path) -> set[str]:
         # Connected skill packages belong to other authors and never reach git:
         # they are local material, and one edition having them is not a
         # divergence. Only the framework's own skills are published.
-        if rel.startswith("skills/") and not rel.startswith("skills/framework-"):
+        if rel.startswith("skills/") and not rel.startswith("skills/claw-"):
             continue
         out.add(rel)
     return out

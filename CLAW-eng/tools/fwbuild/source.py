@@ -77,7 +77,7 @@ def dereference(project_root: Path, recorded: str) -> Path:
     """The inverse: the `source` read from `framework.json` as a real path.
 
     A relative path resolves against the project root, not against the working
-    directory: `framework-doctor` and `framework-sync` run from `<FW>/tools`,
+    directory: `claw-doctor` and `claw-sync` run from `<FW>/tools`,
     not from `<PRJ>`.
     """
     p = Path(recorded)
@@ -129,7 +129,7 @@ def read_manifest(project_root: Path) -> dict | None:
     """The manifest as read, or `None` if absent or unreadable.
 
     The two are deliberately not told apart: for whoever reads the project they
-    are the same failure — `framework-sync` cannot find the source — and the
+    are the same failure — `claw-sync` cannot find the source — and the
     doctor reports them under the same code.
     """
     try:

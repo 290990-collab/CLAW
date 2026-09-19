@@ -27,7 +27,7 @@ PACKAGE_FILE = "PACKAGE.toml"
 POOL_FILE = "pool.toml"
 # Il prefisso delle skill del framework: sono pubblicate e non vengono da un
 # pacchetto. Un pacchetto che ne porta una dello stesso nome la coprirebbe.
-RESERVED = "framework-"
+RESERVED = "claw-"
 # Come Claude Code nomina una skill: la cartella installata prende questo nome.
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FRONTMATTER_NAME_RE = re.compile(r"^name:\s*(\S+)\s*$", re.MULTILINE)

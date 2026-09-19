@@ -1,4 +1,4 @@
-"""Trial installation: simulates framework-install on the `software` profile.
+"""Trial installation: simulates claw-install on the `software` profile.
 
 Fake project: `logtail`, a command-line tool that follows and filters log
 files. It serves to demonstrate that a complete installation passes the doctor
@@ -342,7 +342,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
         json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
-    # How `framework-doctor` and `framework-sync` find the source again later,
+    # How `claw-doctor` and `claw-sync` find the source again later,
     # and which profile the project was born with. The shape is decided by
     # `source.manifest`: the path is relative when the source sits inside the
     # project, so the file survives the clone.

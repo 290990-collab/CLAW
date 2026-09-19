@@ -106,7 +106,7 @@ def plan_install(project_root: Path, targets: Sequence[str]) -> list[Operation]:
     if (prj / MANIFEST).exists():
         raise ValueError(
             f"{MANIFEST} already exists: the project is installed — "
-            "framework-sync --down or --repair, not a second installation"
+            "claw-sync --down or --repair, not a second installation"
         )
     mergeable = {CLAUDE_MD, SETTINGS} | {f"docs/{n}" for n in doctor.STATE_FILES}
     ops = []
@@ -205,7 +205,7 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
         if (prj / "docs" / name).is_file():
             ops.append(_op(prj, f"docs/{name}", KEEP, "project state"))
     ops.append(
-        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, framework-sync finds the source")
+        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, claw-sync finds the source")
     )
     return ops
 
@@ -286,7 +286,7 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
     if manifest.get("version") != version:
         raise ValueError(
             f"installation at v{manifest.get('version')}, source at v{version}: "
-            "framework-sync --down first, then --repair"
+            "claw-sync --down first, then --repair"
         )
     keep = (KEEP, "differs from the source: local change, not overwritten")
     ops = []

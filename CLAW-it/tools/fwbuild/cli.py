@@ -160,7 +160,7 @@ def _skills(args) -> int:
     """`skills list | add | remove`: la presa a cui si collegano le skill di altri.
 
     Scrive nel **sorgente**, non nei progetti: le installazioni ricevono i
-    pacchetti al passaggio successivo di `framework-sync`, come ogni altro file
+    pacchetti al passaggio successivo di `claw-sync`, come ogni altro file
     del framework. Dirlo qui evita di credere che un `add` abbia già cambiato
     qualcosa nei progetti aperti.
     """
@@ -183,12 +183,12 @@ def _skills(args) -> int:
                 f"fuori dal pool: invocabili da te, non dal coordinatore. "
                 f"Per metterle nel pool: skills/{skills.POOL_FILE}"
             )
-            print("nei progetti arrivano con framework-sync --down o --repair")
+            print("nei progetti arrivano con claw-sync --down o --repair")
             return 0
         if args.skills_command == "remove":
             gone = skills.remove(root, args.package)
             print(f"{args.package} staccato: {', '.join(gone) or 'nessuna skill'}")
-            print("nei progetti resta finché non passi da framework-sync --uninstall o --down")
+            print("nei progetti resta finché non passi da claw-sync --uninstall o --down")
             return 0
         in_pool = set(skills.pool(root))
         packages = skills.packages(root)
@@ -335,6 +335,6 @@ def _print_survey(s) -> None:
     )
     if s.behind:
         print(
-            "Da riallineare con framework-sync --down: "
+            "Da riallineare con claw-sync --down: "
             + ", ".join(sorted(p.name for p in s.behind))
         )

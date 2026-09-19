@@ -1,5 +1,5 @@
 ---
-name: framework-sync
+name: claw-sync
 description: >
   Allinea un'installazione con il framework sorgente: porta giù una versione
   nuova del metodo preservando l'adattamento, promuove su una modifica locale

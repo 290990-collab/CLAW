@@ -1,5 +1,5 @@
 ---
-name: framework-sync
+name: claw-sync
 description: >
   Aligns an installation with the source framework: brings a new version of the
   method down while preserving the adaptation, promotes a local change up so

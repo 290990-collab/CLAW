@@ -135,7 +135,7 @@ class TestUninstall(unittest.TestCase):
         tutto il resto o resta o finisce in archivio con lo stesso contenuto."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
-            for rel in (".claude/skills/framework-sync/SKILL.md", ".claude/hooks/gateguard.py"):
+            for rel in (".claude/skills/claw-sync/SKILL.md", ".claude/hooks/gateguard.py"):
                 p = root / rel
                 p.write_text(p.read_text(encoding="utf-8") + "\n# nota mia\n", encoding="utf-8")
             mine = root / ".claude" / "skills" / "mia" / "SKILL.md"
@@ -148,7 +148,7 @@ class TestUninstall(unittest.TestCase):
 
             after = tree(root)
             self.assertEqual(
-                actions(ops)[".claude/skills/framework-sync/SKILL.md"], lifecycle.ARCHIVE
+                actions(ops)[".claude/skills/claw-sync/SKILL.md"], lifecycle.ARCHIVE
             )
             archived = {rel[len(ARCHIVE) :] for rel in after if rel.startswith(ARCHIVE)}
             for rel in archived:
@@ -177,12 +177,12 @@ class TestUninstall(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
             ops = lifecycle.plan_uninstall(root, FRAMEWORK)
-            skill = root / ".claude" / "skills" / "framework-doctor" / "SKILL.md"
+            skill = root / ".claude" / "skills" / "claw-doctor" / "SKILL.md"
             skill.write_text(skill.read_text(encoding="utf-8") + "\nnota\n", encoding="utf-8")
             before = tree(root)
             with self.assertRaises(ValueError) as e:
                 lifecycle.apply_uninstall(root, FRAMEWORK, ops)
-            self.assertIn(".claude/skills/framework-doctor/SKILL.md", str(e.exception))
+            self.assertIn(".claude/skills/claw-doctor/SKILL.md", str(e.exception))
             self.assertEqual(tree(root), before)
 
             (root / doctor.ARCHIVE_DIR).mkdir()
@@ -245,11 +245,11 @@ class TestUninstall(unittest.TestCase):
             (root / "src").mkdir()
             (root / "src" / "app.py").write_text("print(1)\n", encoding="utf-8")
             (root / ".claude" / "hooks" / "mio.py").write_text("pass\n", encoding="utf-8")
-            skill = root / ".claude" / "skills" / "framework-sync" / "SKILL.md"
+            skill = root / ".claude" / "skills" / "claw-sync" / "SKILL.md"
             skill.write_text(skill.read_text(encoding="utf-8") + "\nnota\n", encoding="utf-8")
             ops = lifecycle.plan_uninstall(root, FRAMEWORK)
             before = tree(root)
-            for rel in ("src/app.py", ".claude/hooks/mio.py", ".claude/skills/framework-sync/SKILL.md"):
+            for rel in ("src/app.py", ".claude/hooks/mio.py", ".claude/skills/claw-sync/SKILL.md"):
                 with self.subTest(rel=rel):
                     forged = [op for op in ops if op.path != rel]
                     forged.append(lifecycle.Operation(rel, lifecycle.REMOVE, "", before[rel]))
@@ -291,7 +291,7 @@ class TestRepair(unittest.TestCase):
     def test_repair_restores_what_went_missing(self):
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
-            skill = ".claude/skills/framework-sync/SKILL.md"
+            skill = ".claude/skills/claw-sync/SKILL.md"
             hook = ".claude/hooks/config_protection.py"
             for rel in (skill, hook, "docs/status.md"):
                 (root / rel).unlink()
@@ -364,8 +364,8 @@ class TestRepair(unittest.TestCase):
         «ciò che manca» si misura contro il sorgente sbagliato."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
-            skill = ".claude/skills/framework-doctor/SKILL.md"
-            (root / skill).write_text("name: framework-doctor\nmia\n", encoding="utf-8")
+            skill = ".claude/skills/claw-doctor/SKILL.md"
+            (root / skill).write_text("name: claw-doctor\nmia\n", encoding="utf-8")
             ops = lifecycle.plan_repair(root, FRAMEWORK)
             self.assertNotIn(lifecycle.OVERWRITE, {op.action for op in ops})
             self.assertEqual(actions(ops)[skill], lifecycle.KEEP)
@@ -396,8 +396,8 @@ class TestDown(unittest.TestCase):
             claude.write_text(drifted, encoding="utf-8")
             agents = root / ".claude" / "agents"
             (agents / "obsoleto.md").write_bytes((agents / "explorer.md").read_bytes())
-            skill = ".claude/skills/framework-sync/SKILL.md"
-            (root / skill).write_text("name: framework-sync\nvecchia\n", encoding="utf-8")
+            skill = ".claude/skills/claw-sync/SKILL.md"
+            (root / skill).write_text("name: claw-sync\nvecchia\n", encoding="utf-8")
             hook = ".claude/hooks/block_no_verify.py"
             (root / hook).unlink()
             before = tree(root)
@@ -418,7 +418,7 @@ class TestDown(unittest.TestCase):
 
             self.assertEqual(
                 (root / skill).read_bytes(),
-                (FRAMEWORK / "skills" / "framework-sync" / "SKILL.md").read_bytes(),
+                (FRAMEWORK / "skills" / "claw-sync" / "SKILL.md").read_bytes(),
             )
             self.assertTrue((root / hook).is_file())
             # Le regioni kernel sono dei passi della skill, non di questo codice.
@@ -449,12 +449,12 @@ class TestDown(unittest.TestCase):
         ritocco di dopo. Il rifiuto arriva prima del primo byte scritto."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
-            rel = ".claude/skills/framework-sync/SKILL.md"
+            rel = ".claude/skills/claw-sync/SKILL.md"
             skill = root / rel
-            skill.write_text("name: framework-sync\nvecchia\n", encoding="utf-8")
+            skill.write_text("name: claw-sync\nvecchia\n", encoding="utf-8")
             ops = lifecycle.plan_down(root, FRAMEWORK)
             self.assertEqual(actions(ops)[rel], lifecycle.OVERWRITE)
-            skill.write_text("name: framework-sync\nvecchia, ritoccata dopo\n", encoding="utf-8")
+            skill.write_text("name: claw-sync\nvecchia, ritoccata dopo\n", encoding="utf-8")
             before = tree(root)
             with self.assertRaises(ValueError) as e:
                 lifecycle.apply_update(root, FRAMEWORK, ops)

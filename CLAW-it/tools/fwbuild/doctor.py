@@ -7,7 +7,7 @@ COORDINATOR_LEAK, SKILLS_MISSING, VERSION_MISMATCH, SETTINGS_MISSING,
 SHARED_ORPHAN, TOKEN_BUDGET, REPORT_FORMAT, ACCEPTED_UNUSED, UNSAFE_UNICODE,
 PERSONAL_PATH). MANIFEST_MISSING
 è l'unico che esce a entrambe: ERROR se il file manca, WARN se è incompleto.
-Ogni codice è spiegato, con cosa farne, nella skill `framework-doctor`.
+Ogni codice è spiegato, con cosa farne, nella skill `claw-doctor`.
 
 Una terza gravità, NOTE, non nasce qui: è un WARN che il progetto ha dichiarato
 di accettare in `framework.json`. Resta stampato — una deroga invisibile è una
@@ -27,7 +27,7 @@ PLACEHOLDER_RE = re.compile(r"DA COMPILARE")
 # Il formato superato del report: la confidenza **come** percentuale, cioè
 # `CONF:` seguito da un segnaposto con `%` (`<0-100%>`) o da una cifra. Un
 # progetto installato con quel formato se lo tiene finché non passa da
-# `framework-sync --down`: nessun altro check lo vede, perché l'hash del kernel
+# `claw-sync --down`: nessun altro check lo vede, perché l'hash del kernel
 # torna su quel testo. Il valore dev'essere la percentuale: `CONF: ALTA —
 # copertura all'80%` è un giudizio categorico che cita un numero nel motivo, ed
 # è testo legittimo che il pattern non deve toccare.
@@ -62,7 +62,7 @@ STATE_FILES = ("TODO.md", "status.md", "roadmap.md")
 # Le skill che ogni installazione riceve. Una lista sola: duplicarla nel
 # tooling e nei test significa aggiungerne una e scoprire dal rosso dove
 # stavano le copie.
-LIFECYCLE_SKILLS = ("framework-doctor", "framework-sync", "framework-memory")
+LIFECYCLE_SKILLS = ("claw-doctor", "claw-sync", "claw-memory", "claw-fair")
 ORCHESTRATION = "shared/orchestration.md"
 # Dove la disinstallazione sposta ciò che il progetto aveva adattato, col
 # percorso relativo conservato.
@@ -156,7 +156,7 @@ def _markdown_files(root: Path) -> list[Path]:
     """I file adattati al progetto, che vanno verificati.
 
     `.claude/skills/` è escluso: le skill sono file di framework copiati alla
-    lettera, senza regione kernel né blocchi da compilare — e `framework-doctor`
+    lettera, senza regione kernel né blocchi da compilare — e `claw-doctor`
     contiene per forza la stringa `DA COMPILARE`, perché ne spiega il rilievo.
     I file di stato in `docs/` sono inclusi: nascono da un template con
     segnaposto, e un template non compilato è indistinguibile da uno stato
@@ -237,7 +237,7 @@ def check(root: Path) -> list[Finding]:
                     "REPORT_FORMAT",
                     "WARN",
                     f"{rel}: schema del report con confidenza in percentuale — "
-                    "formato superato, riallinea con framework-sync --down",
+                    "formato superato, riallinea con claw-sync --down",
                 )
             )
         status = kernel.verify(text)
@@ -317,7 +317,7 @@ def check(root: Path) -> list[Finding]:
                 "VERSION_MISMATCH",
                 "WARN",
                 f"installazione a v{'/'.join(declared)}, sorgente a v{source_version}: "
-                "riallinea con framework-sync --down",
+                "riallinea con claw-sync --down",
             )
         )
 
@@ -351,7 +351,7 @@ def check(root: Path) -> list[Finding]:
             Finding(
                 "MANIFEST_MISSING",
                 "ERROR",
-                ".claude/framework.json assente o illeggibile: framework-sync non "
+                ".claude/framework.json assente o illeggibile: claw-sync non "
                 "ritrova il sorgente e il rapporto di flotta non vede il progetto",
             )
         )

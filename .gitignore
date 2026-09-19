@@ -10,7 +10,7 @@ _build/
 # stay on the machine. Only the framework's own skills are published, and the
 # pool that names the ones the coordinator may call is a local choice too.
 CLAW-*/skills/*
-!CLAW-*/skills/framework-*/
+!CLAW-*/skills/claw-*/
 
 # Working material: stays on the machine, not in the published package.
 # UPDATE.md is the decision log, docs/ the plans and evaluations,

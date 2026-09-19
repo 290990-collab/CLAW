@@ -23,7 +23,7 @@ The state is written **exclusively by the coordinator**: whoever writes it must 
 
 ## Maintaining persistent memory (level 4)
 
-To look at it: the `framework-memory` skill lists it and pairs every conflict with the line in the repo that contradicts it.
+To look at it: the `claw-memory` skill lists it and pairs every conflict with the line in the repo that contradicts it.
 
 - **To be revisited, not just filled:** at every change of paths, contracts or modules and at every refuted hypothesis, ask *"does this supersede a memory?"* and correct it or mark it superseded immediately.
 - **Compact memory:** one fact per file, no number duplicated from the repo, no path that no longer exists.

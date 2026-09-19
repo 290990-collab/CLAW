@@ -1,11 +1,11 @@
 ---
-name: framework-comply
+name: claw-comply
 description: >
   Misura se una regola del metodo è seguita davvero: la fa lavorare in sessioni
   `claude -p` su una copia usa e getta del progetto, con tre prompt (a favore,
   neutro, contrario), e conta in quante esecuzioni compare ogni passo
   osservabile. I passi mancati e verificabili dalla sola chiamata sono candidati
-  a hook. Consuma token dell'utente: `/framework-comply <regola>`.
+  a hook. Consuma token dell'utente: `/claw-comply <regola>`.
 ---
 
 # Conformità — la regola è eseguita, o solo scritta?

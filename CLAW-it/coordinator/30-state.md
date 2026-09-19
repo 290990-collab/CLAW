@@ -23,7 +23,7 @@ Lo stato lo scrive **esclusivamente il coordinatore**: chi lo scrive deve aver v
 
 ## Manutenzione della memoria persistente (livello 4)
 
-Per guardarla: la skill `framework-memory` la elenca e appaia ogni conflitto con la riga del repo che lo smentisce.
+Per guardarla: la skill `claw-memory` la elenca e appaia ogni conflitto con la riga del repo che lo smentisce.
 
 - **Va rivisitata, non solo riempita:** a ogni cambio di path, contratti o moduli e a ogni ipotesi smentita, chiediti *«questo supera una memoria?»* e correggila o annotala come superata subito.
 - **Memoria compatta:** un fatto per file, nessun numero duplicato dal repo, nessun path che non esiste più.

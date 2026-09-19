@@ -37,9 +37,9 @@ def repo(root: Path, layout: dict[str, str]) -> str:
 def framework(d: Path) -> Path:
     """Un sorgente finto con la sola cartella che questo modulo guarda."""
     fw = d / "fw"
-    (fw / "skills" / "framework-doctor").mkdir(parents=True)
-    (fw / "skills" / "framework-doctor" / "SKILL.md").write_text(
-        "---\nname: framework-doctor\n---\n", encoding="utf-8"
+    (fw / "skills" / "claw-doctor").mkdir(parents=True)
+    (fw / "skills" / "claw-doctor" / "SKILL.md").write_text(
+        "---\nname: claw-doctor\n---\n", encoding="utf-8"
     )
     return fw
 
@@ -87,7 +87,7 @@ class TestAdd(unittest.TestCase):
             d = Path(d)
             fw = framework(d)
             with self.assertRaises(ValueError):
-                skills.add(fw, repo(d / "src", {"x/SKILL.md": "framework-doctor"}))
+                skills.add(fw, repo(d / "src", {"x/SKILL.md": "claw-doctor"}))
 
     def test_a_repo_without_skills_is_an_error(self):
         """Un pacchetto vuoto collegato in silenzio è un pool che non funziona
@@ -162,8 +162,8 @@ class TestRemove(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             fw = framework(Path(d))
             with self.assertRaises(ValueError):
-                skills.remove(fw, "framework-doctor")
-            self.assertTrue((fw / "skills" / "framework-doctor").is_dir())
+                skills.remove(fw, "claw-doctor")
+            self.assertTrue((fw / "skills" / "claw-doctor").is_dir())
 
 
 class TestInstalledProject(unittest.TestCase):
