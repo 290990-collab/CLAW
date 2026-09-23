@@ -5,7 +5,7 @@ description: >
   product must be traceable to something the product actually does. Use before
   every publication. Does not rewrite the text.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob
 color: red
 ---

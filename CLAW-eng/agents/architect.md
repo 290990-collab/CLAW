@@ -6,7 +6,7 @@ description: >
   project's critical surface, or when the request is ambiguous and structural
   decisions are needed. Produces plans and analyses, never production code.
 model: opus
-effort: xhigh
+effort: high
 tools: Read, Grep, Glob, Bash
 color: purple
 ---

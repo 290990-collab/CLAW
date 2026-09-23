@@ -25,10 +25,13 @@ class TestRealFramework(unittest.TestCase):
         for p in (FRAMEWORK / "agents").glob("*.md"):
             self.assertNotIn("model: fable", p.read_text(encoding="utf-8"), p.name)
 
-    def test_architect_is_opus_xhigh(self):
-        text = (FRAMEWORK / "agents" / "architect.md").read_text(encoding="utf-8")
-        self.assertIn("model: opus", text)
-        self.assertIn("effort: xhigh", text)
+    def test_effort_policy(self):
+        """Never `max`; `xhigh` only on `opus`."""
+        for p in (FRAMEWORK / "agents").glob("*.md"):
+            text = p.read_text(encoding="utf-8")
+            self.assertNotIn("effort: max", text, p.name)
+            if "effort: xhigh" in text:
+                self.assertIn("model: opus", text, p.name)
 
     def test_agent_colors_are_platform_values(self):
         """`color` has eight documented values. A setting the platform does not

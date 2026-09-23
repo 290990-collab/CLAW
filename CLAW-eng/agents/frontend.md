@@ -6,7 +6,7 @@ description: >
   the user sees and touches. If the heart is logic or services with touch-ups
   to the interface, it is the implementer's work.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: purple
 ---

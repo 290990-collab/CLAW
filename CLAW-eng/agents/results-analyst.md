@@ -6,7 +6,7 @@ description: >
   to know what happened, whether the change is real and why. Does not modify
   code, does not launch runs.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: cyan
 ---

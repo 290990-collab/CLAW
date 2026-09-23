@@ -6,7 +6,7 @@ description: >
   non-trivial task, after implementer and tester. Does not trust other agents'
   reports. Read only plus build and tests; does not modify the code.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: pink
 ---

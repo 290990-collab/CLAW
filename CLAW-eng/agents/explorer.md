@@ -6,7 +6,6 @@ description: >
   every time you need to answer "where is / who uses / how is X built" without
   flooding the main context. Read only, never modifies.
 model: haiku
-effort: low
 tools: Read, Grep, Glob
 color: cyan
 ---

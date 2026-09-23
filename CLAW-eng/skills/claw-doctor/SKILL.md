@@ -127,7 +127,7 @@ A waiver declared in `framework.json` covers no finding: either the finding is g
 
 `model: fable` was generated. That model is not available: the agent does not start.
 
-**What to do:** replace it with `model: opus`. For `architect`, `effort: xhigh`.
+**What to do:** replace it with the source card's `model:` and `effort:`.
 
 ### `EXCLUSIVE` — ERROR
 

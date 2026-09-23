@@ -7,7 +7,7 @@ description: >
   declared threshold it is of no use. It measures and explains; it does not
   optimise on its own initiative.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: yellow
 ---

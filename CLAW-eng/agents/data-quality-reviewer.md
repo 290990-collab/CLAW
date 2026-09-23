@@ -7,7 +7,7 @@ description: >
   transformation or migration of data, before consolidating. Does not modify
   the code.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob
 color: cyan
 ---

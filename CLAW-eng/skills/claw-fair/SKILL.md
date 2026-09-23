@@ -26,7 +26,7 @@ The source gives every agent a model and effort meant for any project. A `securi
 - **Only these change:** the `model:` line and the `effort:` line in the frontmatter of `.claude/agents/<agent>.md`, and the *Model* cell of that agent's row in the roster table. No other line of any file: not the method, not `## Project context`, not `framework.json`, not `CLAUDE.md` outside the table. A problem noticed elsewhere goes in the report, not in the diff.
 - **Absolute ceiling: `opus` / `xhigh`.** Never `max`, even if the idea seems to ask for it: the cost of `max` has never been measured on these roles.
 - **Allowed models:** `haiku` < `sonnet` < `opus`. **Never `fable`**: it is not available, the agent does not start and the doctor treats it as ERROR.
-- **Allowed effort:** `low` < `medium` < `high` < `xhigh`. `xhigh` **only with `opus`**: it is the only combination with `xhigh` the source uses; the others are not verified.
+- **Allowed effort:** `low` < `medium` < `high` < `xhigh`. `xhigh` **only with `opus`**, and avoided: at most `architect`, with a concrete reason.
 - **Agents without a card in the source** (created in the project): not touched, listed in the report.
 
 ## Step 0 — Is it a framework project?
@@ -58,7 +58,7 @@ For each installed agent, one row:
 
 | agent | source | current |
 |---|---|---|
-| `frontend` | opus / high | opus / high |
+| `frontend` | opus / medium | opus / medium |
 
 - **source**: `model:` and `effort:` of `<FW>/agents/<agent>.md`.
 - **current**: the same lines in the project's card.
@@ -105,9 +105,9 @@ Static portfolio, design-award ambition, no backend, published on static hosting
 | agent | source | proposed | why |
 |---|---|---|---|
 | `security-reviewer` | opus / high | sonnet / high | no backend and no forms: the surface is headers and dependencies |
-| `copywriter` | sonnet / high | opus / high | bio and project descriptions are few lines carrying the whole first impression |
-| `architect` | opus / xhigh | opus / high | the structural decisions of a static site are few and shallow |
-| `frontend` | opus / high | opus / high | — (at the centre: stays) |
+| `copywriter` | sonnet / high | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
+| `architect` | opus / high | opus / medium | the structural decisions of a static site are few and shallow |
+| `frontend` | opus / medium | opus / medium | — (at the centre: stays) |
 
 ## Step 4 — Plan, then ok
 

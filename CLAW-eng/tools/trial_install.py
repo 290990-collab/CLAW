@@ -231,8 +231,8 @@ ROUTING = """## This project's roster
 
 | Situation | Agent | Model |
 |---|---|---|
-| Where is / who uses X | `explorer` | haiku low |
-| Design, multi-file plans, contracts | `architect` | opus xhigh |
+| Where is / who uses X | `explorer` | haiku |
+| Design, multi-file plans, contracts | `architect` | opus high |
 | Writing production code | `implementer` | sonnet high |
 | Extending the tests | `tester` | sonnet medium |
 | Behaviour-preserving refactoring | `refactorer` | sonnet high |
@@ -242,7 +242,7 @@ ROUTING = """## This project's roster
 | Swallowed errors, fallbacks that hide | `silent-failure-hunter` | sonnet medium |
 | Comments that no longer tell the truth | `comment-analyzer` | sonnet medium |
 | Recurring mistakes in the transcripts | `conversation-analyzer` | sonnet medium |
-| Final check | `final-reviewer` | opus high |
+| Final check | `final-reviewer` | opus medium |
 
 ## Delegation notes for this project
 

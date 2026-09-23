@@ -5,7 +5,7 @@ description: >
   of pieces, metric and prediction. Use before writing and at every iteration of
   the content cycle. Does not publish and does not spend.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob
 color: blue
 ---

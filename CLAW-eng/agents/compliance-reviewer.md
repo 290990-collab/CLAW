@@ -6,7 +6,7 @@ description: >
   of use of data sources. Use when the task touches personal data, licences or
   a source's terms of use, before the final check. Does not modify the code.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob
 color: red
 ---

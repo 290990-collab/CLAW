@@ -6,7 +6,7 @@ description: >
   when the analysis disproves the positioning. Read-only plus external search;
   writes no content.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, WebSearch, WebFetch
 color: yellow
 ---
