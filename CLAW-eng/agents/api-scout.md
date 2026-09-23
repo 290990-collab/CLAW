@@ -8,6 +8,7 @@ description: >
   price. Read only, modifies nothing.
 model: sonnet
 effort: medium
+maxTurns: 25
 tools: Read, Grep, Glob, WebSearch, WebFetch
 color: cyan
 ---
