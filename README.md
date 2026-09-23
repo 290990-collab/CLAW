@@ -18,7 +18,7 @@
                             +-------+-------+       |
                                     |               |
   /claw-install      -+     +-------+-------+       |
-  /claw-doctor       -+---->|    fwbuild    |       |
+  /claw-doctor       -+---->|    claw.py    |       |
   /claw-sync         -+     +-------+-------+       |
   /claw-comply       -+             |               |
 +-- project ------------------------+---------------+------+
@@ -67,14 +67,16 @@ planning, writing, testing, reviewing. Small changes it does itself. The
 
 ### Low token use
 
-Each agent receives only what its task needs. `fwbuild cost` shows what the
-method costs you per day.
+Each agent receives only what its task needs. Reviews run where they matter:
+the final review on the critical surface and on important tasks, a double review
+only when you ask for it.
 
 ### Projects stay in step
 
-One source feeds all your projects. The doctor tells you when a project is out
-of date or its method was edited by hand; one command brings it up to date, and
-an improvement made in one project can be passed to all the others.
+One source feeds all your projects. `claw.py status` tells you when a project
+is out of date and what changed since; one command brings it up to date and
+keeps what you adapted, and an improvement made in one project can be passed to
+all the others.
 
 ### Work state across sessions
 
@@ -103,10 +105,8 @@ so.
 ```
 minimal change here, please
 proof level?
-not a finding — skip it
+not a finding, skip it
 ```
-
-The names are the same in both editions:
 
 | Name | What it makes Claude do |
 |---|---|
@@ -133,7 +133,7 @@ The names are the same in both editions:
 | `do it yourself` | Small change: the coordinator does it instead of delegating |
 | `model to the task` | Agent and model chosen by the task, never raised |
 | `declared selection` | Running an agent twice? Say first how the results will be chosen |
-| `proportionate review` | No, one or two reviewers depending on how big the task is |
+| `proportionate review` | The final review only on the critical surface or an important task; a double one only on request |
 | `skipped step` | A skipped step stays written, with its reason |
 | `tick with evidence` | A TODO box is ticked only with the command and outcome next to it |
 | `safe pause` | Stop at a clean point and leave a note for whoever resumes |
@@ -197,7 +197,7 @@ sessions use your tokens (17 by default).
 29 agents. Each project installs only the ones its profile and your answers
 call for.
 
-**Always installed** — the code cycle:
+**Always installed**, the code cycle:
 
 | Agent | What it does |
 |---|---|
@@ -206,7 +206,7 @@ call for.
 | `implementer` | Writes the planned change |
 | `tester` | Tests invariants and contracts, not just examples |
 | `refactorer` | Cleans up the structure, behaviour unchanged |
-| `final-reviewer` | Rereads the diff from scratch and re-runs the tests before anything is called done |
+| `final-reviewer` | Rereads the diff from scratch and re-runs the tests before an important or critical change is called done |
 
 **Added by profile or on request:**
 
@@ -230,7 +230,7 @@ call for.
 | `visual-designer` | Specifies images and layouts for published material |
 | `content-analyst` | Reads the numbers after publishing, against the prediction |
 
-**Reviewers of the critical surface** — the install asks what would make the
+**Reviewers of the critical surface.** The install asks what would make the
 work wrong even with perfect code, and adds the matching reviewer:
 
 | Agent | Critical surface |
@@ -279,32 +279,31 @@ install, changeable later ([how](#change-what-a-project-has)).
 
 ## Install
 
-Once per machine. Needs Claude Code, git and Python 3.11+ — nothing else to
-install.
+Once per machine. Needs Claude Code, git and Python 3.11+, nothing else.
 
 ### macOS · Linux
 
 ```bash
 git clone https://github.com/290990-collab/CLAW.git ~/.claude/CLAW
-cp -r ~/.claude/CLAW/CLAW-eng ~/.claude/framework        # or CLAW-it, in Italian
-mkdir -p ~/.claude/skills
-cp -r ~/.claude/framework/skills/claw-install ~/.claude/skills/
-cp -r ~/.claude/framework/skills/claw-comply ~/.claude/skills/
+python ~/.claude/CLAW/CLAW-eng/claw.py setup --apply
 ```
 
 ### Windows · PowerShell
 
 ```powershell
 git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
-Copy-Item -Recurse $HOME\.claude\CLAW\CLAW-eng $HOME\.claude\framework   # or CLAW-it, in Italian
-New-Item -ItemType Directory -Force $HOME\.claude\skills | Out-Null
-Copy-Item -Recurse $HOME\.claude\framework\skills\claw-install $HOME\.claude\skills\claw-install
-Copy-Item -Recurse $HOME\.claude\framework\skills\claw-comply $HOME\.claude\skills\claw-comply
+python $HOME\.claude\CLAW\CLAW-eng\claw.py setup --apply
 ```
 
-`~/.claude/framework` is the **source**: the master copy every project is
-generated from. The other skills — `claw-doctor`, `claw-sync`,
-`claw-memory`, `claw-fair` — are copied into each project by the install.
+`~/.claude/CLAW/CLAW-eng` is the **source**: every project is generated from it.
+`setup` puts `/claw-install` and `/claw-comply` in `~/.claude/skills/`, pointing
+at this source; run it without `--apply` to see first what it writes. The other
+skills (`claw-doctor`, `claw-sync`, `claw-memory`, `claw-fair`) are copied into
+each project by the install.
+
+Claude answers in the language of Claude Code's `language` setting. If neither
+`~/.claude/settings.json` nor `~/.claude/CLAUDE.md` sets one, the first install
+asks.
 
 ---
 
@@ -314,8 +313,8 @@ generated from. The other skills — `claw-doctor`, `claw-sync`,
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Set up a project | Open Claude Code in the project folder and run `/claw-install` | It reads the code (or asks for your idea), asks five questions one at a time — profile, critical surface, what you already know, what it may do without asking, orchestration — shows every file it will write and waits for your ok. It ends with the doctor |
-| Keep the source inside one project | Copy the edition folder into the project as `framework/`, copy `framework/skills/claw-*` into `.claude/skills/`, run `/claw-install` | The install finds `./framework/` first. Search order: `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/` |
+| Set up a project | Open Claude Code in the project folder and run `/claw-install` | It reads the code (or asks for your idea) and asks five questions one at a time: profile, critical surface, language and what you already know, what it may do without asking, orchestration. It shows every file it will write and waits for your ok. It ends with the doctor |
+| Keep the source inside one project | Copy `CLAW-eng` into the project as `framework/`, copy `framework/skills/claw-*` into `.claude/skills/`, run `/claw-install` | The install uses `./framework/`. `upgrade` does not update it: replace the folder |
 | Check an installation | `/claw-doctor` | Every finding with its remedy; it fixes what it can. `OK — no findings` means healthy |
 | Keep a warning the doctor reports, because it is intended | See below | The warning is still shown, but the check passes |
 
@@ -324,7 +323,7 @@ there are merged or asked about, never silently overwritten; your code, build
 and dependencies stay untouched.
 
 **Keeping an intended warning.** Sometimes the doctor warns about something you
-chose on purpose — for example a long `CLAUDE.md` in a large project. The
+chose on purpose, for example a long `CLAUDE.md` in a large project. The
 doctor prints it like this:
 
 ```
@@ -338,7 +337,7 @@ sentence:
 ```json
 {
   "source": "...",
-  "version": "1.5.5",
+  "version": "2.0.0",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
@@ -372,36 +371,36 @@ changing the orchestration or the profile.
 | I want to… | Do this | What happens |
 |---|---|---|
 | Get a new release | The steps below | Source and projects move to the new version, your changes kept |
-| Make a change in one project count for all | Edit the method in the project, then `/claw-sync --up` | It asks whether the change is for everyone, writes it into the source and raises its version. Other projects get it with `--down`. The other edition is a separate source: carry it there by hand |
+| See whether a project is behind | `python ~/.claude/CLAW/CLAW-eng/claw.py status <project>` | Source and project versions, the doctor's findings, and the changes in between |
+| Make a change in one project count for all | Edit the method in the project, then `/claw-sync --up` | It asks whether the change is for everyone, writes it into the source, raises its version and commits it. Other projects get it with `--down` |
 
 **New release, step by step:**
 
 | Step | Do this |
 |---|---|
-| 1. Check the source | `cd ~/.claude/framework/tools && python -m fwbuild source ..` |
-| 2a. If it says `intact` | `git -C ~/.claude/CLAW pull`, then replace `~/.claude/framework` with a fresh copy of the edition folder. Connected skill packages live inside it: reconnect them, or copy their folders and `skills/pool.toml` back |
-| 2b. If it says `modified with --up` | `/claw-sync --upgrade`: the release is merged into your source, your changes are kept and each conflict is asked |
-| 3. Update every project | `/claw-sync --down` in each: method, agents, guides, hooks and response style are refreshed; what you filled in is kept |
+| 1. See what arrives | `python ~/.claude/CLAW/CLAW-eng/claw.py upgrade`: the new changes, and any of yours not yet committed |
+| 2. Take it | `python ~/.claude/CLAW/CLAW-eng/claw.py upgrade --apply`. Your committed changes are kept; on a conflict it stops, and `/claw-sync --upgrade` helps you resolve it |
+| 3. Update every project | `/claw-sync --down` in each: method, agents, guides, hooks and response style are refreshed. What you filled in stays, and so does a model or effort you changed |
 
 ### Use other people's skills
 
 Skills written by other people are connected to the source, never published
 with CLAW. Read a skill before connecting it: it is instructions, sometimes
-scripts, that an agent will run. Shell commands run in `~/.claude/framework/tools`.
+scripts, that an agent will run. `claw.py` below is `python ~/.claude/CLAW/CLAW-eng/claw.py`.
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Connect a repository of skills | `python -m fwbuild skills add <repo-url>` (add `--commit <sha>` to pin a version) | Every folder with a `SKILL.md` is connected, pinned to a commit |
+| Connect a repository of skills | `claw.py skills add <repo-url>` (add `--commit <sha>` to pin a version) | Every folder with a `SKILL.md` is connected, pinned to a commit |
 | Get them into a project | `/claw-sync --down` (or `--repair`) in the project | You run them as `/<skill-name>`; the coordinator cannot see them |
-| See what is connected | `python -m fwbuild skills list` | Packages, their skills, and which are in the pool |
-| Let the coordinator use one | The steps below | The coordinator may call it — rarely, and through `skill-runner` |
-| Disconnect a package | `python -m fwbuild skills remove <package>`, then `/claw-sync --down` in each project | The skills leave the source, the pool and the projects |
+| See what is connected | `claw.py skills list` | Packages, their skills, and which are in the pool |
+| Let the coordinator use one | The steps below | The coordinator may call it, rarely, and through `skill-runner` |
+| Disconnect a package | `claw.py skills remove <package>`, then `/claw-sync --down` in each project | The skills leave the source, the pool and the projects |
 
 **Pool, step by step:**
 
 | Step | Do this |
 |---|---|
-| 1. Add it to the pool | Write the name in `~/.claude/framework/skills/pool.toml` (create it if missing): `skills = ["skill-name"]` |
+| 1. Add it to the pool | Write the name in `~/.claude/CLAW/CLAW-eng/skills/pool.toml` (create it if missing): `skills = ["skill-name"]` |
 | 2. Update the project | `/claw-sync --down`. If the skill was already in the project, also delete its line under `skillOverrides` in `.claude/settings.json` |
 | 3. Enable the runner | Once per project: `/claw-sync --activate skill-runner` |
 
@@ -413,8 +412,7 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 | Clean up stale memory | `/claw-memory` | Each stale memory is paired with the repo line that contradicts it; nothing changes without your ok |
 | Check whether a rule is really followed | `/claw-comply <rule>` | See [Hooks](#hooks) |
 | Turn off `gateguard` | Set `FRAMEWORK_GATEGUARD=off` in the environment Claude Code starts from | Edits are no longer stopped on first touch |
-| Know what the method costs | `python -m fwbuild cost <project>` in `~/.claude/framework/tools` | The tokens the method adds to every agent call, and the daily and monthly cost. Tune with `--spawns`, `--devs`, `--price` |
-| See which projects run old versions | `python -m fwbuild report <folder-with-your-repos>` in `~/.claude/framework/tools` | One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks deeper, `--json` is for CI |
+| See which projects run old versions | `python ~/.claude/CLAW/CLAW-eng/claw.py report <folder-with-your-repos>` | One line per project: version, findings, `CLAUDE.md` size. `--depth N` looks deeper, `--json` is for CI |
 
 ---
 
@@ -431,7 +429,7 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 | `/claw-fair` | Tunes each agent's model and effort to the project |
 | `/claw-sync --down` | Brings the source's version into the project |
 | `/claw-sync --up [what]` | Promotes a local change into the source |
-| `/claw-sync --upgrade` | Merges a new release into a source changed with `--up` |
+| `/claw-sync --upgrade` | Takes a new release into the source, resolving conflicts with your changes |
 | `/claw-sync --activate <agent\|guide>` | Adds an agent or a guide |
 | `/claw-sync --deactivate <agent\|guide>` | Removes it from the project; the source keeps it |
 | `/claw-sync --repair` | Puts back missing files; overwrites nothing |
@@ -440,30 +438,35 @@ scripts, that an agent will run. Shell commands run in `~/.claude/framework/tool
 
 Every command that writes shows its plan first and waits for your ok.
 
-### From the shell — in `<source>/tools`
+### From the shell: `python ~/.claude/CLAW/CLAW-eng/claw.py <command>`
+
+Every command that writes prints its plan first; add `--apply` to run it.
 
 | Command | What it does |
 |---|---|
-| `python -m fwbuild doctor --strict <project>` | The doctor's check; exit 1 on warnings too |
-| `python -m fwbuild doctor --json <project>` | Findings plus the `CLAUDE.md` measure, for CI |
-| `python -m fwbuild cost <project> [--spawns N] [--devs N] [--price USD]` | Cost of `CLAUDE.md`. Defaults: 100 spawns a day, 1 person, $5 per million input tokens |
-| `python -m fwbuild report <folder> [--depth N] [--strict] [--json]` | Method versions and findings across repos |
-| `python -m fwbuild source [path]` | Validates a source and says whether it was changed with `--up` |
-| `python -m fwbuild skills list` | Connected packages, their skills, which are in the pool |
-| `python -m fwbuild skills add <repo> [--commit <sha>]` | Connects a repository of skills |
-| `python -m fwbuild skills remove <package>` | Disconnects it and takes its skills out of the pool |
+| `setup` | Puts `/claw-install` and `/claw-comply` in `~/.claude/skills/`, pointing at this source |
+| `status [project]` | The source against its release branch; the project's version, findings and the changes it is missing |
+| `upgrade` | Takes the new release into the source, keeping your committed changes |
+| `install <project> --profile <name>` | The file-writing part of `/claw-install`. Also `--agents`, `--drop`, `--guides`, `--no-gateguard`, `--orchestration` |
+| `down <project>` | Brings the source's version into the project. `--adopt <agent>` also takes the source's model and effort for that agent |
+| `repair <project>` | Puts back missing files; overwrites nothing |
+| `uninstall <project>` | Removes the framework, archiving what you adapted |
+| `doctor <project> [--strict] [--json]` | The integrity check. `--strict` exits 1 on warnings too, `--json` is for CI |
+| `report <folder> [--depth N] [--strict] [--json]` | Method versions and findings across repos |
+| `source [path]` | Validates a source |
+| `skills list` · `skills add <repo> [--commit <sha>]` · `skills remove <package>` | Connected skill packages |
 
 ### Settings
 
 | Setting | Effect |
 |---|---|
-| `CLAUDE_FRAMEWORK` | Where the source is, checked after `./framework/` and before `~/.claude/framework/` |
+| `language` in Claude Code's settings | The language Claude answers in |
 | `FRAMEWORK_GATEGUARD=off` | Turns the `gateguard` hook off (`0` and `false` work too) |
 | `accepted` in `.claude/framework.json` | Warnings you accept, with a reason |
 | `skills/pool.toml` in the source | Connected skills the coordinator may use on its own |
 
 ---
 
-## Version 1.5.6
+## Version 2.0.0
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
