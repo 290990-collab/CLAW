@@ -647,6 +647,18 @@ class TestApplyDown(unittest.TestCase):
                 {f.code for f in doctor.check(root)}, {"PLACEHOLDER", "VERSION_MISMATCH"}
             )
 
+    def test_down_brings_a_guide_a_new_card_cites(self):
+        """A card of the new version citing a guide the project never had would
+        leave a dead pointer (SHARED_MISSING) after the down."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            rel = ".claude/shared/core/security-guide.md"
+            (root / rel).unlink()
+            ops = lifecycle.plan_down(root, FRAMEWORK)
+            self.assertEqual(actions(ops)[rel], lifecycle.CREATE)
+            lifecycle.apply_down(root, FRAMEWORK, ops)
+            self.assertTrue((root / rel).is_file())
+
     def test_down_writes_nothing_when_the_tree_changed_after_the_plan(self):
         with tempfile.TemporaryDirectory() as d:
             fw = source_copy(d)

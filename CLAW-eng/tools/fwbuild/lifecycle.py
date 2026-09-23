@@ -510,6 +510,13 @@ def plan_down(
         elif merged is not None and merged != installed:
             ops.append(_op(prj, rel, MERGE, "text from the source, project block unchanged"))
 
+    cards = [Path(r).stem for r in _kernel_files(prj) if r.startswith(".claude/agents/")]
+    for ref in profile.required_guides(fw, cards):
+        rel = f".claude/shared/{ref}"
+        if not (prj / rel).exists() and (fw / "shared" / ref).is_file():
+            ops.append(_op(prj, rel, CREATE, "cited by a card of this version: fill in its "
+                           "block, add its line in CLAUDE.md § Shared guides"))
+
     overwrite = (OVERWRITE, "differs from the source: updated")
     for rel, original in _skill_files(fw):
         ops += _against_source(prj, rel, original, *overwrite)
