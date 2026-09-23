@@ -2,8 +2,8 @@
 name: final-reviewer
 description: >
   Final check before closing a task: rereads the changes from scratch, re-runs
-  build and tests, looks for regressions. Use as the LAST step of every
-  non-trivial task, after implementer and tester. Does not trust other agents'
+  build and tests, looks for regressions. Use as the LAST step of a task that
+  touches the critical surface or is important. Does not trust other agents'
   reports. Read only plus build and tests; does not modify the code.
 model: opus
 effort: medium

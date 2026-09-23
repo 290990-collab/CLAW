@@ -8,12 +8,12 @@
 3. **Implement:** `implementer`, one task at a time.
    - *Test-first mandatory:* new features, well-defined bug fixes, business or API logic.
    - *Test-first excluded:* refactoring, UI, prototypes, dependencies, documentation.
-4. **Verify:** `tester` extends coverage beyond the implementer's mini-tests (few solid tests on the domain's boundaries).
-5. **Review:** if the diff touches the **critical surface** → first the reviewer of that surface, then `final-reviewer`, which verifies from scratch without trusting the reports.
-   - *Important task* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no) → **double review:** two isolated `final-reviewer`s, same rubric, one after the other; it passes only if both pass. Fixes as per rule 9.
+4. **Verify:** `tester` only when the task touches domain logic or a contract: it extends coverage beyond the implementer's mini-tests (few solid tests on the domain's boundaries).
+5. **Review:** `final-reviewer`, which verifies from scratch without trusting the reports, only if the diff touches the **critical surface** (after that surface's reviewer) or the task is *important* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no).
+   - **Double review** only at the user's request: two isolated `final-reviewer`s, same rubric, one after the other; it passes only if both pass. Fixes as per rule 9.
 6. **Integrate:** the coordinator resolves the findings and integrates. Commit ONLY at the user's request.
 
-**Skipped step:** it stays written — `skipped: <reason>`, one line, in the report and in `docs/TODO.md`. Deleting it removes the difference between assessed and forgotten.
+**Skipped step** (its condition held): it stays written — `skipped: <reason>`, one line, in the report and in `docs/TODO.md`. Deleting it removes the difference between assessed and forgotten.
 
 ## Choosing between agents that look close
 

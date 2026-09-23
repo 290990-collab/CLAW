@@ -77,7 +77,7 @@ installed, is not guessed: say so.
 | `do it yourself` | small change: execute it directly, delegating costs more | `orchestration.md` · “Direct execution” |
 | `model to the task` | agent and model chosen on the task, never raised | `orchestration.md` · “Agent and model to the task, not to the role” |
 | `declared selection` | whoever duplicates says beforehand how they will choose | `orchestration.md` · “Parallelism by role and by cost” |
-| `proportionate review` | none, one or two reviewers depending on the task's weight | `orchestration.md` · “Proportionate review, one round only” |
+| `proportionate review` | final reviewer only on critical surface or important task, double only on request | `orchestration.md` · “Proportionate review, one round only” |
 | `skipped step` | stays written with its reason | `orchestration.md` · “Skipped step” |
 | `tick with evidence` | a box closes with the command and the outcome next to it | `orchestration.md` · “You add or tick off, you do not rewrite.” |
 | `safe pause` | stop at an atomic boundary, with a note for whoever restarts | `orchestration.md` · “Safe pause” |
