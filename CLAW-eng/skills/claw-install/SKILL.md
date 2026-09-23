@@ -136,7 +136,9 @@ Two reviewers only if the project really has two distinct critical surfaces.
 
 **If the answer is not in the table** — public contract, accessibility, operational cost — **you do not invent an agent**: it would be a role paid by everyone for a single case. The surface is written in two places: the *Critical surface* section of `CLAUDE.md`, and `final-reviewer`'s project context, as one line of "here verified also means". Point 4 of its checklist already covers external consumers and contracts; what it does not know without that line is **which** surface, here, comes before the others.
 
-**3. Assumed knowledge base** — what to take as known and what to introduce at first mention. Ask it like this: *"what should I take for granted that you already know, and what would you rather I explained every time?"* The answer goes in the `## This project` block of the `Reporting` style, not in `CLAUDE.md`: the form of the replies is already fixed by the style, and it only concerns the coordinator.
+**3. Language and assumed knowledge base.** *Language of the replies:* already fixed by `language` in `~/.claude/settings.json` or by `~/.claude/CLAUDE.md` → nothing to write. Otherwise ask, proposing the language of the user's messages or of the project's docs; with the user's ok it goes in `language` of `~/.claude/settings.json` (Claude Code's native setting: every project and session; the file is outside the project).
+
+*Knowledge base:* what to take as known and what to introduce at first mention. Ask it like this: *"what should I take for granted that you already know, and what would you rather I explained every time?"* The answer goes in the `## This project` block of the `Reporting` style, not in `CLAUDE.md`: the form of the replies is already fixed by the style, and it only concerns the coordinator.
 
 **4. Autonomy** — what can be done without asking. Conservative default: **none of this**. Commits · publication · installing dependencies · long or expensive runs · irreversible changes.
 

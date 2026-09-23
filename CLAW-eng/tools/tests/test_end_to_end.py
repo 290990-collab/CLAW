@@ -266,7 +266,7 @@ class TestRealFramework(unittest.TestCase):
         skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
-        block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Assumed")]
+        block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Language")]
         for name in sorted(SURFACE_ONLY):
             self.assertIn(f"`{name}`", block, name)
 
@@ -306,7 +306,7 @@ class TestRealFramework(unittest.TestCase):
         skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
             encoding="utf-8"
         )
-        block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Assumed")]
+        block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Language")]
         # More permissive than `doctor.ROUTING_AGENT_RE`, and on purpose: that
         # one accepts lowercase only, so a rename with a capital letter would
         # escape the row instead of making it fail.

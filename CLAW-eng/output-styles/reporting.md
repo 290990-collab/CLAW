@@ -102,4 +102,4 @@ installed, is not guessed: say so.
 ## This project
 
 [TO FILL IN — what to take as known and what to introduce at first mention, from
-question 3 of the questionnaire; the language of the conversation if not English]
+question 3 of the questionnaire]
