@@ -54,7 +54,7 @@ cd <copy> && claude -p "<prompt>" --setting-sources user --allowedTools <tools> 
 ## Step 4 — Reading and labelling
 
 ```bash
-cd <FW>/tools && python -c "
+cd "<FW>/tools" && python -c "
 import sys
 from pathlib import Path
 from fwbuild import comply

@@ -17,10 +17,11 @@ templates/           the state files, generated empty but structured
 output-styles/       reporting.md: how to answer the user, aliases and rule names — main conversation only
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
 skills/              claw-install · claw-doctor · claw-sync · claw-memory · claw-comply · claw-fair
-                     plus the packages connected with `fwbuild skills add` and pool.toml: local, never published
+                     plus the packages connected with `claw.py skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
-tools/tests/         249 tests
+tools/tests/         the tests
+claw.py              the command line
 ```
 
 ## The separation that matters: by recipient, not by subject
@@ -46,54 +47,38 @@ flags `COORDINATOR_LEAK` if the boundary gets lost again.
 
 ## Installation
 
-Claude Code looks for skills in `.claude/skills/` or in `~/.claude/skills/`,
-not in here: until `claw-install` is in one of the two, it does not exist.
-It is the only friction, and it is paid **once**, not per project.
-
-**Single master** — recommended: one source on the machine, personal skill.
-
-The repository carries **two sources**, one per language:
-`CLAW-it/` and `CLAW-eng/`. You install **one**.
+Python 3.11+ and git; nothing else to install.
 
 ```bash
 git clone <repo> ~/.claude/CLAW
-cp -r ~/.claude/CLAW/CLAW-eng ~/.claude/framework
-cp -r ~/.claude/framework/skills/claw-install ~/.claude/skills/
-cp -r ~/.claude/framework/skills/claw-comply ~/.claude/skills/
+python ~/.claude/CLAW/CLAW-eng/claw.py setup            # plan
+python ~/.claude/CLAW/CLAW-eng/claw.py setup --apply    # claw-install and claw-comply into ~/.claude/skills/
 ```
 
-```powershell
-git clone <repo> $HOME\.claude\CLAW
-Copy-Item -Recurse $HOME\.claude\CLAW\CLAW-eng $HOME\.claude\framework
-Copy-Item -Recurse $HOME\.claude\framework\skills\claw-install $HOME\.claude\skills\
-Copy-Item -Recurse $HOME\.claude\framework\skills\claw-comply $HOME\.claude\skills\
-```
+The clone is the master. From then on every new project is `/claw-install`.
+The reply language is Claude Code's `language` setting: the installation asks
+for it once if neither `~/.claude/settings.json` nor `~/.claude/CLAUDE.md`
+fixes one.
 
-The destination is named `framework/` because that is one of the three places
-Step 0 looks in; to leave it where it is, point at it with `$CLAUDE_FRAMEWORK`.
+## Commands
 
-**Copied into the project** — this folder, renamed `framework/`, in the
-project root, plus `cp -r framework/skills/claw-* .claude/skills/`. Step 0
-finds it first.
+`python <source>/claw.py <command>`. Whatever writes prints a plan and saves it;
+`--apply` runs that plan, re-checking every file.
 
-From then on, every new project is **only** `/claw-install`: Step 0
-validates the source before writing anything, Step 6 checks the result with
-`doctor --strict`. To check a candidate source by hand:
+| command | does |
+|---|---|
+| `setup` | the user-level skills, with this source's path written in |
+| `status [project]` | source against its branch; project version, doctor, commits in between |
+| `upgrade` | fetches, lists incoming commits, merges them into the master (a promotion is a local commit, kept) |
+| `install <project> --profile P` | the mechanical part of `/claw-install`: files with placeholders, skeleton, settings, manifest |
+| `down <project>` | a new version into a project, kernel regions included; card front matter follows the record |
+| `repair` · `uninstall <project>` | put back what is missing · remove the framework, archiving what was adapted |
+| `doctor <project> [--strict] [--json]` | integrity check |
+| `report <folders>` | versions and findings across many repositories |
+| `source [path]` · `skills list\|add\|remove` | validate a source · connected skill packages |
 
-```bash
-cd <source>/tools && python -m fwbuild source ..
-```
-
-No dependency to install: only Python 3.11+ is needed (for `tomllib`).
-
-`doctor --json` prints the findings plus the size of `CLAUDE.md`, for CI.
-
-Across several repositories at once — how many versions of the method are out
-there, and where:
-
-```bash
-cd <source>/tools && python -m fwbuild report <folder-of-repositories>
-```
+**Copied into the project** — this folder as `framework/` in the project root:
+`claw-install` finds it first.
 
 ## How it is built
 

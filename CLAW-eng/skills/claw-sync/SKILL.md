@@ -11,78 +11,32 @@ description: >
 
 # Synchronisation with the source
 
-Connects the **source** (the master) to the **installations** (the projects). Requirement: the source must be reachable from the machine; if it is not, only `doctor` is usable.
+Connects the **source** (the master) to the **installations** (the projects). The source must be reachable from the machine; if it is not, only `doctor` works.
 
-`--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` are **modes of this skill**, not shell flags: `fwbuild` has `doctor`, `source`, `cost`, `report` and `skills`. The divergence report across several repositories — `python -m fwbuild report <folder>` — is from the shell instead: it reads many projects and modifies none.
-
-The snippets start from `<FW>/tools`. `<PRJ>` is the project root; `<FW>` is the `source` field of `.claude/framework.json` (if missing, `./framework/`), which may be **relative to the project root**, not to the directory you run from: resolve it with `source.dereference(<PRJ>, source)`.
-
-**Every mode that writes shows the plan first, file by file, and waits for the ok.** Where a `plan_*` of `lifecycle` exists, the plan is saved bound to the project and the mode, and **that** plan is executed, not a recomputed one: execution refuses the plan of another project or another mode, re-checks every file and stops if the tree changed after the ok.
+`<PRJ>` is the project root; `<FW>` is the `source` field of `.claude/framework.json`, relative to `<PRJ>` when not absolute. `--down`, `--up`, `--upgrade`, `--activate`, `--deactivate`, `--repair`, `--uninstall` are **modes of this skill**; the commands they run:
 
 ```bash
-# plan: printed and saved with the project path and the mode, nothing is written
-cd <FW>/tools && python -c "
-import dataclasses, hashlib, json, sys, tempfile
-from pathlib import Path
-from fwbuild import lifecycle
-sys.stdout.reconfigure(encoding='utf-8')   # the reasons contain '→': cp1252 cannot print it
-P = str(Path('<PRJ>').resolve())
-M = '<down | repair | uninstall>'
-H = None   # down only: None keeps the hooks in use; on a project without any, the names chosen at step 0
-ops = getattr(lifecycle, 'plan_' + M)(Path(P), Path('..'), **({'hooks': H} if M == 'down' else {}))
-print(lifecycle.render(ops))
-f = Path(tempfile.gettempdir(), 'fw-plan-' + hashlib.sha256(P.encode()).hexdigest()[:16] + '.json')
-f.write_text(json.dumps({'project': P, 'mode': M, 'ops': [dataclasses.asdict(o) for o in ops]}), encoding='utf-8')
-"
-# after the ok: only the plan of this project and this mode
-cd <FW>/tools && python -c "
-import hashlib, json, sys, tempfile
-from pathlib import Path
-from fwbuild import lifecycle
-sys.stderr.reconfigure(encoding='utf-8')
-P = str(Path('<PRJ>').resolve())
-M = '<down | repair | uninstall>'   # the mode you are running, not the one read from the file
-f = Path(tempfile.gettempdir(), 'fw-plan-' + hashlib.sha256(P.encode()).hexdigest()[:16] + '.json')
-plan = json.loads(f.read_text(encoding='utf-8')) if f.is_file() else {}
-if plan.get('project') != P or plan.get('mode') != M: sys.exit(f'no {M} plan saved for {P}: plan again')
-ops = [lifecycle.Operation(**d) for d in plan['ops']]
-if M == 'uninstall': lifecycle.apply_uninstall(Path(P), Path('..'), ops)
-else: lifecycle.apply_update(Path(P), Path('..'), ops)
-"
+python "<FW>/claw.py" status "<PRJ>"              # versions, doctor, commits between them
+python "<FW>/claw.py" <down|repair|uninstall> "<PRJ>" [options]   # plan: printed and saved, nothing written
+python "<FW>/claw.py" <down|repair|uninstall> "<PRJ>" --apply     # after the ok: runs that plan
+python "<FW>/claw.py" report <folder>             # divergence across many repositories, modifies none
 ```
 
-In the other modes the plan is the list of files and of what happens to them, written before touching them.
+**Every mode that writes shows the plan first and waits for the ok.** `--apply` runs the saved plan of that project, mode and source, never a recomputed one; every file is re-checked and a tree changed after the ok stops everything before the first byte. A plan runs once.
 
 ---
 
 ## `--down` — bringing a new version into the project
 
-Updates the method while preserving the adaptation.
+1. **What arrives:** `status` — the two versions and the commits between them.
+2. **Diagnosis first.** A `KERNEL_DRIFT` is resolved *before*: the plan says "edited by hand: the local change is lost". Promote it (`--up`) or let it go, by the user's word.
+3. **Plan:** `down "<PRJ>" [--hooks a,b] [--adopt a,b|all]`.
+   - **Hooks:** the ones in use are kept. On a project with none, **one question** — does it want them, `gateguard` included? — and a yes becomes `--hooks`.
+   - **Card front matter** (`model`, `effort`, `description`, `maxTurns`, …): a value the project still has as recorded at the last sync follows the source; a different one is a local choice (a `claw-fair`, a hand) and stays — the plan names both. **Without a record** (installations older than the record) every difference stays and is named: ask the user card by card, yes → `--adopt <card>`.
+   - **Guides and style** take the source text and keep the project block; without a recognisable block they are `keep`: updated by hand, comparing with the source.
+4. **After the ok, `--apply`:** regions, cards, roster cells that still say the old model, guides, style, skills, hooks, `settings.json`, manifest (version, source, record) — everything computed before the first write. It closes with the doctor, which must show no findings.
 
-0. **Plan** with `plan_down`: kernel regions to reassemble, guides and the response style to re-merge, skills and hooks to update, missing entries in `settings.json`, the manifest's version. `hooks=None` keeps the hooks the project uses; if it uses none, **one single question** — does it want them, `gateguard` included? — and a yes becomes `hooks=[…]` with the chosen names from `settings.HOOKS`.
-1. **Compare the versions:** the project's is in the kernel region's marker, the source's in `<FW>/VERSION`.
-2. **Diagnosis first.** `KERNEL_DRIFT` findings must be resolved *first*: updating over a local change erases it silently.
-3. **Reassemble** with the new method and the existing project sections, extracted from the current installation and rewritten unchanged.
-
-```bash
-cd <FW>/tools && python -c "
-from pathlib import Path
-from fwbuild import assemble, kernel
-p = Path('<PRJ>/CLAUDE.md')
-text = p.read_text(encoding='utf-8')
-region = kernel.parse(text)
-sections = text[region.end:].lstrip('\n')          # the adaptation, unchanged
-version = Path('../VERSION').read_text(encoding='utf-8').strip()
-p.write_text(assemble.build_document(Path('../method'), version, sections), encoding='utf-8')
-"
-```
-
-4. **Same operation on `.claude/shared/orchestration.md`**, with the kernel from `<FW>/coordinator/`: the versioned documents are **two**, updating only one leaves them misaligned. There orchestration and domain cycles are **inside** the region and the project does not record what it was born from: they must be passed again, in this order, with `extra=[assemble.installed_orchestration(region.body, Path('..')), *assemble.installed_cycles(region.body, Path('..'))]`, or they disappear without any finding seeing it. A region without a recognisable orchestration is a `ValueError`: the orchestration is chosen explicitly with `assemble.orchestration_file`, not guessed.
-5. **Same operation on every installed agent**, with `split_source` and `build_agent`: front matter and the `## Project context` block stay the project's, the method comes from the master. If the plan names a `model` or `effort` different from the source, ask: yes → that front-matter line takes the source's value.
-6. **Run the plan** from step 0 with `apply_update`: it copies skills and hooks, re-merges guides and the style — text from the source, the last section (the project block, the one holding the placeholder in the source) stays the project's —, merges `settings.json`, writes `version` into `.claude/framework.json` and appends the new delta to `settings_added`. It skips the kernel regions: steps 3-5 have already rewritten them. A guide or style without a recognisable block appears in the plan as `keep`, with the reason: it is updated by hand, comparing it with the source — replacing it whole would erase the adaptation.
-7. **Verify** with `doctor`: it must exit 0.
-
-**Conflicts are presented, they do not resolve themselves:** on a region modified locally the user must see both versions and decide.
+**Conflicts are presented, they do not resolve themselves:** on a region modified locally the user sees both versions and decides.
 
 ---
 
@@ -106,85 +60,22 @@ p.write_text(assemble.build_document(Path('../method'), version, sections), enco
    | a check the agent must not be able to skip | `<FW>/hooks/`, and its entry in `<FW>/tools/fwbuild/settings.py` |
 
    Getting this wrong costs: a delegation rule in `method/` is paid by every subagent at every spawn without being usable; an execution rule in `coordinator/` will never be seen by whoever executes.
-4. **Record the base, if it is not there already**, **before** touching `VERSION`:
-
-   ```bash
-   cd <FW>/tools && python -c "
-   from pathlib import Path
-   from fwbuild import upgrade
-   F = Path('..')
-   if upgrade.read_record(F) is None:
-       print(upgrade.write_record(F, (F/'VERSION').read_text(encoding='utf-8').strip(),
-                                  '<EDITION>', '<repository URL>'))
-   "
-   ```
-
-   From here on `VERSION` is no longer a published number, and without this line nobody knows which release the source came from any more: it is the only thing that makes your work recoverable at the next upgrade (→ `--upgrade`). **If the record is already there it is not touched:** the base stays what it is, however many promotions you make.
-5. **Increment `<FW>/VERSION`:** correction → patch; new or reworded rule → minor; structural change → major.
-6. **State what changed**, so whoever updates knows what they receive.
-7. **Realign the originating project** with `--down`, so the hash matches again.
-
-⚠️ **A translation of this source is a source of its own**, with its own `VERSION`: `--up` does not reach it. A rule that holds in every language has to be carried across by hand — until it is, the two editions say different things.
+4. **Increment `<FW>/VERSION`:** correction → patch; new or reworded rule → minor; structural change → major. A source that is not a git clone records its base first, once: `upgrade.write_record(<FW>, <its VERSION>, <edition folder>, <repository URL>)`.
+5. **Commit it in the master**, the message saying what changed: it is what `status` shows whoever updates, and what `--upgrade` carries through the next release.
+6. **Realign the originating project** with `--down`, so the hash matches again.
 
 ---
 
-## `--upgrade` — bringing a new release over a modified source
+## `--upgrade` — bringing a new release into the master
 
-Only for those who have used `--up`: an untouched source is updated by replacing it. The absence of `upstream.json` **is** that answer, not a fault.
+The master is a git clone: a release is its tracked branch, a promotion (`--up`) a local commit.
 
-1. **Get the new release** where it disturbs nothing, and from there `<NEW>` is the edition folder inside the clone:
+1. `python "<FW>/claw.py" upgrade` — fetches, lists the incoming commits and the uncommitted changes. Uncommitted changes are promotions not yet committed: commit them first, or discard them by the user's word.
+2. After the ok, `upgrade --apply` — merges: fast-forward, or a merge commit that keeps your commits. Then it refreshes the user-level skills (`claw-install`, `claw-comply`).
+3. **On conflict the merge stays open, one file at a time:** read the three versions — base, yours, new (`git show :1:<file>`, `:2:`, `:3:`) — and propose a merge that keeps your addition *inside* the new text, not beside it. If the new text already covers it, take that and say so. No conflict is resolved without showing the user what they lose. `VERSION` is not a conflict: the release's wins. Then `git commit`.
+4. **Then the projects:** `status` on each, `--down` where it is behind.
 
-   ```bash
-   git clone <repo> <NEW>   # or: git -C <existing clone> pull
-   ```
-
-2. **Rebuild the base**, that is the edition as it was at the release your source came from. `upgrade.base_version(<FW>)` gives the number; in the clone, the base is the commit where that edition's `VERSION` held that number, extracted where it touches nothing:
-
-   ```bash
-   git -C <NEW> log --format=%H -- <EDITION>/VERSION   # newest first
-   git -C <NEW> show <commit>:<EDITION>/VERSION        # until it matches
-   git -C <NEW> worktree add --detach <BASE> <commit>
-   ```
-
-   **Wrong base, useless comparison:** if no commit matches — wrong repository, truncated history, a number never published — stop and ask. Do not fall back on `VERSION`: that is the right answer only when `upstream.json` is missing.
-
-3. **Classify**, writing nothing:
-
-   ```bash
-   cd <FW>/tools && python -c "
-   from pathlib import Path
-   from fwbuild import upgrade
-   plan = upgrade.classify(Path('<BASE>/<EDITION>'), Path('<FW>'), Path('<NEW>/<EDITION>'))
-   for name in ('theirs', 'yours', 'conflict'):
-       print(name, len(getattr(plan, name)), getattr(plan, name)[:20])
-   "
-   ```
-
-   | outcome | what it means | what you do |
-   |---|---|---|
-   | `same` | you and the release say the same thing — including when your addition landed upstream identical | nothing |
-   | `theirs` | you left it as it was and upstream changed it | copy from the release |
-   | `yours` | you changed it and upstream did not | **keep yours** |
-   | `conflict` | changed by both, differently | the user decides |
-
-4. **Show the plan before applying it**, with the counts and the conflicting paths. `same`, `theirs` and `yours` are mechanical: the second are applied by copying from the release, the third by not touching them.
-5. **One conflict at a time:** read the three versions — base, yours, new — and propose a merge that keeps your addition *inside* the new text, not beside it. If your change is already covered by the new text, take that and say so. No conflict is resolved without showing the user what they lose.
-6. **`VERSION` is not a conflict:** you take the release's. A source declaring a number that was never published is what created the problem.
-7. **Rewrite the record** with the release just taken: it is the base of the next upgrade.
-
-   ```bash
-   cd <FW>/tools && python -c "
-   from pathlib import Path
-   from fwbuild import upgrade
-   F = Path('..')
-   print(upgrade.write_record(F, (F/'VERSION').read_text(encoding='utf-8').strip(),
-                              '<EDITION>', '<repository URL>'))
-   "
-   ```
-
-8. **Close with `--down` on the projects**, which are now one version behind, and with `doctor` on each.
-
-⚠️ The source is upgraded **in place**: copy it aside before applying. It is the only operation of this skill that touches the master, and it has no undo.
+**A source that is not a clone** (copied into a project): get the release into `<NEW>` and the base — the release your copy came from, `upgrade.base_version(<FW>)` — into `<BASE>`, then `upgrade.classify(<BASE>, <FW>, <NEW>)`: `same` and `theirs` come from the release, `yours` stays, `conflict` is handled as in step 3; after it, `upgrade.write_record` with the release just taken. No commit declares the base → stop and ask. It works in place with no undo: copy the source aside first.
 
 ---
 
@@ -206,26 +97,15 @@ Activating later is *better* than a dormant file: you always take the latest ver
 
 **A guide** is named by its path under `shared/` (`domain/llm-guide.md`). Activating it: copy it into `.claude/shared/`, fill in the project block, add its line in `CLAUDE.md § Shared guides` — without it, it is `SHARED_ORPHAN`. Deactivating it: file and line go. A guide that an installed file still cites is not deactivated: the pointer would stay dead (`SHARED_MISSING`).
 
-Always check for conflicts after an activation:
-
-```bash
-cd <FW>/tools && python -c "
-from fwbuild import profile
-import pathlib
-present = sorted(p.stem for p in pathlib.Path('<PRJ>/.claude/agents').glob('*.md'))
-print('conflicts:', profile.check_exclusive(present) or 'none')
-"
-```
-
-Always close with `doctor`.
+Close an activation with `down "<PRJ>"` and `--apply`: at the same version it changes no text and records the new card, which the next `--down` needs. Always close with `doctor`: `EXCLUSIVE` names agents that do not coexist.
 
 ---
 
 ## `--repair` — putting back what is missing
 
-At the installed version, which must be the source's: otherwise `plan_repair` refuses, and `--down` comes first. It puts back the lifecycle skills, the hooks in use, the state files and the cited guides that are missing, and the missing entries in `settings.json`. **It overwrites nothing:** a file that differs from the source is a local change and stays.
+At the installed version, which must be the source's: otherwise the plan refuses, and `--down` comes first. It puts back the lifecycle skills, the hooks in use, the state files and the cited guides that are missing, and the missing entries in `settings.json`. **It overwrites nothing:** a file that differs from the source is a local change and stays.
 
-1. Plan with `plan_repair`, ok, `apply_update`.
+1. `repair "<PRJ>"`, ok, `--apply`.
 2. Guides and state files that are recreated come from the template: fill in the `[TO FILL IN]` blocks as at installation.
 3. Close with `doctor`.
 
@@ -245,7 +125,7 @@ Only what is byte-for-byte identical to the source is deleted; what the project 
 | `docs/` | stay |
 | `.claude/framework.json` | archived last |
 
-Plan with `plan_uninstall`, ok, `apply_uninstall`: a file changed after the plan stops everything, before the first byte is written.
+`uninstall "<PRJ>"`, ok, `--apply`: a file changed after the plan stops everything, before the first byte is written.
 
 ---
 
@@ -254,9 +134,9 @@ Plan with `plan_uninstall`, ok, `apply_uninstall`: a file changed after the plan
 Skills by other authors are not published with the framework: they stay on the machine, under `<FW>/skills/<package>/`, and the commands are **from the shell**, because they write into the source and not into a project.
 
 ```bash
-cd <FW>/tools && python -m fwbuild skills list
-cd <FW>/tools && python -m fwbuild skills add <repo> [--commit <sha>]
-cd <FW>/tools && python -m fwbuild skills remove <package>
+python "<FW>/claw.py" skills list
+python "<FW>/claw.py" skills add <repo> [--commit <sha>]
+python "<FW>/claw.py" skills remove <package>
 ```
 
 `add` fetches the repository, pins it to a commit, copies every folder with a `SKILL.md` and refuses a skill name already connected: in the project they all sit at one level and the second would cover the first. **Connecting is an installation of other people's material: you ask the user first**, and the content is read — these are instructions, and sometimes scripts, that an agent will run.
@@ -288,7 +168,7 @@ One per project, inside the kernel region of the coordinator's guide. No dedicat
 
 `old` and `new` are the `settings.ORCHESTRATION_SETTINGS` entries of the two orchestrations, `{}` if they have none.
 
-1. **Guide** — reassemble `.claude/shared/orchestration.md` as in step 4 of `--down`, with `assemble.orchestration_file(Path('..'), '<new>')` instead of `installed_orchestration`; the cycles are passed again unchanged.
+1. **Guide** — reassemble `.claude/shared/orchestration.md`: `assemble.build_document(<FW>/coordinator, <VERSION>, <its project sections, unchanged>, extra=[assemble.orchestration_file(<FW>, '<new>'), *assemble.installed_cycles(region.body, <FW>)])`.
 2. **Settings** — remove only what the installation really added: `rec = settings.unmerge(old, settings.unmerge(old, settings_added)[0])[0]` is the part of `old` still in the record. `settings.unmerge(current, rec)` removes it — a variable the user already had stays —, then `settings.merge(rest, new)` adds the new one's. Conflicts and `kept` are shown before writing.
 3. **Manifest** — `settings_added` becomes `settings.merge(settings.unmerge(settings_added, rec)[0], added)[0]`, with `added` the second value of the `merge` in step 2: without it, `--uninstall` leaves on a variable no orchestration asks for any more.
 4. **Verify** with `doctor`.

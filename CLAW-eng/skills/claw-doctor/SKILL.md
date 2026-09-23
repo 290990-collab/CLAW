@@ -10,10 +10,10 @@ description: >
 # Diagnosing an installation
 
 ```bash
-cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
+python "<FW>/claw.py" doctor --strict "<PRJ>"
 ```
 
-`<PRJ>` is the project root. `<FW>` is the `source` field of `.claude/framework.json` (if the file is missing, `./framework/`): it may be **relative to the project root**, and `source.dereference(<PRJ>, source)` resolves it.
+`<PRJ>` is the project root. `<FW>` is the `source` field of `.claude/framework.json` (if the file is missing, `./framework/`), relative to the project root when not absolute.
 
 `fwbuild` has **five** subcommands — `doctor`, `source`, `cost`, `report`, `skills`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `claw-sync`, they are not shell flags.
 
@@ -189,7 +189,7 @@ Before adding a row here, the question is the drift one: *a waiver for this proj
 ## Several projects at once
 
 ```bash
-cd <FW>/tools && python -m fwbuild report <folder-of-repositories>
+python "<FW>/claw.py" report <folder-of-repositories>
 ```
 
 `doctor` answers "does this installation hold?". `report` answers **how many versions of the method are out there, and where**: it looks for `.claude/framework.json` under the given paths (two levels, `--depth` to change that), calls the doctor on each and lines up version, findings and the size of `CLAUDE.md`.

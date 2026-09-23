@@ -131,7 +131,7 @@ All proposed values equal the current ones → say so and stop, without asking a
 
 For each approved agent whose value changes:
 
-1. In the card, replace **the whole line** `model: <old>` with `model: <new>`, and the same for `effort:`. Format unchanged — key, colon, one space, value — because sync reads them with `^(model|effort):[ \t]*(\S+)[ \t]*$`. If `effort:` is missing, add it right after `model:`.
+1. In the card, replace **the whole line** `model: <old>` with `model: <new>`, and the same for `effort:`. Format unchanged — key, colon, one space, value. If `effort:` is missing, add it right after `model:`. `--down` keeps these values: they differ from the source's recorded ones, so they are local choices.
 2. In the roster table, replace the value **in the third column** of the row that has the agent in backticks in the second. The second column is a contract (the doctor reads the agent's name there): not touched.
 
 Before writing, read the file: if the expected line is not there, or differs from the one in the plan, stop on that file and report it. Do not guess where to put it.
@@ -140,7 +140,7 @@ Before writing, read the file: if the expected line is not there, or differs fro
 
 **Verify that the diff is only the promised one.** Before the changes copy every file you will touch into a temporary folder outside the project; afterwards, compare line by line (the stdlib's `difflib` is enough). Every changed line must be a `model:`/`effort:` line of a card, or a roster row in which only the third cell changed. Any other difference → restore the file from the kept text and report it as an error.
 
-Then `doctor`, as at the close of `claw-sync`: from `<FW>/tools`, `python -m fwbuild doctor <PRJ>`, run before writing too: only a finding that was not there before counts. It is reported, not fixed outside the allowed lines.
+Then `doctor`, as at the close of `claw-sync`: `python "<FW>/claw.py" doctor "<PRJ>"`, run before writing too: only a finding that was not there before counts. It is reported, not fixed outside the allowed lines.
 
 Then the report to the user, short:
 - the final table `agent | before | after`;

@@ -16,19 +16,17 @@ You are the coordinator: you read a project, ask questions, decide a roster, fil
 
 ---
 
-## Step 0 — Find and validate the source
+## Step 0 — Validate the source
 
-The source lives in one of these places, **in this order**: `./framework/` (copied into the project), `$CLAUDE_FRAMEWORK`, `~/.claude/framework/`. Take the **first that exists** — not the first that works — and validate it:
+`<FW>` is the source: `claw.py setup` writes its path into this skill. Where it is still literal (a skill copied by hand), take the first that **exists** of `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/`.
 
 ```bash
-cd <FW>/tools && python -m fwbuild source ..
+python "<FW>/claw.py" source "<FW>"
 ```
 
-It prints root, version and the state of the upstream record, or what is missing and exits 1.
+**Exit 1 → stop:** no folders, no files — a wrong source discovered halfway leaves a project worse than a virgin one. Ask the user where the framework is. **Found but incomplete is an error, not a reason to try the next one.**
 
-**If it exits 1, stop here:** no folders, no files — a wrong source discovered halfway leaves a project worse than a virgin one. Ask the user where the framework is and retry with that path. **Found but incomplete is an error, not a reason to try the next one.**
-
-From here `<FW>` is the validated root and `<PRJ>` the project root: replace them with the real paths, do not leave them literal.
+`<PRJ>` is the project root. Replace both with real paths.
 
 ## Step 1 — Detect the kind of installation
 
@@ -161,176 +159,67 @@ by the agent? → they go into the commands.
 
 Regulatory constraints and performance requirements belong to **question 2**: they are critical surfaces, not contours of the profile.
 
-## Step 4 — Roster and selective installation
+## Step 4 — Plan
 
-**Only the active is installed.** The master stays in `<FW>/agents/`: an agent not chosen is not deleted, it is *not yet installed*, and it is added later already up to date with `claw-sync --activate`. Reason: the name and `description` of every file in `.claude/agents/` enter the coordinator's context in every session.
+**Only the active is installed.** An agent not chosen stays in `<FW>/agents/`, *not yet installed*, and arrives later already up to date with `claw-sync --activate`: every file in `.claude/agents/` puts its name and `description` in the coordinator's context at every session.
 
-**Six cannot be removed** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: they are the code cycle, and `drop` ignores them on purpose. Everything else is optional and comes back with `--activate`.
-
-The commands start from `<FW>/tools`: there the framework root is `..`, the project's is `<PRJ>`.
+**Six cannot be removed** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: the code cycle; `--drop` ignores them.
 
 ```bash
-cd <FW>/tools && python -c "
-from pathlib import Path
-from fwbuild import profile
-prof = profile.load(Path('../profiles/<PROFILE>.toml'))
-r = profile.roster(prof, extras=[], drop=[])
-print(r)
-print('conflicts:', profile.check_exclusive(r))
-print('guides:', profile.guides(Path('..'), prof, r, extras=[]))
-"
+python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop a,b] [--guides domain/x.md] [--no-gateguard] [--orchestration <name>]
 ```
 
-`guides` joins the profile's guides, those the chosen cards cite and the extras from the conditional questions; an extra that does not exist is a `FileNotFoundError`, not one guide fewer.
+`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--no-gateguard`: question 4 said no. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `framework.json` already there: the project is installed → `claw-sync`.
+
+**Show the plan and wait for the ok.**
 
 ## Step 5 — Generation
 
-**Two** documents with a kernel region are generated, not one. The difference is the recipient:
+```bash
+python "<FW>/claw.py" install "<PRJ>" --apply
+```
 
-| document | kernel source | who reads it | cost |
+It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `framework.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `claw-doctor`).
+
+| document | kernel | who reads it | cost |
 |---|---|---|---|
 | `CLAUDE.md` | `<FW>/method/` | **everyone**, at every spawn | always paid |
-| `.claude/shared/orchestration.md` | `<FW>/coordinator/` | only whoever delegates | on demand |
+| `.claude/shared/orchestration.md` | `<FW>/coordinator/` + orchestration + profile cycles | only whoever delegates | on demand |
 
-**Never in `CLAUDE.md`:** the routing table, the work cycle, the delegation rules, the state levels. They are instructions a `tester` or an `explorer` pays for at every spawn without being able to use them, and the doctor detects them (`COORDINATOR_LEAK`).
+**Never in `CLAUDE.md`:** routing table, work cycle, delegation rules, state levels — a `tester` or an `explorer` would pay for them at every spawn (`COORDINATOR_LEAK`). **Nor the reply style:** it is an output style, applied to the main conversation only.
 
 ### Pre-existing material — read before writing
 
-It holds everywhere, but this is where things get lost: **none of these files is overwritten before being read.**
+**Nothing that was there is lost:**
 
-**Before the first file is written, the plan and the user's ok:**
-
-```bash
-cd <FW>/tools && python -c "
-import sys
-from pathlib import Path
-from fwbuild import lifecycle
-sys.stdout.reconfigure(encoding='utf-8')
-ops = lifecycle.plan_install(Path('<PRJ>'), lifecycle.targets(Path('..'), <ROSTER>, <GUIDES>, <HOOKS>))
-print(lifecycle.render(ops))
-print(*(f'keep        {o.path} — {o.reason}' for o in ops if o.action == 'keep'), sep='\n')
-"
-```
-
-`<HOOKS>` is `settings.HOOKS`, without `gateguard` if question 4 said no. `overwrite` and `merge` are read by name; `keep` is project material that will stay next to the framework. A `ValueError` on an existing `framework.json`: the project is already installed → `claw-sync`.
-
-- **A `CLAUDE.md` that was already there:** its content is project material. The directives kept at Step 2 go into the project sections, the rest (commands, architecture, state, constraints) into the section it belongs to. Only then do you write the new file, which now contains the old one too. Whatever finds no place is asked about, not thrown away.
-- **`docs/TODO.md`, `status.md`, `roadmap.md` that were already there:** you fill in the template **with their content**, instead of copying the empty one over them. A TODO deleted at installation is the first file the framework promises every session will read.
-- **Skills already in `.claude/skills/`:** they are not touched and not moved. List them in `CLAUDE.md` next to the lifecycle ones, one line each: a skill nobody knows they have never gets invoked.
-- **A `.claude/settings.json` that was already there:** the permissions inside it are the user's, and serialising `Profile.settings` over them deletes them. It is merged with `settings.merge`: lists are joined, on a differing scalar theirs stays and the key goes into the conflicts, which are shown before writing.
-- **Hooks already in `.claude/hooks/`, or `hooks` entries in the settings:** they are the user's. The scripts stay; one with the name of a framework hook shows up as `overwrite` and is asked about. The entries are merged with the framework's, never replaced.
-- **Output styles already in `.claude/output-styles/`, or an `outputStyle` already written in the settings:** the user has already chosen how they want to be spoken to. Show it next to `Reporting` and ask which one holds; the loser stays on disk, it is not deleted.
+- **`CLAUDE.md`:** its old content ends up in `## Pre-existing instructions`. The directives kept at Step 2 go into the project sections, the rest (commands, architecture, state, constraints) into the section it belongs to, then the section goes. What finds no place is asked about, not thrown away.
+- **`docs/TODO.md`, `status.md`, `roadmap.md`:** not overwritten. Fold them into the template's structure **with their content**: a TODO deleted at installation is the first file the framework promises every session will read.
+- **Skills in `.claude/skills/`:** untouched. List them in `CLAUDE.md`, one line each: a skill nobody knows they have never gets invoked.
+- **`.claude/settings.json`:** merged, the user's permissions stay; the printed conflicts are shown to the user.
+- **`.claude/hooks/`:** the user's scripts stay; one with a framework hook's name was named in the plan as `overwrite`. The entries are merged, never replaced.
+- **`.claude/output-styles/`, or an `outputStyle` already set:** printed as a conflict. Ask which one holds; the loser stays on disk.
 
 ### `CLAUDE.md` — project sections
 
-```
-[KERNEL REGION from <FW>/method/]
-
-## The project
-one-line description · "path → role" map · HARD constraints (violating them
-invalidates the work, not just the code) · contracts, with their consumers
-
-## Commands
-build, test, startup · quick check the agent runs · heavy operations the user
-launches, with what they must report back
-
-## Critical surface
-what the critical surface is — what makes the work wrong even with perfect
-code — and who reviews it. It starts from `prof.critical_surface` and from the
-answer to question 2: if they coincide you write one line, if they diverge both
-hold
-
-## Current state
-empty at birth — it is level 3 of the self-updating state
-
-## Shared guides
-first line: `orchestration.md`, only for the coordinator and first if the
-session delegates. Then **one line per installed guide**: what it holds — copied
-from the line under the guide's title, not invented — and when to open it. A
-list of bare paths is not usable: to decide whether to open a guide you would
-already have to know what is inside
-```
-
-**The reply style does not live here.** It is an output style — `.claude/output-styles/` — and Claude Code applies it **to the main conversation only**: a subagent runs on its own system prompt. Writing it into `CLAUDE.md` would have it paid at every spawn by those who never talk to the user.
+- `## The project` — one-line description · "path → role" map · HARD constraints (breaking them invalidates the work, not just the code) · contracts, with their consumers.
+- `## Commands` — build, test, start · the agent's quick check · heavy operations the user launches, with what they report back.
+- `## Critical surface` — what makes the work wrong even with perfect code, and who reviews it: from the profile's `critical_surface` and question 2; if they coincide one line, if they diverge both hold.
+- `## Current state` — empty at birth: level 3 of the state.
+- `## Shared guides` — generated, one line per guide from the line under its title: check it still says what the guide holds and when to open it.
 
 ### `.claude/shared/orchestration.md` — project sections
 
-```
-[KERNEL REGION from <FW>/coordinator/]
+- `## This project's roster` — generated from the real roster: `| Situation | Agent | Model |`, the situation taken from each card's description; sharpen it for this project. **The columns are a contract:** the doctor reads the agent in backticks in the **second** one.
+- `## Delegation notes for this project` — operations the user launches, not the agent · specific parallelism limits · when to skip a cycle step.
 
-## This project's roster
-table GENERATED from the real roster, never copied: | Situation | Agent | Model |
-one row per installed agent, none excluded.
-**The columns are a contract**, not a matter of style: the doctor reads the
-agent name in backticks in the **second** one. Swapping them produces an
-all-orphan roster and names that do not exist
+**Cards, guides, style** — every `## Project context`, every guide's project block, the `## This project` block of `Reporting` (question 3): each placeholder says what goes there.
 
-## Delegation notes for this project
-operations the user launches and not the agent · specific parallelism
-constraints · when to skip a step of the cycle
-```
-
-### Assembly
-
-```bash
-cd <FW>/tools && python -c "
-from pathlib import Path
-from fwbuild import assemble
-F = Path('..'); V = (F/'VERSION').read_text(encoding='utf-8').strip()
-P = Path('<PRJ>')
-for d in ('.claude/shared', '.claude/agents', '.claude/skills', '.claude/output-styles', '.claude/hooks', 'docs'):
-    P.joinpath(d).mkdir(parents=True, exist_ok=True)
-P.joinpath('CLAUDE.md').write_text(
-    assemble.build_document(F/'method', V, PROJECT_SECTIONS), encoding='utf-8')
-ORCH = '<ORCHESTRATION>'; CYCLES = [<profile cycles>]
-P.joinpath('.claude/shared/orchestration.md').write_text(
-    assemble.build_document(F/'coordinator', V, ROSTER_SECTIONS,
-        extra=[assemble.orchestration_file(F, ORCH), *assemble.cycle_files(F, CYCLES)]),
-    encoding='utf-8')
-"
-```
-
-**Active agents** — for each one: read the source with `assemble.split_source`, **fill in the `## Project context` block** with the specific directives (every placeholder declares what to put there), reassemble with `assemble.build_agent`, write into `.claude/agents/`.
-
-**Orchestration and domain cycles** — the module from question 5, then the cycles if the profile declares `cycles`, are appended **in this order** to the kernel region of the coordinator's guide: `--down` passes them again the same way. They are orchestration, not execution, so never in `CLAUDE.md`.
-
-**Guides** — copy from `<FW>/shared/` the list from `profile.guides` at Step 4, filling in the project block there too. An extra agent brings its own: without them the card goes out with a dead pointer that the doctor sees only once the installation is already written (`SHARED_MISSING`).
-
-**Lifecycle skills** — copy `<FW>/skills/claw-doctor`, `claw-sync`, `claw-memory` and `claw-fair` into `.claude/skills/`. Without them they are not invocable and the doctor flags it (`SKILLS_MISSING`).
-
-**Skills of the connected packages** — `skills.installed(F)` says which ones there are (empty is the normal case). They are copied **flattened**, from `<FW>/skills/<package>/<skill>/` to `.claude/skills/<skill>/`: Claude Code does not discover a skill nested any deeper. With a package connected, `skill-runner` is to be activated as well — the only agent that may invoke them.
-
-**Reply style** — copy `<FW>/output-styles/reporting.md` into `.claude/output-styles/` and **fill in the `## This project` block** with the answer to question 3. Left unfilled it is a `PLACEHOLDER`: the doctor reads every `.md` under `.claude/` except the skills.
-
-**Hooks** — copy `<FW>/hooks/<name>.py` into `.claude/hooks/` for every name in `<HOOKS>`. An entry in the settings without its script, for a closed hook, blocks every edit or every command.
-
-**`.claude/settings.json`** — the framework's entries first, then on top of whatever was there (→ *Pre-existing material*):
-
-```python
-fw_settings = settings.framework(prof.settings, <HOOKS>, '<ORCHESTRATION>', skills.overrides(F))   # ValueError: a defect in the source, stop
-merged, added, conflicts = settings.merge(<existing settings.json, or {}>, fw_settings)
-```
-
-`conflicts` are shown before writing `merged`. It carries `outputStyle`, the name of the style just copied: without it the file is installed and nobody selects it.
-
-**`.claude/framework.json`** — `source`, `version`, `profile`: it is how the two skills find the source again, and the only place that records **what** the installation is made of. Without the profile, "regenerate the permissions of the project's profile" cannot be carried out. `settings_added` is `added`: the only piece of `settings.json` that `claw-sync --uninstall` will be able to remove. The shape **is not written by you**: `source.manifest` makes the path relative when the source sits inside the project and absolute only when it sits outside — an absolute path to an internal source is the machine of whoever installed it, and it dies at the first clone.
-
-```python
-source.manifest(PRJ, FW, version, prof.name, settings_added=added, skills=skills.installed(FW))
-```
-
-`skills` is `skill name → package`: in the project the package skills all sit at one level, and without this line the doctor cannot say which package is missing.
-
-The `accepted` field **is not written at installation**: it is born empty and is added by whoever decides to live with a warning (→ `claw-doctor` skill).
-
-**State files** — copy the three templates into `docs/` and fill in every `[TO FILL IN — …]` block **immediately**: first entry and first step in `TODO.md` with today's date, first goal with its criterion in `roadmap.md`. `status.md` is born empty by construction — you write in it when something closes. The sections that may legitimately stay empty (waiting, blocked, open decisions) carry no placeholder: they already hold the right text, and it is replaced when there is something. It must be done here: at Step 6 a residual placeholder is a `PLACEHOLDER`, and `TODO.md` is the file every future session reads first.
-
-**No `@import`:** the kernel is concatenated physically.
+**State files** — first entry and first step in `TODO.md` with today's date, first goal with its criterion in `roadmap.md`; `status.md` is born empty. Sections that may stay empty carry no placeholder.
 
 ## Step 6 — Verification
 
 ```bash
-cd <FW>/tools && python -m fwbuild doctor --strict <PRJ>
+python "<FW>/claw.py" doctor --strict "<PRJ>"
 ```
 
-It must print `OK — no findings` and exit 0. `--strict` makes the rule mechanical: **as long as one finding remains, of any severity, the installation is not complete.** What each code means: skill `claw-doctor`.
+It must print `OK — no findings` and exit 0: **as long as one finding remains, of any severity, the installation is not complete.** What each code means: skill `claw-doctor`.
