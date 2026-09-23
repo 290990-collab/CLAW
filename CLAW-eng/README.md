@@ -86,15 +86,7 @@ cd <source>/tools && python -m fwbuild source ..
 
 No dependency to install: only Python 3.11+ is needed (for `tomllib`).
 
-What the common context of an installed project costs — the `CLAUDE.md` every
-subagent pays at every spawn — is told by:
-
-```bash
-cd <source>/tools && python -m fwbuild cost <project> [--spawns N] [--devs N] [--price USD]
-# defaults: 100 spawns a day, 1 person, $5 per million input tokens
-```
-
-`doctor --json` prints the same findings plus that measurement, for CI.
+`doctor --json` prints the findings plus the size of `CLAUDE.md`, for CI.
 
 Across several repositories at once — how many versions of the method are out
 there, and where:

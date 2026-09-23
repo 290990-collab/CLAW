@@ -8,13 +8,6 @@ from pathlib import Path
 
 from . import doctor, report, skills, source, upgrade
 
-# Claude Opus 5 list price, uncached input tokens, in dollars per million. It
-# is a declared default, not a truth: prices change and caching lowers the real
-# figure. `--price` exists so that whoever reads chooses the number.
-PRICE_PER_MTOK = 5.00
-WORKING_DAYS = 22
-
-
 def _force_utf8_stdout() -> None:
     """On Windows, Python's stdout uses the local code page (cp1252), which
     does not cover all the characters in the messages. Without this, a finding
@@ -69,14 +62,6 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--json", action="store_true", help="report as JSON, for CI")
     r.add_argument(
         "--strict", action="store_true", help="exit 1 if a project diverges or has findings"
-    )
-
-    c = sub.add_parser("cost", help="what the installed CLAUDE.md costs")
-    c.add_argument("path", type=Path)
-    c.add_argument("--spawns", type=int, default=100, help="spawns per day per person")
-    c.add_argument("--devs", type=int, default=1, help="how many people work on the repo")
-    c.add_argument(
-        "--price", type=float, default=PRICE_PER_MTOK, help="$ per million input tokens"
     )
 
     s = sub.add_parser("source", help="resolve and validate the source root")
@@ -143,9 +128,6 @@ def main(argv: list[str] | None = None) -> int:
         if not blocking:
             print("OK — only waivers declared in framework.json")
         return code
-
-    if args.command == "cost":
-        return _cost(args.path, args.spawns, args.devs, args.price)
 
     if args.command == "report":
         s = report.survey(args.paths, args.depth, _source_version())
@@ -246,44 +228,6 @@ def _report(path: Path, findings: list[doctor.Finding]) -> dict:
 def _n(value: float, decimals: int = 0) -> str:
     """A number with thousands separators, in the English convention."""
     return f"{value:,.{decimals}f}"
-
-
-def _cost(path: Path, spawns: int, devs: int, price: float) -> int:
-    """The size of CLAUDE.md translated into a budget line.
-
-    The full cost, that is, the upper bound: prompt caching lowers the real
-    figure and is not measurable from here. Every assumption is printed
-    alongside the number — a total without its assumptions is a number nobody
-    can contest.
-    """
-    m = _measure(path)
-    if m is None:
-        print(f"{path}: CLAUDE.md absent — nothing to measure")
-        return 1
-
-    per_day = m.tokens * spawns * devs
-    daily = per_day / 1_000_000 * price
-    people = "person" if devs == 1 else "people"
-
-    print(f"CLAUDE.md: {_n(m.total_words)} words ≈ {_n(m.tokens)} tokens, paid at every spawn.")
-    if m.has_region:
-        print(
-            f"  of which kernel {_n(m.kernel_words)} (with a ceiling) and project "
-            f"{_n(m.project_words)} (without)."
-        )
-    print(
-        f"{_n(spawns)} spawns a day × {devs} {people} = "
-        f"{_n(per_day / 1_000_000, 1)} million tokens a day of common context alone."
-    )
-    print(
-        f"At ${_n(price, 2)}/Mtok: ${_n(daily, 2)} a day, "
-        f"${_n(daily * WORKING_DAYS, 2)} a month ({WORKING_DAYS} working days)."
-    )
-    print(
-        "Full cost: prompt caching lowers it. Claude Opus 5 list price (input) — "
-        "change it with --price."
-    )
-    return 0
 
 
 def _source_version() -> str | None:

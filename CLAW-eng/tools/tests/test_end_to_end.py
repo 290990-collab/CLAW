@@ -789,25 +789,6 @@ class TestCli(unittest.TestCase):
             )
             self.assertTrue(data["source"])
 
-    def test_cost_prints_its_assumptions_with_the_number(self):
-        """A figure without its assumptions is a number nobody can contest:
-        price, spawns and people sit alongside the total."""
-        with tempfile.TemporaryDirectory() as d:
-            code, out = self._run(
-                ["cost", str(self._install(d)), "--spawns", "200", "--devs", "12"]
-            )
-            self.assertEqual(code, 0)
-            self.assertIn("200 spawns a day", out)
-            self.assertIn("12 people", out)
-            self.assertIn("/Mtok", out)
-            self.assertIn("--price", out)
-
-    def test_cost_without_an_installation_fails_loudly(self):
-        with tempfile.TemporaryDirectory() as d:
-            code, out = self._run(["cost", d])
-            self.assertEqual(code, 1)
-            self.assertIn("CLAUDE.md absent", out)
-
 
 class TestRealInstall(unittest.TestCase):
     def test_full_install_passes_doctor(self):

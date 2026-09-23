@@ -143,8 +143,6 @@ The threshold is the kernel itself, the only known quantity: *the project does n
 
 **What to do:** do not cut at random. Move into `.claude/shared/` what only a few agents need, leaving the pointer; remove what the repository already says by itself (structure that can be derived, commands already in a `Makefile` or `package.json`); keep in `CLAUDE.md` only what an agent cannot deduce — hard constraints, contracts with their consumers, the critical surface. If after the cut the file stays over the threshold because the project is large, it is a warning to accept knowingly.
 
-To turn it into a figure: `python -m fwbuild cost <PRJ> --spawns N --devs N`.
-
 ### `REPORT_FORMAT` — WARNING
 
 The installed report schema still carries confidence as a percentage: previous format, fake precision in the field the coordinator reads first, while a model's self-reported confidence is poorly calibrated. No other finding sees it: the hash matches that very text, and the declared version is the one the project was born with.
