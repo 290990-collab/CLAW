@@ -2,6 +2,7 @@ import hashlib
 import io
 import json
 import re
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -427,9 +428,9 @@ class TestDown(unittest.TestCase):
             self.assertEqual(claude.read_text(encoding="utf-8"), drifted)
             self.assertEqual(read_json(root / source.MANIFEST)["version"], VERSION)
 
-    def test_down_names_a_model_the_source_changed(self):
-        """The front matter stays the project's: an agent downgraded in the
-        source would stay on the old model, and the plan must name it."""
+    def test_down_without_a_record_keeps_a_different_value_and_names_it(self):
+        """No record of the last sync: a different model may be the user's
+        choice, so it stays, and the plan says how to take the source's."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
             rel = ".claude/agents/implementer.md"
@@ -441,9 +442,13 @@ class TestDown(unittest.TestCase):
             card.write_text(text.replace(f"model: {model}", f"model: {other}", 1), encoding="utf-8")
 
             got = {op.path: op for op in lifecycle.plan_down(root, FRAMEWORK)}
+            self.assertIn("kept (no record): model — --adopt implementer", got[rel].reason)
+            self.assertNotIn("kept", got[".claude/agents/explorer.md"].reason)
 
-            self.assertIn(f"model: {other} here, {model} in the source", got[rel].reason)
-            self.assertNotIn("in the source", got[".claude/agents/explorer.md"].reason)
+            ops = lifecycle.plan_down(root, FRAMEWORK, adopt=["implementer"])
+            self.assertIn("from the source: model", {o.path: o for o in ops}[rel].reason)
+            lifecycle.apply_down(root, FRAMEWORK, ops, ["implementer"])
+            self.assertIn(f"model: {model}\n", card.read_text(encoding="utf-8"))
 
     def test_down_refuses_a_plan_the_tree_has_outgrown(self):
         """A skill the plan overwrites and that changed after the ok is no longer
@@ -527,6 +532,134 @@ class TestDown(unittest.TestCase):
             if doctor.PLACEHOLDER_RE.search(text):
                 with self.subTest(path=path.relative_to(FRAMEWORK).as_posix()):
                     self.assertIsNotNone(lifecycle.project_heading(text))
+
+
+def source_copy(d) -> Path:
+    """A throwaway source, to be changed like a new release would."""
+    fw = Path(d) / "fw"
+    shutil.copytree(FRAMEWORK, fw, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache"))
+    return fw
+
+
+def install_from(fw: Path, root: Path) -> list[str]:
+    from fwbuild import profile
+
+    prof = profile.load(fw / "profiles" / "software.toml")
+    roster = profile.roster(prof, [], [])
+    guides = profile.guides(fw, prof, roster)
+    ops = lifecycle.plan_install(root, lifecycle.targets(fw, roster, guides, settings.HOOKS))
+    lifecycle.apply_install(
+        root, fw, ops, "software", roster, guides, settings.HOOKS, "orchestrator-worker"
+    )
+    return roster
+
+
+def edit(path: Path, old: str, new: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    assert old in text, old
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+
+class TestApplyInstall(unittest.TestCase):
+    def test_install_leaves_only_placeholders_and_records_the_cards(self):
+        """What the tool writes is complete but for the project's words: the only
+        finding is PLACEHOLDER, and the record of every card is there for the
+        first `--down`."""
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prj"
+            root.mkdir()
+            (root / "CLAUDE.md").write_text("# Old\n\nUse tabs.\n", encoding="utf-8")
+            roster = install_from(FRAMEWORK, root)
+
+            self.assertEqual({f.code for f in doctor.check(root)}, {"PLACEHOLDER"})
+            manifest = read_json(root / source.MANIFEST)
+            self.assertEqual(sorted(manifest["frontmatter"]), sorted(roster))
+            self.assertIn("Use tabs.", (root / "CLAUDE.md").read_text(encoding="utf-8"))
+            self.assertEqual(
+                read_json(root / ".claude/settings.json")["env"], settings.BASE["env"]
+            )
+
+    def test_install_refuses_a_plan_made_for_other_choices(self):
+        from fwbuild import profile
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prj"
+            root.mkdir()
+            prof = profile.load(FRAMEWORK / "profiles" / "software.toml")
+            roster = profile.roster(prof, [], [])
+            guides = profile.guides(FRAMEWORK, prof, roster)
+            ops = lifecycle.plan_install(
+                root, lifecycle.targets(FRAMEWORK, roster, guides, settings.HOOKS)
+            )
+            with self.assertRaises(ValueError):
+                lifecycle.apply_install(
+                    root, FRAMEWORK, ops, "software", roster[:-1], guides,
+                    settings.HOOKS, "orchestrator-worker",
+                )
+            self.assertEqual(tree(root), {})
+
+
+class TestApplyDown(unittest.TestCase):
+    def test_front_matter_follows_the_record(self):
+        """A value the project never touched follows the source; one the
+        project chose stays. The regions take the new method, the project
+        sections stay, a roster cell that still says the old value follows."""
+        with tempfile.TemporaryDirectory() as d:
+            fw = source_copy(d)
+            root = Path(d) / "prj"
+            root.mkdir()
+            install_from(fw, root)
+            agents = root / ".claude" / "agents"
+            edit(agents / "tester.md", "model: sonnet", "model: opus")
+            claude = root / "CLAUDE.md"
+            edit(claude, "## Current state\n", "## Current state\n\nmine\n")
+
+            edit(fw / "agents" / "implementer.md", "effort: high", "effort: low")
+            edit(fw / "agents" / "tester.md", "effort: medium", "effort: low")
+            edit(fw / "agents" / "explorer.md", "model: haiku\n", "model: haiku\nmemory: project\n")
+            edit(fw / "method" / "20-evidence.md", "Every action starts", "Each action starts")
+            (fw / "VERSION").write_text("9.9.9\n", encoding="utf-8")
+
+            ops = lifecycle.plan_down(root, fw)
+            lifecycle.apply_down(root, fw, ops)
+
+            impl = (agents / "implementer.md").read_text(encoding="utf-8")
+            tester = (agents / "tester.md").read_text(encoding="utf-8")
+            self.assertIn("effort: low", impl)
+            self.assertIn("model: opus", tester)
+            self.assertIn("effort: low", tester)
+            self.assertIn("memory: project", (agents / "explorer.md").read_text(encoding="utf-8"))
+            text = claude.read_text(encoding="utf-8")
+            self.assertIn("Each action starts", text)
+            self.assertIn("## Current state\n\nmine\n", text)
+            self.assertEqual(kernel.parse(text).version, "9.9.9")
+            roster = (root / lifecycle.ORCHESTRATION).read_text(encoding="utf-8")
+            self.assertIn("| `implementer` | sonnet low |", roster)
+            self.assertIn("| `tester` | sonnet medium |", roster)
+            manifest = read_json(root / source.MANIFEST)
+            self.assertEqual(manifest["version"], "9.9.9")
+            self.assertEqual(
+                manifest["frontmatter"]["implementer"],
+                lifecycle.field_record((fw / "agents" / "implementer.md").read_text(encoding="utf-8")),
+            )
+            # The doctor measures the version against its own source, not the copy.
+            self.assertLessEqual(
+                {f.code for f in doctor.check(root)}, {"PLACEHOLDER", "VERSION_MISMATCH"}
+            )
+
+    def test_down_writes_nothing_when_the_tree_changed_after_the_plan(self):
+        with tempfile.TemporaryDirectory() as d:
+            fw = source_copy(d)
+            root = Path(d) / "prj"
+            root.mkdir()
+            install_from(fw, root)
+            (fw / "VERSION").write_text("9.9.9\n", encoding="utf-8")
+            ops = lifecycle.plan_down(root, fw)
+            edit(root / "CLAUDE.md", "## Current state\n", "## Current state\n\nlater\n")
+            before = tree(root)
+            with self.assertRaises(ValueError):
+                lifecycle.apply_down(root, fw, ops)
+            self.assertEqual(tree(root), before)
 
 
 if __name__ == "__main__":

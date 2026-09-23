@@ -132,6 +132,152 @@ def plan_install(project_root: Path, targets: Sequence[str]) -> list[Operation]:
     return ops
 
 
+PROJECT_SKELETON = """## The project
+
+[TO FILL IN — one line on what it is · "path → role" map · HARD constraints (breaking them invalidates the work, not just the code) · contracts, with who consumes them]
+
+## Commands
+
+[TO FILL IN — build, test, start · the agent's quick check · heavy operations the user launches, with what they must report]
+
+## Critical surface
+
+[TO FILL IN — what makes the work wrong even with perfect code, and who reviews it. The field's: {surface}]
+
+## Current state
+
+## Shared guides
+
+- `.claude/shared/orchestration.md` — coordinator only, first if the session delegates: when to delegate and to whom, the work cycle, delegation prompts, state.
+{guides}
+"""
+
+PREEXISTING = """
+## Pre-existing instructions
+
+[TO FILL IN — move what follows into the sections above, in the most compressed form that keeps its meaning, then delete this section]
+
+"""
+
+ROSTER_SKELETON = """## This project's roster
+
+| Situation | Agent | Model |
+|---|---|---|
+{rows}
+
+## Delegation notes for this project
+
+[TO FILL IN — operations the user launches, not the agent · project-specific parallelism limits · when to skip a cycle step]
+"""
+
+
+def apply_install(
+    project_root: Path,
+    framework_root: Path,
+    ops: Sequence[Operation],
+    profile_name: str,
+    roster: Sequence[str],
+    guides: Sequence[str],
+    hooks: Sequence[str],
+    orchestration: str,
+) -> tuple[list[str], list[str]]:
+    """Runs a `plan_install` plan: `(settings conflicts, files to fill in)`.
+
+    Everything is computed and every digest re-checked before the first byte.
+    Cards, guides and styles arrive with their placeholders; `CLAUDE.md` and the
+    coordinator's guide with the project skeleton, a pre-existing `CLAUDE.md`
+    appended to be redistributed. State files already there are left for the
+    model to fold into the template. The placeholders are filled next, then
+    `doctor --strict`.
+    """
+    prj, fw = Path(project_root), Path(framework_root)
+    prof = profile.load(fw / "profiles" / f"{profile_name}.toml")
+    clash = profile.check_exclusive(list(roster))
+    if clash:
+        raise ValueError(f"agents that do not coexist: {', '.join(clash)}")
+    if {op.path for op in ops if op.action != KEEP} != set(targets(fw, roster, guides, hooks)):
+        raise ValueError("the plan was made for other choices, nothing was written: plan again")
+    _verify(prj, [op for op in ops if op.action != KEEP])
+    version = _version(fw)
+
+    cards = {n: (fw / "agents" / f"{n}.md").read_text(encoding="utf-8") for n in roster}
+    listed = "\n".join(
+        f"- `.claude/shared/{rel}` — {_guide_line((fw / 'shared' / rel).read_text(encoding='utf-8'))}"
+        for rel in guides
+    )
+    sections = PROJECT_SKELETON.format(surface=prof.critical_surface or "-", guides=listed)
+    if (prj / CLAUDE_MD).is_file():
+        sections += PREEXISTING + (prj / CLAUDE_MD).read_text(encoding="utf-8")
+    rows = "\n".join(f"| {_situation(c)} | `{n}` | {_model_cell(c)} |" for n, c in cards.items())
+    texts = {
+        CLAUDE_MD: assemble.build_document(fw / "method", version, sections),
+        ORCHESTRATION: assemble.build_document(
+            fw / "coordinator",
+            version,
+            ROSTER_SKELETON.format(rows=rows),
+            extra=[
+                assemble.orchestration_file(fw, orchestration),
+                *assemble.cycle_files(fw, prof.cycles),
+            ],
+        ),
+    }
+    for name, card in cards.items():
+        texts[f".claude/agents/{name}.md"] = assemble.build_agent(
+            *assemble.split_source(card), version
+        )
+    copies = {f".claude/shared/{rel}": fw / "shared" / rel for rel in guides}
+    copies |= {f".claude/output-styles/{p.name}": p for p in _files(fw / "output-styles")}
+    copies |= {f".claude/hooks/{n}.py": _hook_source(fw, n) for n in hooks}
+    copies |= dict(_skill_files(fw))
+    copies |= {
+        f"docs/{n}": fw / "templates" / n
+        for n in doctor.STATE_FILES
+        if not (prj / "docs" / n).exists()
+    }
+    merged, added, conflicts = settings.merge(
+        _current_settings(prj),
+        settings.framework(prof.settings, hooks, orchestration, skills.overrides(fw)),
+    )
+    data = source.manifest(
+        prj, fw, version, prof.name, settings_added=added, skills=skills.installed(fw)
+    )
+    data["frontmatter"] = {n: field_record(c) for n, c in cards.items()}
+
+    for rel, original in copies.items():
+        (prj / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(original, prj / rel)
+    for rel, text in texts.items():
+        (prj / rel).parent.mkdir(parents=True, exist_ok=True)
+        (prj / rel).write_text(text, encoding="utf-8")
+    _write_json(prj / SETTINGS, merged)
+    _write_json(prj / MANIFEST, data)
+    to_fill = sorted(
+        rel
+        for rel in [*texts, *copies]
+        if not rel.startswith(".claude/skills/")
+        and rel.endswith(".md")
+        and doctor.PLACEHOLDER_RE.search((prj / rel).read_text(encoding="utf-8"))
+    )
+    return conflicts, to_fill
+
+
+def _situation(card: str) -> str:
+    """The roster's Situation for a card: its description up to the first colon or full stop."""
+    block = _fields(card).get("description", "description:")
+    text = " ".join(
+        line.strip() for line in block.split(":", 1)[1].splitlines() if line.strip() not in ("", ">")
+    )
+    return re.split(r"(?<=[.:])\s", text)[0].rstrip(".:")
+
+
+def _guide_line(text: str) -> str:
+    """A guide's line in `CLAUDE.md § Shared guides`: the first sentence under its title."""
+    line = next(
+        (s.strip() for s in text.splitlines()[1:] if s.strip() and not s.startswith("#")), ""
+    )
+    return re.split(r"(?<=\.)\s", line)[0]
+
+
 def render(ops: Sequence[Operation]) -> str:
     """The plan to show: first what changes or removes something, by name, then
     the counts. A hundred "create" lines above one "overwrite" hide it."""
@@ -316,18 +462,22 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
 
 
 def plan_down(
-    project_root: Path, framework_root: Path, hooks: Sequence[str] | None = None
+    project_root: Path,
+    framework_root: Path,
+    hooks: Sequence[str] | None = None,
+    adopt: Sequence[str] = (),
 ) -> list[Operation]:
     """What a new version brings: kernel regions, guides and styles, skills,
     hooks, settings.
 
-    The kernel regions are reassembled by the skill's steps, not by
-    `apply_update`: here they are listed, and a touched-up region says the
-    change will be lost. Guides and styles take the source text and keep their
-    project block; without a recognisable block they stay as they are, and the
-    plan says so. `hooks` are the hooks to have afterwards; `None` means
-    those the project already uses — a project born without hooks does not get
-    any in silence.
+    The kernel regions are reassembled by `apply_down`: here they are listed,
+    and a touched-up region says the change will be lost. A card's front
+    matter follows `_frontmatter_merge`; `adopt` names the cards (or `all`)
+    that take the source's values whatever the record says. Guides and styles
+    take the source text and keep their project block; without a recognisable
+    block they stay as they are, and the plan says so. `hooks` are the hooks to
+    have afterwards; `None` means those the project already uses — a project
+    born without hooks does not get any in silence.
     """
     prj, fw = Path(project_root), Path(framework_root)
     manifest = _manifest(prj)
@@ -341,7 +491,7 @@ def plan_down(
         if is_agent and not original.is_file():
             ops.append(_op(prj, rel, KEEP, "card no longer in the source: stays as it is"))
             continue
-        note = _model_note(text, original.read_text(encoding="utf-8")) if is_agent else ""
+        note = _card_note(manifest, rel, text, original, adopt) if is_agent else ""
         if region is None:
             ops.append(_op(prj, rel, KEEP, "no markers: no region to reassemble"))
         elif kernel.verify(text) == "DRIFT":
@@ -374,8 +524,88 @@ def plan_down(
     for name in hooks:
         ops += _against_source(prj, f".claude/hooks/{name}.py", _hook_source(fw, name), *overwrite)
     ops += _settings_update_ops(prj, fw, manifest, ops)
-    ops.append(_op(prj, MANIFEST, MERGE, f"version {manifest.get('version')} → {version}"))
+    moved = manifest.get("source") != source.reference(prj, fw)
+    ops.append(_op(prj, MANIFEST, MERGE, f"version {manifest.get('version')} → {version}"
+                   + (f"; source → {source.reference(prj, fw)}" if moved else "")))
     return ops
+
+
+def _card_note(manifest: dict, rel: str, text: str, original: Path, adopt: Sequence[str]) -> str:
+    name = Path(rel).stem
+    record = _record(manifest, name)
+    _, taken, kept = _frontmatter_merge(
+        text, original.read_text(encoding="utf-8"), record, "all" in adopt or name in adopt
+    )
+    note = f"; from the source: {', '.join(taken)}" if taken else ""
+    if kept:
+        note += f"; kept (local): {', '.join(kept)}" if record is not None else (
+            f"; kept (no record): {', '.join(kept)} — --adopt {name} takes the source"
+        )
+    return note
+
+
+def apply_down(
+    project_root: Path, framework_root: Path, ops: Sequence[Operation], adopt: Sequence[str] = ()
+) -> None:
+    """Runs a `plan_down` plan, kernel regions included.
+
+    Every new text is computed and every digest re-checked before the first
+    byte is written: a failure leaves the project as it was. The regions take
+    the source's method and keep what surrounds them; cards take their front
+    matter from `_frontmatter_merge`, and a roster row whose Model cell still
+    says the old value is rewritten. The manifest records the source cards'
+    front matter — the reference of the next `--down` — and the source.
+    """
+    prj, fw = Path(project_root), Path(framework_root)
+    _verify(prj, [op for op in ops if op.action != KEEP])
+    manifest = _manifest(prj)
+    version = _version(fw)
+    table = manifest.get("frontmatter")
+    record = dict(table) if isinstance(table, dict) else {}
+    regions = [op.path for op in ops if op.action == MERGE and _is_kernel_file(op.path)]
+    writes: dict[Path, str] = {}
+    cells: dict[str, tuple[str, str]] = {}
+    for rel in regions:
+        if not rel.startswith(".claude/agents/"):
+            continue
+        name = Path(rel).stem
+        text = (prj / rel).read_text(encoding="utf-8")
+        original = (fw / "agents" / f"{name}.md").read_text(encoding="utf-8")
+        fm, _, _ = _frontmatter_merge(
+            text, original, _record(manifest, name), "all" in adopt or name in adopt
+        )
+        _, method, _ = assemble.split_source(original)
+        domain = text[kernel.parse(text).end :].lstrip("\n")
+        writes[prj / rel] = assemble.build_agent(fm, method, domain, version)
+        record[name] = field_record(original)
+        if _model_cell(text) != _model_cell(fm):
+            cells[name] = (_model_cell(text), _model_cell(fm))
+    for rel, method_dir in ((CLAUDE_MD, "method"), (ORCHESTRATION, "coordinator")):
+        if rel not in regions:
+            continue
+        text = (prj / rel).read_text(encoding="utf-8")
+        region = kernel.parse(text)
+        sections = text[region.end :].lstrip("\n")
+        extra: list[Path] = []
+        if rel == ORCHESTRATION:
+            sections = _roster_cells(sections, cells)
+            extra = [
+                assemble.installed_orchestration(region.body, fw),
+                *assemble.installed_cycles(region.body, fw),
+            ]
+        writes[prj / rel] = text[: region.start] + assemble.build_document(
+            fw / method_dir, version, sections, extra=extra
+        )
+
+    apply_update(prj, fw, ops)
+    for path, text in writes.items():
+        path.write_text(text, encoding="utf-8")
+    data = _manifest(prj)
+    data["frontmatter"] = {
+        n: r for n, r in record.items() if (prj / ".claude" / "agents" / f"{n}.md").is_file()
+    }
+    data["source"] = source.reference(prj, fw)
+    _write_json(prj / MANIFEST, data)
 
 
 def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operation]) -> None:
@@ -544,19 +774,90 @@ def _kernel_files(prj: Path) -> list[str]:
     return out + [p.relative_to(prj).as_posix() for p in agents if p.suffix == ".md"]
 
 
-MODEL_LINE_RE = re.compile(r"^(model|effort):[ \t]*(\S+)[ \t]*$", re.MULTILINE)
+FIELD_RE = re.compile(r"[A-Za-z][\w-]*(?=:)")
+ROSTER_ROW_RE = re.compile(r"^(\|[^|\n]*\|\s*)`([a-z-]+)`\s*\|([^|\n]*)\|", re.MULTILINE)
 
 
-def _model_note(installed: str, original: str) -> str:
-    """Model and effort live in the front matter, which stays the project's: a
-    change in the source does not arrive on its own, and the plan names it."""
-    def lines(text: str) -> dict[str, str]:
-        head = re.match(r"---\n(.*?)\n---", text.replace("\r\n", "\n"), re.DOTALL)
-        return dict(MODEL_LINE_RE.findall(head.group(1))) if head else {}
-    here, there = lines(installed), lines(original)
-    diff = [f"{k}: {here.get(k, '-')} here, {v} in the source"
-            for k, v in there.items() if here.get(k) != v]
-    return f"; {', '.join(diff)} — ask" if diff else ""
+def _fields(text: str) -> dict[str, str]:
+    """A card's front matter: top-level key → its normalised lines, continuation
+    lines included."""
+    lines = text.replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        raise ValueError("card without front matter")
+    out: dict[str, str] = {}
+    key = None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return {k: kernel.normalize(v) for k, v in out.items()}
+        m = FIELD_RE.match(line)
+        if m:
+            key = m.group(0)
+            out[key] = line + "\n"
+        elif key is not None:
+            out[key] += line + "\n"
+        elif line.strip():
+            raise ValueError(f"front matter line outside any key: {line!r}")
+    raise ValueError("front matter not closed")
+
+
+def field_record(card: str) -> dict[str, str]:
+    """What `framework.json` records of a source card at every sync: key → digest."""
+    return {k: kernel.digest(v) for k, v in _fields(card).items()}
+
+
+def _record(manifest: dict, name: str) -> dict | None:
+    table = manifest.get("frontmatter")
+    entry = table.get(name) if isinstance(table, dict) else None
+    return entry if isinstance(entry, dict) else None
+
+
+def _frontmatter_merge(
+    installed: str, original: str, record: dict | None, adopt: bool
+) -> tuple[str, list[str], list[str]]:
+    """`(front matter, taken, kept)` after `--down`.
+
+    A key the project still has at the value recorded at the last sync is taken
+    from the source: nobody chose it. A different value is a local choice and
+    stays. Without a record the two cannot be told apart: every difference
+    stays, unless `adopt`.
+    """
+    here, there = _fields(installed), _fields(original)
+    blocks, taken, kept = [], [], []
+    for key in [*there, *(k for k in here if k not in there)]:
+        h, t = here.get(key), there.get(key)
+        if h == t:
+            chosen = h
+        elif adopt or (
+            record is not None and (kernel.digest(h) if h else "-") == record.get(key, "-")
+        ):
+            chosen = t
+            taken.append(key)
+        else:
+            chosen = h
+            kept.append(key)
+        if chosen:
+            blocks.append(chosen)
+    return "---\n" + "".join(blocks) + "---\n", taken, kept
+
+
+def _model_cell(card: str) -> str:
+    """The roster's Model cell for a card: `model effort`."""
+    f = _fields(card)
+    return " ".join(
+        f[k].split(":", 1)[1].strip() for k in ("model", "effort") if k in f
+    )
+
+
+def _roster_cells(sections: str, changes: dict[str, tuple[str, str]]) -> str:
+    """Rewrites a roster row's Model cell only where it still says the old value."""
+
+    def fix(m: re.Match) -> str:
+        name, cell = m.group(2), m.group(3).strip()
+        if name in changes and cell == changes[name][0]:
+            return f"{m.group(1)}`{name}` | {changes[name][1]} |"
+        return m.group(0)
+
+    return ROSTER_ROW_RE.sub(fix, sections)
 
 
 def _is_kernel_file(rel: str) -> bool:

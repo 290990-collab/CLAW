@@ -789,6 +789,39 @@ class TestCli(unittest.TestCase):
             )
             self.assertTrue(data["source"])
 
+    def test_install_plans_then_writes(self):
+        """Without `--apply` nothing is written; with it, the saved plan runs."""
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prj"
+            root.mkdir()
+            self.assertEqual(self._run(["install", str(root), "--profile", "nope"])[0], 1)
+            code, out = self._run(["install", str(root), "--profile", "software"])
+            self.assertEqual((code, list(root.iterdir())), (0, []))
+            code, out = self._run(["install", str(root), "--apply"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("CLAUDE.md", out)
+            self.assertEqual({f.code for f in doctor.check(root)}, {"PLACEHOLDER"})
+
+    def test_down_plans_then_applies_once(self):
+        """The plan runs once: a second `--apply` has nothing approved to run."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            manifest = root / ".claude" / "framework.json"
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            data["version"] = "1.0.0"
+            manifest.write_text(json.dumps(data), encoding="utf-8")
+            self.assertEqual(self._run(["down", str(root), "--apply"])[0], 1)
+            code, out = self._run(["down", str(root)])
+            self.assertEqual(code, 0, out)
+            self.assertEqual(json.loads(manifest.read_text(encoding="utf-8"))["version"], "1.0.0")
+            code, out = self._run(["down", str(root), "--apply"])
+            self.assertEqual(code, 0, out)
+            self.assertEqual(
+                json.loads(manifest.read_text(encoding="utf-8"))["version"],
+                (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip(),
+            )
+            self.assertEqual(self._run(["down", str(root), "--apply"])[0], 1)
+
 
 class TestRealInstall(unittest.TestCase):
     def test_full_install_passes_doctor(self):
