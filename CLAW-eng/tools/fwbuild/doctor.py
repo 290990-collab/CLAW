@@ -1,11 +1,10 @@
 """The integrity checks of an installation.
 
-Twenty finding codes: eight of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
-SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, FABLE, EXCLUSIVE,
-MANIFEST_MISSING) and twelve of severity WARN (ROSTER_ORPHAN, KERNEL_DRIFT,
-COORDINATOR_LEAK, SKILLS_MISSING, VERSION_MISMATCH, SETTINGS_MISSING,
-SHARED_ORPHAN, TOKEN_BUDGET, REPORT_FORMAT, ACCEPTED_UNUSED, UNSAFE_UNICODE,
-PERSONAL_PATH). MANIFEST_MISSING
+Twenty finding codes: seven of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
+SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, EXCLUSIVE, MANIFEST_MISSING) and
+thirteen of severity WARN (ROSTER_ORPHAN, KERNEL_DRIFT, COORDINATOR_LEAK,
+SKILLS_MISSING, VERSION_MISMATCH, SETTINGS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET,
+REPORT_FORMAT, ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). MANIFEST_MISSING
 is the only one that comes out at both: ERROR if the file is missing, WARN if it
 is incomplete.
 Every code is explained, with what to do about it, in the `claw-doctor`
@@ -235,7 +234,9 @@ def check(root: Path) -> list[Finding]:
                 Finding("PLACEHOLDER", "ERROR", f"{rel}: placeholder not filled in")
             )
         if FABLE_RE.search(text):
-            out.append(Finding("FABLE", "ERROR", f"{rel}: model fable not available"))
+            out.append(
+                Finding("FABLE", "WARN", f"{rel}: model fable bills outside the plan on most plans")
+            )
         if CONF_PERCENT_RE.search(text):
             out.append(
                 Finding(

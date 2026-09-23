@@ -123,11 +123,11 @@ A waiver declared in `framework.json` covers no finding: either the finding is g
 
 **What to do:** remove it if the finding is gone, write the reason if it is missing, fix the error if it is an error.
 
-### `FABLE` — ERROR
+### `FABLE` — WARNING
 
-`model: fable` was generated. That model is not available: the agent does not start.
+`model: fable`: on most plans Fable bills to usage credits, outside the plan's limits.
 
-**What to do:** replace it with the source card's `model:` and `effort:`.
+**What to do:** not intended → the source card's `model:` and `effort:`; intended → accept it in `framework.json`.
 
 ### `EXCLUSIVE` — ERROR
 
