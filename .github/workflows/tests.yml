@@ -11,20 +11,19 @@ on:
 
 jobs:
   suite:
-    # The product is copied and run wherever the user works, so every edition
-    # is checked on all three desktop platforms. Windows is not optional here:
+    # The product is copied and run wherever the user works, so it is checked
+    # on all three desktop platforms. Windows is not optional here:
     # console encoding is the one failure mode this repository already knows
     # about, and only a Windows runner can see it.
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        edition: [CLAW-it, CLAW-eng]
 
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: ${{ matrix.edition }}/tools
+        working-directory: CLAW-eng/tools
 
     env:
       # The CLI forces UTF-8 on its own streams; trial_install.py does not.
@@ -51,18 +50,3 @@ jobs:
 
       - name: Doctor on the trial installation
         run: python -m fwbuild doctor --strict ../../_build/ci
-
-  parity:
-    # The editions must differ by language only. The check reads files, so one
-    # runner is enough -- unlike the suite, it has nothing to do with the
-    # operating system.
-    runs-on: ubuntu-latest
-    env:
-      PYTHONIOENCODING: utf-8
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Structural parity between the editions
-        run: python .github/parity.py

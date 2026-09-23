@@ -1,5 +1,6 @@
 ---
 name: claw-install
+disable-model-invocation: true
 description: >
   Installs and adapts the framework in a project: detects whether the project
   is empty or already has code, runs the questionnaire, chooses the agent

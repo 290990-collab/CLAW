@@ -1,5 +1,6 @@
 ---
 name: claw-comply
+disable-model-invocation: true
 description: >
   Measures whether a rule of the method is actually followed: it puts the rule
   to work in `claude -p` sessions on a throwaway copy of the project, with three
