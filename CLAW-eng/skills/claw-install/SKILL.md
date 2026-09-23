@@ -302,12 +302,10 @@ P.joinpath('.claude/shared/orchestration.md').write_text(
 
 **Hooks** — copy `<FW>/hooks/<name>.py` into `.claude/hooks/` for every name in `<HOOKS>`. An entry in the settings without its script, for a closed hook, blocks every edit or every command.
 
-**`.claude/settings.json`** — profile and hooks together first, then on top of whatever was there (→ *Pre-existing material*):
+**`.claude/settings.json`** — the framework's entries first, then on top of whatever was there (→ *Pre-existing material*):
 
 ```python
-fw_settings, _, c = settings.merge(prof.settings, settings.hooks(<HOOKS>))   # c not empty: a defect in the source, stop
-fw_settings, _, c = settings.merge(fw_settings, settings.ORCHESTRATION_SETTINGS.get('<ORCHESTRATION>', {}))   # same
-fw_settings, _, c = settings.merge(fw_settings, skills.overrides(F))   # the pool: outside it, they stay with the user
+fw_settings = settings.framework(prof.settings, <HOOKS>, '<ORCHESTRATION>', skills.overrides(F))   # ValueError: a defect in the source, stop
 merged, added, conflicts = settings.merge(<existing settings.json, or {}>, fw_settings)
 ```
 

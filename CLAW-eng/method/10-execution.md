@@ -2,7 +2,6 @@
 
 They hold for every agent that receives a task, coordinator included when it works directly.
 
-- **No sub-delegation:** subagents spawn no other agents. If work outside your mandate is needed, report it to the coordinator.
 - **Strict scope:** execute *only* the assigned task. Any extra problem noticed goes into the report, NEVER into the diff.
 - **Decisions outside the mandate:** a choice the task does not assign you — structure, contract, alternatives not indicated — is not yours to make: stop and report it at the top of the report with the options, and resume on the answer.
 - **Range reads:** read the `file:line` ranges you receive, not whole files. Widen only if the excerpt is not enough, and say so.

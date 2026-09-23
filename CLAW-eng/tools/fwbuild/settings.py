@@ -28,6 +28,10 @@ _MATCHER = {
 
 _TIMEOUT_SECONDS = 10
 
+# Every installation, whatever the profile: subagents do not spawn subagents.
+# Enforced here rather than written in the method every spawn pays for.
+BASE = {"env": {"CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"}}
+
 # What an orchestration requires from `settings.json` in order to work. It is
 # merged like the profile and ends up in the same record: changing it or
 # uninstalling has to be able to remove it.
@@ -42,6 +46,25 @@ ORCHESTRATION_SETTINGS = {
         }
     },
 }
+
+
+def framework(
+    profile_settings: dict, hook_names: Sequence[str], orchestration: str, overrides: dict
+) -> dict:
+    """The entries the framework wants in `settings.json`: base, profile, hooks,
+    orchestration, skill overrides. A conflict among them is a defect of the
+    source: `ValueError`."""
+    out = copy.deepcopy(BASE)
+    for part in (
+        profile_settings,
+        hooks(hook_names),
+        ORCHESTRATION_SETTINGS.get(orchestration, {}),
+        overrides,
+    ):
+        out, _, conflicts = merge(out, part)
+        if conflicts:
+            raise ValueError(f"framework settings conflict on: {', '.join(conflicts)}")
+    return out
 
 
 def merge(existing: dict, framework: dict) -> tuple[dict, dict, list[str]]:

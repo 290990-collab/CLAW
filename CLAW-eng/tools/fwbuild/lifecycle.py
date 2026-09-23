@@ -808,22 +808,12 @@ def _framework_settings(
     orchestration = assemble.installed_orchestration(region.body, fw).stem
     referenced = _referenced_hooks(current)
     names = [n for n in settings.HOOKS if n not in referenced and _hook_after(prj, n, ops)]
-    merged, _, conflicts = settings.merge(profile.load(path).settings, settings.hooks(names))
-    if conflicts:
-        raise ValueError(f"profile and hooks conflict on: {', '.join(conflicts)}")
-    merged, _, conflicts = settings.merge(
-        merged, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
+    # `skills.overrides`: the skills connected and outside the pool, invocable
+    # by the user, invisible to the coordinator. Without it the pool does not
+    # exist — the model sees them all.
+    return settings.framework(
+        profile.load(path).settings, names, orchestration, skills.overrides(fw)
     )
-    if conflicts:
-        raise ValueError(f"orchestration conflicts on: {', '.join(conflicts)}")
-    # The skills connected and outside the pool: invocable by the user,
-    # invisible to the coordinator. Without this entry the pool does not exist —
-    # the model sees them all, and "only the pool ones" stays a sentence in a
-    # guide.
-    merged, _, conflicts = settings.merge(merged, skills.overrides(fw))
-    if conflicts:
-        raise ValueError(f"the skill pool conflicts on: {', '.join(conflicts)}")
-    return merged
 
 
 def _settings_update_ops(

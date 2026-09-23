@@ -347,7 +347,7 @@ class TestRepair(unittest.TestCase):
             self.assertEqual(actions(ops).get(SETTINGS), lifecycle.MERGE)
             lifecycle.apply_update(root, FRAMEWORK, ops)
 
-            self.assertEqual(read_json(root / SETTINGS)["env"], env)
+            self.assertEqual(read_json(root / SETTINGS)["env"], {**settings.BASE["env"], **env})
             self.assertEqual(doctor.check(root), [])
 
     def test_repair_refuses_without_the_coordinator_guide(self):

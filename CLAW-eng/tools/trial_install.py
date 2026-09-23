@@ -327,14 +327,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
     # Profile and hooks together first, then on top of what the project already
     # has — nothing here, but the step is the same as on a real project: it is
     # the addition the manifest records, so the uninstall removes only that.
-    framework_settings, _, conflicts = settings.merge(prof.settings, settings.hooks(hooks))
-    if conflicts:
-        raise SystemExit(f"profile and hooks conflict on: {', '.join(conflicts)}")
-    framework_settings, _, conflicts = settings.merge(
-        framework_settings, settings.ORCHESTRATION_SETTINGS.get(orchestration, {})
-    )
-    if conflicts:
-        raise SystemExit(f"orchestration conflicts on: {', '.join(conflicts)}")
+    framework_settings = settings.framework(prof.settings, hooks, orchestration, {})
     merged, added, conflicts = settings.merge({}, framework_settings)
     if conflicts:
         raise SystemExit(f"settings.json conflicts on: {', '.join(conflicts)}")
