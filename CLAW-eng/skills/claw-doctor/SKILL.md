@@ -15,7 +15,7 @@ python "<FW>/claw.py" doctor --strict "<PRJ>"
 
 `<PRJ>` is the project root. `<FW>` is the `source` field of `.claude/framework.json` (if the file is missing, `./framework/`), relative to the project root when not absolute.
 
-`fwbuild` has **five** subcommands — `doctor`, `source`, `cost`, `report`, `skills`. The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `claw-sync`, they are not shell flags.
+The modes `--down`, `--up`, `--upgrade`, `--repair`, `--uninstall`, `--activate`, `--deactivate` belong to `claw-sync`, they are not flags of `claw.py`.
 
 - Complete installation → `OK — no findings`.
 - **Always use `--strict`**, in CI and by hand: without it the exit code is 0 even with warnings.
