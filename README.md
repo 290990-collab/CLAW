@@ -337,7 +337,7 @@ sentence:
 ```json
 {
   "source": "...",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
@@ -467,6 +467,6 @@ Every command that writes prints its plan first; add `--apply` to run it.
 
 ---
 
-## Version 2.0.0
+## Version 2.0.1
 
 MIT, see [LICENSE](LICENSE).

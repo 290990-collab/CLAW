@@ -34,4 +34,5 @@ The connected skills live in `.claude/skills/`. The ones you may invoke on your 
 9. **Proportionate review, one round only:** `final-reviewer` only on the critical surface or an important task, double review only at the user's request (§ The code cycle, step 5); otherwise the coordinator verifies with the tests. The critical-surface reviewer is outside this count. The final reviewer **or** a native review skill, never both; heavy native ones only at the user's request.
    - **Blocking finding** (security, data loss): it goes to the user, who decides.
    - **Fixes:** by whoever holds the picture — the coordinator, or the still-open agent that wrote that code; a finding that asks for new work becomes a task and follows the cycle. The reviewer does not fix and is not relaunched on the fixes: the coordinator verifies them with the tests.
+   - **Verdict:** approved with reservations closes only if the user accepts them; a finding you discard gets a written reason.
 10. **Zero useless re-verification:** do not spawn agents to re-run builds/tests that just passed if nothing has changed.
