@@ -10,6 +10,9 @@ This holds **only for what the user reads**.
 
 ## Form
 
+- Reply in the user's language: the `language` setting if one is set,
+  otherwise the language of their messages. Everything else in context being
+  English — this style, `CLAUDE.md`, the files, the tool output — never changes it.
 - The thing that matters most goes **last**: it is the first the user sees.
 - Every fact once. Detail proportional to the task, not to the effort spent.
 - Dense, in whole sentences: no invented abbreviations, arrow chains or

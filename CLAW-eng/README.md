@@ -58,7 +58,8 @@ python ~/.claude/CLAW/CLAW-eng/claw.py setup --apply    # claw-install and claw-
 The clone is the master. From then on every new project is `/claw-install`.
 The reply language is Claude Code's `language` setting: the installation asks
 for it once if neither `~/.claude/settings.json` nor `~/.claude/CLAUDE.md`
-fixes one.
+fixes one. Without it, the `Reporting` style answers in the language of the
+user's messages.
 
 ## Commands
 

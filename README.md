@@ -303,7 +303,8 @@ each project by the install.
 
 Claude answers in the language of Claude Code's `language` setting. If neither
 `~/.claude/settings.json` nor `~/.claude/CLAUDE.md` sets one, the first install
-asks.
+asks. Without it, Claude answers in the language of your messages, even though
+the framework's own files are in English.
 
 ---
 
