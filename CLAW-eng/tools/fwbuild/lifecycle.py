@@ -466,6 +466,7 @@ def plan_down(
     framework_root: Path,
     hooks: Sequence[str] | None = None,
     adopt: Sequence[str] = (),
+    cited: Path | None = None,
 ) -> list[Operation]:
     """What a new version brings: kernel regions, guides and styles, skills,
     hooks, settings.
@@ -477,7 +478,8 @@ def plan_down(
     take the source text and keep their project block; without a recognisable
     block they stay as they are, and the plan says so. `hooks` are the hooks to
     have afterwards; `None` means those the project already uses — a project
-    born without hooks does not get any in silence.
+    born without hooks does not get any in silence. `cited` is the source the
+    manifest will name, when `framework_root` is only a copy of it.
     """
     prj, fw = Path(project_root), Path(framework_root)
     manifest = _manifest(prj)
@@ -531,9 +533,10 @@ def plan_down(
     for name in hooks:
         ops += _against_source(prj, f".claude/hooks/{name}.py", _hook_source(fw, name), *overwrite)
     ops += _settings_update_ops(prj, fw, manifest, ops)
-    moved = manifest.get("source") != source.reference(prj, fw)
+    ref = source.reference(prj, Path(cited) if cited else fw)
+    moved = manifest.get("source") != ref
     ops.append(_op(prj, MANIFEST, MERGE, f"version {manifest.get('version')} → {version}"
-                   + (f"; source → {source.reference(prj, fw)}" if moved else "")))
+                   + (f"; source → {ref}" if moved else "")))
     return ops
 
 

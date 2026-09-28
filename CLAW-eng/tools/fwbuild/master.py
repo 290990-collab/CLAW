@@ -9,6 +9,7 @@ master's path: no search for the source, no path to type.
 
 import shutil
 import subprocess
+import zipfile
 from pathlib import Path
 
 USER_SKILLS = ("claw-install", "claw-comply")
@@ -58,13 +59,27 @@ def since(fw: Path, version: str) -> list[str] | None:
     return None
 
 
-def merge(fw: Path) -> list[str]:
-    """Merges the tracked branch: fast-forward, else a merge commit. Returns
-    the conflicted files, empty on success; on conflict the merge stays open
-    for the user to resolve. Any other failure raises."""
-    if _run(fw, "merge", "--ff-only", "@{u}").returncode == 0:
+def export(fw: Path, ref: str, dest: Path) -> None:
+    """The source as it stands at `ref`, written into `dest`: the version a
+    plan is computed against before it is merged."""
+    prefix = git(fw, "rev-parse", "--show-prefix")
+    archive = Path(dest) / "source.zip"
+    # From a subdirectory, `git archive <ref>:<prefix>` fails ("current working
+    # directory is untracked"): it runs from the clone's root.
+    top = Path(git(fw, "rev-parse", "--show-toplevel"))
+    git(top, "archive", "--format=zip", "-o", str(archive), f"{ref}:{prefix}")
+    with zipfile.ZipFile(archive) as z:
+        z.extractall(dest)
+    archive.unlink()
+
+
+def merge(fw: Path, ref: str = "@{u}") -> list[str]:
+    """Merges `ref`, the tracked branch by default: fast-forward, else a merge
+    commit. Returns the conflicted files, empty on success; on conflict the
+    merge stays open for the user to resolve. Any other failure raises."""
+    if _run(fw, "merge", "--ff-only", ref).returncode == 0:
         return []
-    out = _run(fw, "merge", "--no-edit", "@{u}")
+    out = _run(fw, "merge", "--no-edit", ref)
     if out.returncode == 0:
         return []
     conflicts = lines(fw, "diff", "--name-only", "--diff-filter=U")

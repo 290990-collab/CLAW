@@ -5,6 +5,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -119,6 +120,9 @@ def main(argv: list[str] | None = None) -> int:
     ):
         p = sub.add_parser(name, help=f"{help_text}: plan, then --apply")
         p.add_argument("--apply", action="store_true")
+    u = sub.add_parser("update", help="upgrade, then down on a project: plan, then --apply")
+    u.add_argument("path", type=Path)
+    u.add_argument("--apply", action="store_true")
 
     args = parser.parse_args(argv)
 
@@ -130,6 +134,8 @@ def main(argv: list[str] | None = None) -> int:
         return _setup(args.apply)
     if args.command == "upgrade":
         return _upgrade(args.apply)
+    if args.command == "update":
+        return _update(args.path, args.apply)
     if args.command == "skills":
         return _skills(args)
 
@@ -535,3 +541,72 @@ def _upgrade(apply: bool) -> int:
     version = (FW / "VERSION").read_text(encoding="utf-8").strip()
     print(f"upgrade: done — source at v{version}. Projects: {_claw()} status <project>")
     return 0
+
+
+def _update(prj: Path, apply: bool) -> int:
+    """`upgrade` and `down` under one ok. The plan shows the commits that arrive
+    and the down the arriving version makes; `--apply` merges exactly those
+    commits, refreshes the user-level skills, then runs the down only if its
+    plan is still the one shown."""
+    plan = _plan_file(prj, "update")
+    try:
+        if not master.is_clone(FW) or not master.upstream(FW):
+            print("not a git clone with a tracked branch: claw-sync --upgrade")
+            return 1
+        if master.lines(FW, "status", "--porcelain"):
+            print("uncommitted changes in the master: commit them (they are promotions) first")
+            return 1
+        if not apply:
+            master.git(FW, "fetch", "--quiet")
+            head = master.git(FW, "rev-parse", "@{u}")
+            incoming = master.lines(FW, "log", "--oneline", f"HEAD..{head}")
+            with tempfile.TemporaryDirectory() as d:
+                if incoming:
+                    master.export(FW, head, Path(d))
+                ops = lifecycle.plan_down(prj, Path(d) if incoming else FW, cited=FW)
+            plan.write_text(
+                json.dumps({
+                    "project": str(Path(prj).resolve()), "source": str(FW), "head": head,
+                    "ops": [dataclasses.asdict(o) for o in ops],
+                }),
+                encoding="utf-8",
+            )
+            print(f"{len(incoming)} incoming commits:")
+            for c in incoming:
+                print(f"  {c}")
+            print("then the user-level skills are refreshed, and the project:\n")
+            print(lifecycle.render(ops))
+            for o in ops:
+                if o.action == lifecycle.KEEP and o.reason:
+                    print(f"{o.action:<11} {o.path} — {o.reason}")
+            print(f'\nplan saved. To run it: {_claw()} update "{prj}" --apply')
+            return 0
+        data = json.loads(plan.read_text(encoding="utf-8")) if plan.is_file() else {}
+        if (data.get("project"), data.get("source")) != (str(Path(prj).resolve()), str(FW)):
+            raise ValueError(f"no update plan saved for {prj} from this source: plan first")
+        conflicts = master.merge(FW, data["head"])
+        if conflicts:
+            print("conflicts, the merge is left open: resolve them, then git commit\n  "
+                  + "\n  ".join(conflicts))
+            return 1
+        master.install_skills(FW, SKILLS_HOME)
+        plan.unlink()
+    except (ValueError, FileNotFoundError, RuntimeError) as err:
+        print(err)
+        return 1
+    # The down runs on the code just merged, not on the one loaded in this process.
+    claw = [sys.executable, str(FW / "claw.py")]
+    run = dict(capture_output=True, text=True, encoding="utf-8", errors="replace")
+    down = subprocess.run([*claw, "down", str(prj)], **run)
+    down_plan = _plan_file(prj, "down")
+    shown = json.loads(down_plan.read_text(encoding="utf-8"))["ops"] if (
+        down.returncode == 0 and down_plan.is_file()
+    ) else None
+    if shown != data["ops"]:
+        print(down.stdout + down.stderr)
+        print(f"source updated, but the project's down differs from the plan shown: "
+              f'check the plan above, then {_claw()} down "{prj}" --apply')
+        return 1
+    done = subprocess.run([*claw, "down", str(prj), "--apply"], **run)
+    print(done.stdout + done.stderr, end="")
+    return done.returncode

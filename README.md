@@ -371,7 +371,8 @@ changing the orchestration or the profile.
 
 | I want to… | Do this | What happens |
 |---|---|---|
-| Get a new release | The steps below | Source and projects move to the new version, your changes kept |
+| Get a new release into one project | `python ~/.claude/CLAW/CLAW-eng/claw.py update <project>`, then the same with `--apply` | It shows the new changes and what the project receives; with `--apply` it takes the release and updates the project, only if the project is still as shown |
+| Get a new release, all projects | The steps below | Source and projects move to the new version, your changes kept |
 | See whether a project is behind | `python ~/.claude/CLAW/CLAW-eng/claw.py status <project>` | Source and project versions, the doctor's findings, and the changes in between |
 | Make a change in one project count for all | Edit the method in the project, then `/claw-sync --up` | It asks whether the change is for everyone, writes it into the source, raises its version and commits it. Other projects get it with `--down` |
 
@@ -448,6 +449,7 @@ Every command that writes prints its plan first; add `--apply` to run it.
 | `setup` | Puts `/claw-install` and `/claw-comply` in `~/.claude/skills/`, pointing at this source |
 | `status [project]` | The source against its release branch; the project's version, findings and the changes it is missing |
 | `upgrade` | Takes the new release into the source, keeping your committed changes |
+| `update <project>` | `upgrade` and `down` under one `--apply`: the down runs only if it is still the one shown |
 | `install <project> --profile <name>` | The file-writing part of `/claw-install`. Also `--agents`, `--drop`, `--guides`, `--no-gateguard`, `--orchestration` |
 | `down <project>` | Brings the source's version into the project. `--adopt <agent>` also takes the source's model and effort for that agent |
 | `repair <project>` | Puts back missing files; overwrites nothing |

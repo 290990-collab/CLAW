@@ -58,7 +58,7 @@ python ~/.claude/CLAW/CLAW-eng/claw.py setup --apply    # claw-install and claw-
 The clone is the master. From then on every new project is `/claw-install`.
 The reply language is Claude Code's `language` setting: the installation asks
 for it once if neither `~/.claude/settings.json` nor `~/.claude/CLAUDE.md`
-fixes one. Without it, the `Reporting` style answers in the language of the
+fixes one. Without it, the method's kernel answers in the language of the
 user's messages.
 
 ## Commands
@@ -71,6 +71,7 @@ user's messages.
 | `setup` | the user-level skills, with this source's path written in |
 | `status [project]` | source against its branch; project version, doctor, commits in between |
 | `upgrade` | fetches, lists incoming commits, merges them into the master (a promotion is a local commit, kept) |
+| `update <project>` | `upgrade`, then `down` on the project, under one `--apply`: the plan shows the down the incoming version makes, and it runs only if unchanged |
 | `install <project> --profile P` | the mechanical part of `/claw-install`: files with placeholders, skeleton, settings, manifest |
 | `down <project>` | a new version into a project, kernel regions included; card front matter follows the record |
 | `repair` · `uninstall <project>` | put back what is missing · remove the framework, archiving what was adapted |
