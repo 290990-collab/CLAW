@@ -1,4 +1,4 @@
-"""Trial installation: simulates claw-install on the `software` profile.
+"""Trial installation: simulates /claw install on the `software` profile.
 
 Fake project: `logtail`, a command-line tool that follows and filters log
 files. It serves to demonstrate that a complete installation passes the doctor
@@ -335,7 +335,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
         json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
-    # How `claw-doctor` and `claw-sync` find the source again later,
+    # How `/claw` finds the source again later,
     # and which profile the project was born with. The shape is decided by
     # `source.manifest`: the path is relative when the source sits inside the
     # project, so the file survives the clone.
@@ -377,11 +377,6 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
         ),
         encoding="utf-8",
     )
-
-    # The lifecycle skills go where Claude Code looks for them, otherwise they
-    # are not invocable in the project.
-    for skill in doctor.LIFECYCLE_SKILLS:
-        shutil.copytree(FRAMEWORK / "skills" / skill, out / ".claude" / "skills" / skill)
 
     # The reply style: `outputStyle` in the settings names it, this file defines
     # it. The project block is filled in at once, like every placeholder.

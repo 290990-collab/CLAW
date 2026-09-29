@@ -1,14 +1,4 @@
----
-name: claw-memory
-description: >
-  Shows what is in the project's persistent memory and what no longer holds:
-  lists the facts, pairs them with the state of the repository and with the
-  framework's rules, and proposes what to correct, mark as superseded or
-  delete. To be used at the start of a long session, after a structural change,
-  or when a memory looks old: `/claw-memory`.
----
-
-# Persistent memory — what it says, and what contradicts it
+# `/claw memory` — what the memory says, and what contradicts it
 
 Level 4 of the state is the only one that lives **outside the repository**: no finding of the doctor sees it, and in a conflict the repo wins.
 

@@ -106,7 +106,7 @@ def plan_install(project_root: Path, targets: Sequence[str]) -> list[Operation]:
     if (prj / MANIFEST).exists():
         raise ValueError(
             f"{MANIFEST} already exists: the project is installed — "
-            "claw-sync --down or --repair, not a second installation"
+            "/claw update or /claw fix, not a second installation"
         )
     mergeable = {CLAUDE_MD, SETTINGS} | {f"docs/{n}" for n in doctor.STATE_FILES}
     ops = []
@@ -351,7 +351,7 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
         if (prj / "docs" / name).is_file():
             ops.append(_op(prj, f"docs/{name}", KEEP, "project state"))
     ops.append(
-        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, claw-sync finds the source")
+        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, /claw finds the source")
     )
     return ops
 
@@ -432,7 +432,7 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
     if manifest.get("version") != version:
         raise ValueError(
             f"installation at v{manifest.get('version')}, source at v{version}: "
-            "claw-sync --down first, then --repair"
+            "/claw update first, then /claw fix"
         )
     keep = (KEEP, "differs from the source: local change, not overwritten")
     ops = []
@@ -744,16 +744,12 @@ def _files(directory: Path) -> list[Path]:
 def _skill_files(fw: Path) -> list[tuple[str, Path]]:
     """The skill files to install: path in the project, original.
 
-    The lifecycle ones already sit at one level; those of the connected
-    packages lose the package level, because Claude Code only discovers
+    Only those of the connected packages — `/claw` is a user-level skill. They
+    lose the package level, because Claude Code only discovers
     `.claude/skills/<skill>/`.
     """
     base = fw / "skills"
-    out = [
-        (f".claude/skills/{p.relative_to(base).as_posix()}", p)
-        for skill in doctor.LIFECYCLE_SKILLS
-        for p in _files(base / skill)
-    ]
+    out = []
     for skill, package in skills.installed(fw).items():
         out += [
             (f".claude/skills/{p.relative_to(base / package).as_posix()}", p)

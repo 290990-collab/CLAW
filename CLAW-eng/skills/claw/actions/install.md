@@ -1,15 +1,4 @@
----
-name: claw-install
-disable-model-invocation: true
-description: >
-  Installs and adapts the framework in a project: detects whether the project
-  is empty or already has code, runs the questionnaire, chooses the agent
-  roster, generates CLAUDE.md, the active agents, the guides and the state
-  files, and verifies the result. To be used once per project:
-  `/claw-install`.
----
-
-# Installing and adapting the framework
+# `/claw install` — installing and adapting the framework
 
 You are the coordinator: you read a project, ask questions, decide a roster, fill in content. The tooling does only the mechanical part — assembly, hashing, checks.
 
@@ -143,7 +132,7 @@ Two reviewers only if the project really has two distinct critical surfaces.
 
 In the same question, **`gateguard` yes or no**: it denies the first touch of every file in a session until the facts are presented — who imports it, what public surface changes — and it costs one extra turn per file; `FRAMEWORK_GATEGUARD=off` turns it off. The other hooks in `settings.HOOKS` are always installed.
 
-**5. Orchestration** → a file from `<FW>/orchestrations/`, **one** per project. Propose `assemble.DEFAULT_ORCHESTRATION`; name as useful for the field those in the profile's `recommended_orchestrations`, with the **When** point of their module, and the others as available. `agent-teams` is experimental and needs an interactive session: say so before the choice. It is changed later with `claw-sync` (§ Change of orchestration).
+**5. Orchestration** → a file from `<FW>/orchestrations/`, **one** per project. Propose `assemble.DEFAULT_ORCHESTRATION`; name as useful for the field those in the profile's `recommended_orchestrations`, with the **When** point of their module, and the others as available. `agent-teams` is experimental and needs an interactive session: say so before the choice. It is changed later with `/claw change`.
 
 ### Conditional — only for what the profile does not already install
 
@@ -162,7 +151,7 @@ Regulatory constraints and performance requirements belong to **question 2**: th
 
 ## Step 4 — Plan
 
-**Only the active is installed.** An agent not chosen stays in `<FW>/agents/`, *not yet installed*, and arrives later already up to date with `claw-sync --activate`: every file in `.claude/agents/` puts its name and `description` in the coordinator's context at every session.
+**Only the active is installed.** An agent not chosen stays in `<FW>/agents/`, *not yet installed*, and arrives later already up to date with ``/claw add``: every file in `.claude/agents/` puts its name and `description` in the coordinator's context at every session.
 
 **Six cannot be removed** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: the code cycle; `--drop` ignores them.
 
@@ -170,7 +159,7 @@ Regulatory constraints and performance requirements belong to **question 2**: th
 python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop a,b] [--guides domain/x.md] [--no-gateguard] [--orchestration <name>]
 ```
 
-`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--no-gateguard`: question 4 said no. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `framework.json` already there: the project is installed → `claw-sync`.
+`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--no-gateguard`: question 4 said no. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `framework.json` already there: the project is installed → `/claw update`.
 
 **Show the plan and wait for the ok.**
 
@@ -180,7 +169,7 @@ python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop
 python "<FW>/claw.py" install "<PRJ>" --apply
 ```
 
-It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `framework.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `claw-doctor`).
+It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `framework.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `/claw fix`).
 
 | document | kernel | who reads it | cost |
 |---|---|---|---|
@@ -223,4 +212,4 @@ It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/or
 python "<FW>/claw.py" doctor --strict "<PRJ>"
 ```
 
-It must print `OK — no findings` and exit 0: **as long as one finding remains, of any severity, the installation is not complete.** What each code means: skill `claw-doctor`.
+It must print `OK — no findings` and exit 0: **as long as one finding remains, of any severity, the installation is not complete.** What each code means: `/claw fix`.

@@ -16,8 +16,8 @@ profiles/            7 profiles: domain → roster, guides, cycles, permissions
 templates/           the state files, generated empty but structured
 output-styles/       reporting.md: how to answer the user, aliases and rule names — main conversation only
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
-skills/              claw-install · claw-doctor · claw-sync · claw-memory · claw-comply · claw-fair
-                     plus the packages connected with `claw.py skills add` and pool.toml: local, never published
+skills/claw/         the /claw skill: SKILL.md routes, actions/ holds one file per action
+skills/              plus the packages connected with `claw skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
 tools/tests/         the tests
@@ -51,11 +51,10 @@ Python 3.11+ and git; nothing else to install.
 
 ```bash
 git clone <repo> ~/.claude/CLAW
-python ~/.claude/CLAW/CLAW-eng/claw.py setup            # plan
-python ~/.claude/CLAW/CLAW-eng/claw.py setup --apply    # claw-install and claw-comply into ~/.claude/skills/
+python ~/.claude/CLAW/CLAW-eng/claw.py setup    # the /claw skill into ~/.claude/skills/, `claw` into ~/.local/bin/
 ```
 
-The clone is the master. From then on every new project is `/claw-install`.
+The clone is the master. From then on every new project is `/claw install`.
 The reply language is Claude Code's `language` setting: the installation asks
 for it once if neither `~/.claude/settings.json` nor `~/.claude/CLAUDE.md`
 fixes one. Without it, the method's kernel answers in the language of the
@@ -63,24 +62,27 @@ user's messages.
 
 ## Commands
 
-`python <source>/claw.py <command>`. Whatever writes prints a plan and saves it;
-`--apply` runs that plan, re-checking every file.
+Two surfaces, split by who acts. **The terminal** works on the source:
+`claw update` takes a release, `claw status` and `claw doctor` look.
+**Claude Code's `/claw <action>`** works on a project — install, update, fix,
+add, remove, change, share, tune, memory, comply, uninstall — and runs the
+commands below itself.
+
+Whatever writes prints a plan and asks; `--yes` skips the question, and
+without a terminal (a skill) the plan is saved and `--apply` runs it,
+re-checking every file.
 
 | command | does |
 |---|---|
-| `setup` | the user-level skills, with this source's path written in |
-| `status [project]` | source against its branch; project version, doctor, commits in between |
-| `upgrade` | fetches, lists incoming commits, merges them into the master (a promotion is a local commit, kept) |
-| `update <project>` | `upgrade`, then `down` on the project, under one `--apply`: the plan shows the down the incoming version makes, and it runs only if unchanged |
-| `install <project> --profile P` | the mechanical part of `/claw-install`: files with placeholders, skeleton, settings, manifest |
+| `update` | fetches, lists incoming commits, merges them into the master (a promotion is a local commit, kept), refreshes `/claw` |
+| `status [project]` | source against its branch; the project in this folder, or the one named: version, doctor, commits in between |
+| `doctor [project] [--strict] [--json]` | integrity check |
+| `setup` | the `/claw` skill with this source's path written in, and the `claw` launcher |
+| `install <project> --profile P` | the mechanical part of `/claw install`: files with placeholders, skeleton, settings, manifest |
 | `down <project>` | a new version into a project, kernel regions included; card front matter follows the record |
 | `repair` · `uninstall <project>` | put back what is missing · remove the framework, archiving what was adapted |
-| `doctor <project> [--strict] [--json]` | integrity check |
 | `report <folders>` | versions and findings across many repositories |
 | `source [path]` · `skills list\|add\|remove` | validate a source · connected skill packages |
-
-**Copied into the project** — this folder as `framework/` in the project root:
-`claw-install` finds it first.
 
 ## How it is built
 
@@ -94,8 +96,8 @@ every agent, the method lives inside a delimited region:
 ```
 
 It is not locked: you can modify it. The hash stops matching and
-`claw-doctor` tells you, so a change to the method becomes **visible**
-instead of buried. From there `claw-sync` carries it up into the source —
+`claw doctor` tells you, so a change to the method becomes **visible**
+instead of buried. From there `/claw share` carries it up into the source —
 and that is the direction whose absence makes the method diverge between
 projects.
 
@@ -104,7 +106,7 @@ configuration, not drift.
 
 **Guides and the response style have no region.** The text belongs to the
 framework, the last section — the `[TO FILL IN]` block — to the project.
-`claw-sync --down` takes the new text from the source and keeps that block
+`/claw update` takes the new text from the source and keeps that block
 as it is; if the block's heading is gone, the file is left untouched and the
 plan names it, to be updated by hand. That is why in a guide the placeholder
 sits **only** in the last section: a test checks it.
@@ -114,9 +116,9 @@ sits **only** in the last section: a test checks it.
 - **The method is not customised per project.** You fill in the context (the
   `[TO FILL IN]` blocks), you do not rewrite the method. If a change to the
   method is right, it is right for everyone: it goes up into the source with
-  `claw-sync`.
+  `/claw share`.
 - **Only the active is installed.** An agent not chosen is not deleted, it is
-  not yet installed: the master stays here and `--activate` takes it up to
+  not yet installed: the master stays here and `/claw add` takes it up to
   date.
 - **Non-universal content → `shared/`**, behind a pointer. `CLAUDE.md` is paid
   at every agent spawn: it is the most expensive file in the system.

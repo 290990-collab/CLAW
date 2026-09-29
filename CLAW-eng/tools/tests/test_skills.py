@@ -37,9 +37,9 @@ def repo(root: Path, layout: dict[str, str]) -> str:
 def framework(d: Path) -> Path:
     """A fake source with the only folder this module looks at."""
     fw = d / "fw"
-    (fw / "skills" / "claw-doctor").mkdir(parents=True)
-    (fw / "skills" / "claw-doctor" / "SKILL.md").write_text(
-        "---\nname: claw-doctor\n---\n", encoding="utf-8"
+    (fw / "skills" / "claw").mkdir(parents=True)
+    (fw / "skills" / "claw" / "SKILL.md").write_text(
+        "---\nname: claw\n---\n", encoding="utf-8"
     )
     return fw
 
@@ -88,7 +88,7 @@ class TestAdd(unittest.TestCase):
             d = Path(d)
             fw = framework(d)
             with self.assertRaises(ValueError):
-                skills.add(fw, repo(d / "src", {"x/SKILL.md": "claw-doctor"}))
+                skills.add(fw, repo(d / "src", {"x/SKILL.md": "claw"}))
 
     def test_a_repo_without_skills_is_an_error(self):
         """An empty package connected in silence is a pool that does not work
@@ -163,8 +163,8 @@ class TestRemove(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             fw = framework(Path(d))
             with self.assertRaises(ValueError):
-                skills.remove(fw, "claw-doctor")
-            self.assertTrue((fw / "skills" / "claw-doctor").is_dir())
+                skills.remove(fw, "claw")
+            self.assertTrue((fw / "skills" / "claw").is_dir())
 
 
 class TestInstalledProject(unittest.TestCase):

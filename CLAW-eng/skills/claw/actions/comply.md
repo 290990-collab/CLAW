@@ -1,21 +1,10 @@
----
-name: claw-comply
-disable-model-invocation: true
-description: >
-  Measures whether a rule of the method is actually followed: it puts the rule
-  to work in `claude -p` sessions on a throwaway copy of the project, with three
-  prompts (for, neutral, against), and counts in how many runs each observable
-  step appears. Steps that are missed and checkable from the call alone are
-  hook candidates. It spends the user's tokens: `/claw-comply <rule>`.
----
-
-# Compliance — is the rule executed, or only written?
+# `/claw comply <rule>` — is the rule executed, or only written?
 
 A rule that is read is not a rule that is followed. Here you count: same rule, several runs, one outcome per step. **The coordinator launches it, at the user's request;** it writes nothing in the project.
 
 ## Step 0 — Source and cost
 
-`<FW>` is the `source` field of `.claude/framework.json`, resolved with `source.dereference(<PRJ>, source)`: the transcript reader lives in `<FW>/tools`.
+The transcript reader lives in `<FW>/tools`.
 
 The cost is declared first: 2 calibration sessions + 3 prompts × N (default N = 5, so 17), with the model. **No session without the user's ok.**
 

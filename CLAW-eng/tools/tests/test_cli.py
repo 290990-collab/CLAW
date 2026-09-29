@@ -50,7 +50,7 @@ class TestDoctorCommand(unittest.TestCase):
         """Step 6 of the installation says any finding leaves it incomplete:
         without --strict that rule would stay prose only."""
         with tempfile.TemporaryDirectory() as d:
-            root = make_project(d, skills=False)
+            root = make_project(d, settings=False)
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(cli.main(["doctor", str(root)]), 0)
                 self.assertEqual(cli.main(["doctor", "--strict", str(root)]), 1)
@@ -73,7 +73,7 @@ class TestSourceCommand(unittest.TestCase):
             self.assertIn("method", buf.getvalue())
 
     def test_says_whether_the_source_has_been_promoted(self):
-        """A source with no record is taken to be intact by `--upgrade` and
+        """A source with no record is taken to be intact by an update by replacement and
         replaced: what `--up` promoted is lost there, and until now no command
         said so beforehand."""
         with tempfile.TemporaryDirectory() as d:

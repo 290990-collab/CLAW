@@ -17,8 +17,9 @@ LINE = "**Released upstream:** a rule that only the new version has."
 
 
 class TestUpdate(unittest.TestCase):
-    """`update` is the one command a user runs after a release: it must bring
-    the project exactly the down it showed, or nothing."""
+    """`update` is the one command a user runs after a release: it takes the
+    release into the source, and nothing else — projects move with `/claw
+    update`, one at a time."""
 
     def setUp(self):
         self._env = dict(os.environ)
@@ -59,37 +60,36 @@ class TestUpdate(unittest.TestCase):
     def _version(self, prj: Path) -> str:
         return json.loads((prj / ".claude" / "framework.json").read_text(encoding="utf-8"))["version"]
 
-    def test_plan_writes_nothing_then_apply_brings_the_release(self):
+    def test_it_shows_then_takes_the_release_into_the_source_only(self):
         with tempfile.TemporaryDirectory() as d:
             fw, prj = self._world(d)
             home = Path(d) / "skills"
             before = self._version(prj)
-            code, out = self._run(fw, home, ["update", str(prj)])
+            code, out = self._run(fw, home, ["update"])
             self.assertEqual(code, 0, out)
             self.assertIn("1 incoming commits", out)
-            self.assertEqual(self._version(prj), before)
-            self.assertNotIn(LINE, (prj / "CLAUDE.md").read_text(encoding="utf-8"))
+            self.assertNotEqual((fw / "VERSION").read_text(encoding="utf-8").strip(), "9.9.9")
 
-            code, out = self._run(fw, home, ["update", str(prj), "--apply"])
+            code, out = self._run(fw, home, ["update", "--yes"])
             self.assertEqual(code, 0, out)
             self.assertEqual((fw / "VERSION").read_text(encoding="utf-8").strip(), "9.9.9")
-            self.assertEqual(self._version(prj), "9.9.9")
-            self.assertIn(LINE, (prj / "CLAUDE.md").read_text(encoding="utf-8"))
-            self.assertTrue((home / "claw-install" / "SKILL.md").is_file())
-            self.assertEqual(self._run(fw, home, ["update", str(prj), "--apply"])[0], 1)
+            self.assertTrue((home / "claw" / "SKILL.md").is_file())
+            self.assertEqual(self._version(prj), before)
+            self.assertNotIn(LINE, (prj / "CLAUDE.md").read_text(encoding="utf-8"))
+            code, out = self._run(fw, home, ["update", "--yes"])
+            self.assertEqual(code, 0, out)
+            self.assertIn("already up to date", out)
 
-    def test_a_project_changed_after_the_plan_gets_no_down(self):
+    def test_uncommitted_changes_in_the_source_stop_it(self):
+        """They are promotions not yet committed: merging over them loses them."""
         with tempfile.TemporaryDirectory() as d:
-            fw, prj = self._world(d)
-            home = Path(d) / "skills"
-            self.assertEqual(self._run(fw, home, ["update", str(prj)])[0], 0)
-            claude = prj / "CLAUDE.md"
-            claude.write_text(claude.read_text(encoding="utf-8") + "\nlocal note\n", encoding="utf-8")
-            code, out = self._run(fw, home, ["update", str(prj), "--apply"])
+            fw, _ = self._world(d)
+            version = fw / "VERSION"
+            version.write_text("0.0.1\n", encoding="utf-8")
+            code, out = self._run(fw, Path(d) / "skills", ["update", "--yes"])
             self.assertEqual(code, 1, out)
-            self.assertIn("differs from the plan shown", out)
-            self.assertNotIn(LINE, claude.read_text(encoding="utf-8"))
-            self.assertEqual(self._version(prj), (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip())
+            self.assertIn("uncommitted changes", out)
+            self.assertEqual(version.read_text(encoding="utf-8"), "0.0.1\n")
 
 
 if __name__ == "__main__":

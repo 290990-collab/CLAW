@@ -7,8 +7,8 @@ SKILLS_MISSING, VERSION_MISMATCH, SETTINGS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET,
 REPORT_FORMAT, ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). MANIFEST_MISSING
 is the only one that comes out at both: ERROR if the file is missing, WARN if it
 is incomplete.
-Every code is explained, with what to do about it, in the `claw-doctor`
-skill.
+Every code is explained, with what to do about it, in `/claw fix`
+(`skills/claw/actions/fix.md`).
 
 A third severity, NOTE, is not produced here: it is a WARN the project has
 declared it accepts in `framework.json`. It stays printed — an invisible waiver
@@ -27,8 +27,8 @@ from . import assemble, kernel, profile, source
 PLACEHOLDER_RE = re.compile(r"TO FILL IN")
 # The superseded report format: confidence **as** a percentage, that is `CONF:`
 # followed by a placeholder with `%` (`<0-100%>`) or by a digit. A project
-# installed with that format keeps it until it goes through `claw-sync
-# --down`: no other check sees it, because the kernel hash matches that text. The value must be the percentage: `CONF: HIGH — 80% coverage` is a
+# installed with that format keeps it until it goes through `/claw
+# update`: no other check sees it, because the kernel hash matches that text. The value must be the percentage: `CONF: HIGH — 80% coverage` is a
 # categorical judgement quoting a number in its reason, and it is legitimate
 # text the pattern must not touch.
 CONF_PERCENT_RE = re.compile(r"CONF:\s*(?:<[^>\n]*%|\d[^%\n]*%)")
@@ -59,10 +59,6 @@ PERSONAL_PATH_RE = re.compile(
     r"[A-Za-z][A-Za-z0-9._-]*"
 )
 STATE_FILES = ("TODO.md", "status.md", "roadmap.md")
-# The skills every installation receives. One single list: duplicating it in
-# the tooling and in the tests means adding one and discovering from the red
-# where the copies were.
-LIFECYCLE_SKILLS = ("claw-doctor", "claw-sync", "claw-memory", "claw-fair")
 ORCHESTRATION = "shared/orchestration.md"
 # Where the uninstall moves what the project had adapted, keeping the relative
 # path.
@@ -159,9 +155,7 @@ def _markdown_files(root: Path) -> list[Path]:
     """The files adapted to the project, which have to be checked.
 
     `.claude/skills/` is excluded: the skills are framework files copied
-    verbatim, with no kernel region and no blocks to fill in — and
-    `claw-doctor` necessarily contains the string `TO FILL IN`, because it
-    explains that finding. The state files in `docs/` are included: they are
+    verbatim, with no kernel region and no blocks to fill in. The state files in `docs/` are included: they are
     born from a template with placeholders, and an unfilled template is
     indistinguishable from absent state for whoever reads it at session start.
 
@@ -243,7 +237,7 @@ def check(root: Path) -> list[Finding]:
                     "REPORT_FORMAT",
                     "WARN",
                     f"{rel}: report schema with confidence as a percentage — "
-                    "superseded format, realign with claw-sync --down",
+                    "superseded format, realign with /claw update",
                 )
             )
         status = kernel.verify(text)
@@ -324,7 +318,7 @@ def check(root: Path) -> list[Finding]:
                 "VERSION_MISMATCH",
                 "WARN",
                 f"installation at v{'/'.join(declared)}, source at v{source_version}: "
-                "realign with claw-sync --down",
+                "realign with /claw update",
             )
         )
 
@@ -358,7 +352,7 @@ def check(root: Path) -> list[Finding]:
             Finding(
                 "MANIFEST_MISSING",
                 "ERROR",
-                ".claude/framework.json absent or unreadable: claw-sync cannot "
+                ".claude/framework.json absent or unreadable: /claw update cannot "
                 "find the source and the fleet report does not see the project",
             )
         )
@@ -387,17 +381,6 @@ def check(root: Path) -> list[Finding]:
                     "WARN",
                     f".claude/framework.json declares v{manifest['version'].strip()}, "
                     f"the markers say v{'/'.join(declared)}",
-                )
-            )
-
-    for skill in LIFECYCLE_SKILLS:
-        if not (root / ".claude" / "skills" / skill / "SKILL.md").is_file():
-            out.append(
-                Finding(
-                    "SKILLS_MISSING",
-                    "WARN",
-                    f".claude/skills/{skill}/ absent: the skill is not invocable "
-                    "in this project",
                 )
             )
 

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -69,6 +70,26 @@ class TestMaster(unittest.TestCase):
                 text = (home / name / "SKILL.md").read_text(encoding="utf-8")
                 self.assertNotIn(master.TOKEN, text, name)
                 self.assertIn(FRAMEWORK.resolve().as_posix(), text, name)
+
+    def test_the_launcher_runs_this_source_with_the_setup_python(self):
+        """`claw` on the PATH must run this source's `claw.py`, not another
+        copy, with the Python that ran the setup."""
+        with tempfile.TemporaryDirectory() as d:
+            bin_dir = Path(d) / "bin"
+            master.install_launcher(FRAMEWORK, bin_dir, sys.executable)
+            planned = [Path(p) for _, p in master.launcher_plan(bin_dir)]
+            self.assertTrue(planned)
+            script = (FRAMEWORK.resolve() / "claw.py")
+            for p in planned:
+                text = p.read_text(encoding="utf-8")
+                self.assertIn(script.as_posix() if p.suffix != ".cmd" else str(script), text, p)
+                self.assertIn(Path(sys.executable).name, text, p)
+            launcher = planned[-1]
+            out = subprocess.run(
+                [str(launcher), "--help"], capture_output=True, text=True, encoding="utf-8"
+            )
+            self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertIn("claw update", out.stdout)
 
 
 if __name__ == "__main__":

@@ -1,19 +1,4 @@
----
-name: claw-fair
-description: >
-  Tunes the model and effort of the subagents of a project with the framework
-  installed to the project's real scope — profile (web, software, research,
-  data, llm, marketing, library) and described idea — instead of the source's
-  one-size-fits-all values: raises where a mistake costs, lowers where you pay
-  for a model the work does not ask for. Absolute ceiling opus/xhigh. Touches
-  only the `model:` and `effort:` lines of the cards and the Model column of the
-  roster; if the scope is neither described nor deducible it stops without
-  changing anything. Use when the user wants to adjust, tune or review the
-  agents' models and effort, cut the cost of subagents, or asks whether the
-  agents have the right model for this project: `/claw-fair`.
----
-
-# Claw-fair — the model the work asks for, in this project
+# `/claw tune` — the model the work asks for, in this project
 
 The source gives every agent a model and effort meant for any project. A `security-reviewer` on Opus makes sense for a service with authentication, not for a static site; a `copywriter` on Sonnet is fine for a changelog, less so for the page that presents a person. Here each card is tuned to the scope of **this** project.
 
@@ -33,7 +18,7 @@ The source gives every agent a model and effort meant for any project. A `securi
 
 `<PRJ>` is the project root. It needs `<PRJ>/.claude/framework.json`: if missing, the framework is not installed → say so and stop.
 
-`<FW>` is its `source` field, which may be relative to the project root: resolve it with `source.dereference(<PRJ>, source)` from `<FW>/tools`, as the other lifecycle skills do. `<FW>/agents/` does not exist → stop: without the source value there is nowhere to start from.
+`<FW>/agents/` does not exist → stop: without the source value there is nowhere to start from.
 
 The roster is the list of files in `<PRJ>/.claude/agents/`. The roster table is in `<PRJ>/.claude/shared/orchestration.md` (section `## This project's roster`, columns `| Situation | Agent | Model |`), or in `CLAUDE.md` if that guide is not there.
 
@@ -45,7 +30,7 @@ Sources, in this order:
 2. `CLAUDE.md`, sections `## The project` and `## Critical surface` — the idea and where a mistake costs most.
 3. `README.md`, `docs/` (roadmap, TODO) and, if there is any, the code: what the product does, who uses it, what it exposes on the network.
 
-**Stop condition.** The profile alone is not enough: it is always there, and it says «web», not «static portfolio» or «e-commerce with payments». If `## The project` is empty or still contains `TO FILL IN`, **and** neither README, nor `docs/`, nor the code say what the product is → **stop without changing anything**. Tell the user what is missing and where it goes: `## The project` in `CLAUDE.md`, or the answer to the `claw-install` questionnaire. Tuning on the profile alone would give values different from the source with no reason to hold them up.
+**Stop condition.** The profile alone is not enough: it is always there, and it says «web», not «static portfolio» or «e-commerce with payments». If `## The project` is empty or still contains `TO FILL IN`, **and** neither README, nor `docs/`, nor the code say what the product is → **stop without changing anything**. Tell the user what is missing and where it goes: `## The project` in `CLAUDE.md`, or the answer to the `/claw install` questionnaire. Tuning on the profile alone would give values different from the source with no reason to hold them up.
 
 From the scope derive, one line each:
 - **what is produced** (site, service, pipeline, evidence, text);
@@ -63,7 +48,7 @@ For each installed agent, one row:
 - **source**: `model:` and `effort:` of `<FW>/agents/<agent>.md`.
 - **current**: the same lines in the project's card.
 
-**Always reason from the source, never from the current value.** A second run must give the same result as the first, not move the values again at every round. If current ≠ source, the difference comes from a previous claw-fair or from a hand: it is flagged in the plan, not added up.
+**Always reason from the source, never from the current value.** A second run must give the same result as the first, not move the values again at every round. If current ≠ source, the difference comes from a previous `/claw tune` or from a hand: it is flagged in the plan, not added up.
 
 ## Step 3 — Tuning
 
@@ -119,7 +104,7 @@ Show the user **a single table**, with every installed agent, including those th
 Below the table, three lines:
 - how many agents change, and how many go up and how many go down;
 - the agents not touched because they do not exist in the source;
-- **what happens next:** at every `claw-sync`, each card different from the source is named and sync asks whether to bring it back to the source value. To keep the tuning, answer no.
+- **what happens next:** at every `/claw update`, each card different from the source is named and sync asks whether to bring it back to the source value. To keep the tuning, answer no.
 
 Ask with the multiple-choice tool: apply all / apply only some (which) / cancel. **No writing without an answer.** Cancel → stop: it is not a failure.
 
@@ -131,7 +116,7 @@ All proposed values equal the current ones → say so and stop, without asking a
 
 For each approved agent whose value changes:
 
-1. In the card, replace **the whole line** `model: <old>` with `model: <new>`, and the same for `effort:`. Format unchanged — key, colon, one space, value. If `effort:` is missing, add it right after `model:`. `--down` keeps these values: they differ from the source's recorded ones, so they are local choices.
+1. In the card, replace **the whole line** `model: <old>` with `model: <new>`, and the same for `effort:`. Format unchanged — key, colon, one space, value. If `effort:` is missing, add it right after `model:`. `/claw update` keeps these values: they differ from the source's recorded ones, so they are local choices.
 2. In the roster table, replace the value **in the third column** of the row that has the agent in backticks in the second. The second column is a contract (the doctor reads the agent's name there): not touched.
 
 Before writing, read the file: if the expected line is not there, or differs from the one in the plan, stop on that file and report it. Do not guess where to put it.
@@ -140,7 +125,7 @@ Before writing, read the file: if the expected line is not there, or differs fro
 
 **Verify that the diff is only the promised one.** Before the changes copy every file you will touch into a temporary folder outside the project; afterwards, compare line by line (the stdlib's `difflib` is enough). Every changed line must be a `model:`/`effort:` line of a card, or a roster row in which only the third cell changed. Any other difference → restore the file from the kept text and report it as an error.
 
-Then `doctor`, as at the close of `claw-sync`: `python "<FW>/claw.py" doctor "<PRJ>"`, run before writing too: only a finding that was not there before counts. It is reported, not fixed outside the allowed lines.
+Then `doctor`, as at the close of `/claw update`: `python "<FW>/claw.py" doctor "<PRJ>"`, run before writing too: only a finding that was not there before counts. It is reported, not fixed outside the allowed lines.
 
 Then the report to the user, short:
 - the final table `agent | before | after`;

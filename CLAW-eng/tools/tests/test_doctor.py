@@ -25,7 +25,6 @@ def make_project(
     state=True,
     orchestration=True,
     leak=False,
-    skills=True,
     markers=True,
     settings=True,
     guides=(),
@@ -42,11 +41,6 @@ def make_project(
         (root / ".claude" / "framework.json").write_text(
             json.dumps(data), encoding="utf-8"
         )
-    if skills:
-        for name in doctor.LIFECYCLE_SKILLS:
-            d = root / ".claude" / "skills" / name
-            d.mkdir(parents=True)
-            (d / "SKILL.md").write_text(f"name: {name}\n", encoding="utf-8")
     if settings:
         (root / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
     for rel in guides:
@@ -139,12 +133,12 @@ class TestDoctor(unittest.TestCase):
             self.assertIn("FABLE", codes(doctor.check(make_project(d, fable=True))))
 
     def test_skills_are_not_scanned_for_placeholders(self):
-        """claw-doctor explains the PLACEHOLDER finding and necessarily
-        contains that string: scanning it would produce a false positive on
-        every run."""
+        """A skill that explains the PLACEHOLDER finding necessarily contains
+        that string: scanning it would produce a false positive on every run."""
         with tempfile.TemporaryDirectory() as d:
             root = make_project(d)
-            (root / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_text(
+            (root / ".claude" / "skills" / "mine").mkdir(parents=True)
+            (root / ".claude" / "skills" / "mine" / "SKILL.md").write_text(
                 "The `PLACEHOLDER` finding flags a leftover `[TO FILL IN]`.\n",
                 encoding="utf-8",
             )
@@ -164,11 +158,6 @@ class TestDoctor(unittest.TestCase):
             found = [f for f in doctor.check(root) if f.code == "SKILLS_MISSING"]
             self.assertEqual(len(found), 1)
             self.assertIn("someone-skills", found[0].message)
-
-    def test_detects_missing_lifecycle_skills(self):
-        with tempfile.TemporaryDirectory() as d:
-            found = doctor.check(make_project(d, skills=False))
-            self.assertIn("SKILLS_MISSING", codes(found))
 
     def test_detects_missing_orchestration_guide(self):
         with tempfile.TemporaryDirectory() as d:
@@ -262,7 +251,7 @@ class TestDoctor(unittest.TestCase):
             self.assertNotIn("SHARED_ORPHAN", codes(doctor.check(p)))
 
     def test_detects_missing_manifest(self):
-        """Without `framework.json` `claw-sync` cannot find the source and
+        """Without `framework.json` `/claw` cannot find the source and
         the fleet report does not count the project: it is not a clean
         installation."""
         with tempfile.TemporaryDirectory() as d:
@@ -454,8 +443,9 @@ class TestDoctor(unittest.TestCase):
             hooks = p / ".claude" / "hooks"
             hooks.mkdir()
             (hooks / "mine.py").write_bytes(b"# citt\xe0\n")
-            (p / ".claude" / "skills" / "claw-doctor" / "SKILL.md").write_bytes(
-                b"name: claw-doctor\ncitt\xe0 " + home + b"\n"
+            (p / ".claude" / "skills" / "mine").mkdir(parents=True)
+            (p / ".claude" / "skills" / "mine" / "SKILL.md").write_bytes(
+                b"name: mine\ncitt\xe0 " + home + b"\n"
             )
             self.assertEqual(codes(doctor.check(p)), {"PERSONAL_PATH"})
 

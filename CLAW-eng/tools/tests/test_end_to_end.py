@@ -127,7 +127,7 @@ class TestRealFramework(unittest.TestCase):
         This test is what makes the rename visible."""
         sources = (
             assemble.read_method(FRAMEWORK / "coordinator")
-            + (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+            + (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
                 encoding="utf-8"
             )
             + assemble.read_method(FRAMEWORK / "orchestrations")
@@ -263,7 +263,7 @@ class TestRealFramework(unittest.TestCase):
         """Outside every profile, question 2 is their **only** way in. If a row
         of the table disappears, the agent stays in the catalogue and nobody
         reaches it any more: never installed, and no finding saying so."""
-        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
         block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Language")]
@@ -275,7 +275,7 @@ class TestRealFramework(unittest.TestCase):
         written by hand: a profile without its row cannot be chosen, and no
         finding sees it — the defect sits in the skill, before an installation
         exists."""
-        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
         block = skill[
@@ -303,7 +303,7 @@ class TestRealFramework(unittest.TestCase):
         row that cites it standing, and whoever installs picks an answer that
         leads to no file. The doctor cannot help here: the defect is in the
         skill, before an installation exists."""
-        skill = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
         block = skill[skill.index("**2. Critical surface**") : skill.index("**3. Language")]
@@ -321,7 +321,7 @@ class TestRealFramework(unittest.TestCase):
         project that already had instructions, the rule that prevents it lives
         only in the skill's prose — it would vanish in a rewrite, and the defect
         would show up with the files already lost, on the installer's machine."""
-        text = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
         block = text[
@@ -357,25 +357,21 @@ class TestRealFramework(unittest.TestCase):
         invented alarm that survives across sessions. The paired column is the
         only thing preventing that, and it is prose: it would vanish in a
         rewrite."""
-        text = (FRAMEWORK / "skills" / "claw-memory" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "memory.md").read_text(
             encoding="utf-8"
         )
         block = text[text.index("## Step 4") : text.index("## Step 5")]
         self.assertIn("| the repo says |", block)
         self.assertIn("does not get written", block)
 
-    def test_every_skill_is_present_with_matching_name(self):
-        for name in (
-            "claw-install",
-            "claw-doctor",
-            "claw-sync",
-            "claw-memory",
-            "claw-comply",
-            "claw-fair",
-        ):
-            p = FRAMEWORK / "skills" / name / "SKILL.md"
-            self.assertTrue(p.is_file(), name)
-            self.assertIn(f"name: {name}", p.read_text(encoding="utf-8"))
+    def test_every_action_the_skill_routes_to_exists(self):
+        """`/claw` opens the file of the action asked: a row pointing at a
+        missing file is an action that fails only when someone needs it."""
+        base = FRAMEWORK / "skills" / "claw"
+        text = (base / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("name: claw\n", text)
+        routed = set(re.findall(r"`(actions/[a-z-]+\.md)`", text))
+        self.assertEqual(routed, {f"actions/{p.name}" for p in (base / "actions").glob("*.md")})
 
     def test_promoting_from_a_stale_project_is_forbidden(self):
         """Two projects on the same source promote in turn. Whoever promotes
@@ -388,10 +384,10 @@ class TestRealFramework(unittest.TestCase):
         Drift covers only what has a kernel region: a new guide in `shared/`
         has none, and without the line that names it, it stays invisible to the
         most common case of all, the addition."""
-        text = (FRAMEWORK / "skills" / "claw-sync" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "share.md").read_text(
             encoding="utf-8"
         )
-        block = text[text.index("## `--up") : text.index("## `--upgrade")]
+        block = text
         self.assertIn("aligned", block)
         self.assertIn("`.claude/framework.json`", block)
         self.assertIn("one thing at a time", block)
@@ -646,7 +642,7 @@ class TestInstalledBudget(unittest.TestCase):
     def test_every_code_the_doctor_can_emit_is_documented(self):
         """A finding without an entry in the skill is a code whoever receives
         it does not know what to do with."""
-        skill = (FRAMEWORK / "skills" / "claw-doctor" / "SKILL.md").read_text(
+        skill = (FRAMEWORK / "skills" / "claw" / "actions" / "fix.md").read_text(
             encoding="utf-8"
         )
         src = (FRAMEWORK / "tools" / "fwbuild" / "doctor.py").read_text(encoding="utf-8")
@@ -722,7 +718,7 @@ class TestProfilesAreDistinguishable(unittest.TestCase):
 
     def test_the_install_skill_starts_from_the_declared_surface(self):
         """A field no step reads is dead configuration."""
-        text = (FRAMEWORK / "skills" / "claw-install" / "SKILL.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
         self.assertIn("critical_surface", text)

@@ -2,17 +2,18 @@
 
 Upgrading is git's job: fetch, show what arrives, merge. A change promoted with
 `--up` is a commit, and git carries it through the merge or stops on the
-conflict. The skills that run before any project exists — `claw-install`,
-`claw-comply` — are copied into the user's skills with `<FW>` written as the
-master's path: no search for the source, no path to type.
+conflict. The `/claw` skill is copied into the user's skills with `<FW>` written as the
+master's path: one skill for every project, no search for the source, no path
+to type. `claw` on the PATH is a launcher of this source's `claw.py`.
 """
 
+import os
 import shutil
 import subprocess
 import zipfile
 from pathlib import Path
 
-USER_SKILLS = ("claw-install", "claw-comply")
+USER_SKILLS = ("claw",)
 TOKEN = "<FW>"
 
 
@@ -107,3 +108,38 @@ def install_skills(fw: Path, home: Path) -> None:
                 p.read_text(encoding="utf-8").replace(TOKEN, Path(fw).resolve().as_posix()),
                 encoding="utf-8",
             )
+
+
+def _launchers(bin_dir: Path) -> list[Path]:
+    """`claw` for POSIX shells, and `claw.cmd` too on Windows, where PowerShell
+    and cmd find a command by its extension."""
+    names = ["claw", "claw.cmd"] if os.name == "nt" else ["claw"]
+    return [Path(bin_dir) / n for n in names]
+
+
+def launcher_plan(bin_dir: Path) -> list[tuple[str, str]]:
+    """`(action, file)` for every launcher."""
+    return [("overwrite" if p.exists() else "create", str(p)) for p in _launchers(bin_dir)]
+
+
+def install_launcher(fw: Path, bin_dir: Path, python: str) -> None:
+    """`claw <args>` runs this source's `claw.py` with the Python that ran the
+    setup: a second Python on the machine does not change which one runs it."""
+    script = Path(fw).resolve() / "claw.py"
+    Path(bin_dir).mkdir(parents=True, exist_ok=True)
+    for p in _launchers(bin_dir):
+        if p.suffix == ".cmd":
+            p.write_text(f'@"{Path(python)}" "{script}" %*\r\n', encoding="utf-8")
+        else:
+            p.write_text(
+                f'#!/bin/sh\nexec "{Path(python).as_posix()}" "{script.as_posix()}" "$@"\n',
+                encoding="utf-8",
+                newline="\n",
+            )
+            p.chmod(0o755)
+
+
+def on_path(bin_dir: Path) -> bool:
+    folders = os.environ.get("PATH", "").split(os.pathsep)
+    target = os.path.normcase(str(Path(bin_dir).resolve()))
+    return any(f and os.path.normcase(str(Path(f).resolve())) == target for f in folders)

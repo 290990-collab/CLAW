@@ -1,11 +1,11 @@
-"""Entry point: python claw.py <command>, or python -m fwbuild <command>."""
+"""Entry point: `claw <command>` (the launcher `setup` writes), python claw.py
+<command>, or python -m fwbuild <command>."""
 
 import argparse
 import dataclasses
 import hashlib
 import json
 import os
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -15,7 +15,10 @@ from . import assemble, doctor, lifecycle, master, profile, report, settings, sk
 # The source this command runs from: every command that writes works on it.
 FW = Path(__file__).resolve().parents[2]
 SKILLS_HOME = Path.home() / ".claude" / "skills"
+BIN_HOME = Path.home() / ".local" / "bin"
 PLANNED = ("install", "down", "repair", "uninstall")
+# Commands that work like the others but stay out of `--help`.
+MORE = "setup, install, down, repair, uninstall, report, source, skills"
 
 
 def _force_utf8_stdout() -> None:
@@ -50,11 +53,16 @@ def _bases(path: Path | None) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     _force_utf8_stdout()
-    parser = argparse.ArgumentParser(prog="claw")
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser = argparse.ArgumentParser(
+        prog="claw",
+        description="Everyday: claw update (the source, from its release) · claw status · "
+        "claw doctor. In a project, Claude Code's /claw does the rest.",
+        epilog=f"Also: {MORE}. `claw <command> --help` for any of them.",
+    )
+    sub = parser.add_subparsers(dest="command", required=True, metavar="command")
 
-    d = sub.add_parser("doctor", help="check an installation")
-    d.add_argument("path", type=Path)
+    d = sub.add_parser("doctor", help="check an installation (default: this folder)")
+    d.add_argument("path", type=Path, nargs="?", default=Path("."))
     # A complete installation has no findings of any severity: --strict is that
     # rule made mechanical, for CI and for Step 6.
     # Notes — the warnings `framework.json` declares it accepts — do not make
@@ -64,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     d.add_argument("--json", action="store_true", help="findings and measures as JSON, for CI")
 
-    r = sub.add_parser("report", help="method divergence across several projects")
+    r = sub.add_parser("report")
     r.add_argument("paths", type=Path, nargs="+")
     r.add_argument(
         "--depth", type=int, default=2, help="how many levels down to look for projects"
@@ -74,10 +82,10 @@ def main(argv: list[str] | None = None) -> int:
         "--strict", action="store_true", help="exit 1 if a project diverges or has findings"
     )
 
-    s = sub.add_parser("source", help="resolve and validate the source root")
+    s = sub.add_parser("source")
     s.add_argument("path", type=Path, nargs="?")
 
-    k = sub.add_parser("skills", help="skill packages connected to the source")
+    k = sub.add_parser("skills")
     ks = k.add_subparsers(dest="skills_command", required=True)
     for name, help_text in (
         ("list", "connected packages, skills and pool"),
@@ -92,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("package", help="package name, as `skills list` prints it")
         p.add_argument("--source", type=Path, dest="path", help="source root")
 
-    i = sub.add_parser("install", help="install the framework in a project: plan, then --apply")
+    i = sub.add_parser("install")
     i.add_argument("path", type=Path)
     i.add_argument("--profile", help="a profile in profiles/")
     i.add_argument("--agents", default="", help="extra agents, comma-separated")
@@ -105,24 +113,18 @@ def main(argv: list[str] | None = None) -> int:
         ("repair", "put back what an installation is missing"),
         ("uninstall", "remove the framework from a project"),
     ):
-        p = sub.add_parser(name, help=f"{help_text}: plan, then --apply")
+        p = sub.add_parser(name, description=help_text)
         p.add_argument("path", type=Path)
         if name == "down":
             p.add_argument("--hooks", help="hooks to have afterwards; default: those in use")
             p.add_argument("--adopt", default="", help="cards taking the source's front matter, or all")
-    for p in (i, *(sub.choices[n] for n in PLANNED[1:])):
-        p.add_argument("--apply", action="store_true", help="run the saved plan")
-    st = sub.add_parser("status", help="source and project versions, and what changed")
+    st = sub.add_parser("status", help="the source against its release; this folder's project, if any")
     st.add_argument("path", type=Path, nargs="?")
-    for name, help_text in (
-        ("setup", "install the user-level skills from this source"),
-        ("upgrade", "merge the master's tracked branch"),
-    ):
-        p = sub.add_parser(name, help=f"{help_text}: plan, then --apply")
-        p.add_argument("--apply", action="store_true")
-    u = sub.add_parser("update", help="upgrade, then down on a project: plan, then --apply")
-    u.add_argument("path", type=Path)
-    u.add_argument("--apply", action="store_true")
+    u = sub.add_parser("update", help="take the new release into the source: shows it, asks, merges")
+    sp = sub.add_parser("setup", description="the /claw skill and the `claw` launcher, from this source")
+    for p in (i, *(sub.choices[n] for n in PLANNED[1:]), u, sp):
+        p.add_argument("--apply", action="store_true", help="run the plan saved by a previous call")
+        p.add_argument("-y", "--yes", action="store_true", help="run it without asking")
 
     args = parser.parse_args(argv)
 
@@ -131,11 +133,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         return _status(args.path)
     if args.command == "setup":
-        return _setup(args.apply)
-    if args.command == "upgrade":
-        return _upgrade(args.apply)
+        return _setup(args.apply or args.yes)
     if args.command == "update":
-        return _update(args.path, args.apply)
+        return _update(args.apply or args.yes)
     if args.command == "skills":
         return _skills(args)
 
@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         version = (root / "VERSION").read_text(encoding="utf-8").strip()
         print(f"{root} v{version}")
-        # Without the record, `--upgrade` takes the source to be intact and
+        # Without the record, an update by replacement takes the source to be intact and
         # replaces it with the release: what `--up` promoted is lost there.
         record = upgrade.read_record(root)
         if record is None:
@@ -195,7 +195,7 @@ def _skills(args) -> int:
     """`skills list | add | remove`: the socket other people's skills plug into.
 
     It writes into the **source**, not into the projects: installations receive
-    the packages at the next pass of `claw-sync`, like every other
+    the packages at the next `/claw update`, like every other
     framework file. Saying it here avoids believing that an `add` has already
     changed something in the projects that are open.
     """
@@ -218,12 +218,12 @@ def _skills(args) -> int:
                 f"outside the pool: invocable by you, not by the coordinator. "
                 f"To put them in the pool: skills/{skills.POOL_FILE}"
             )
-            print("they reach projects with claw-sync --down or --repair")
+            print("they reach projects with /claw update or /claw fix")
             return 0
         if args.skills_command == "remove":
             gone = skills.remove(root, args.package)
             print(f"{args.package} disconnected: {', '.join(gone) or 'no skill'}")
-            print("in projects it stays until you run claw-sync --uninstall or --down")
+            print("in projects it stays until /claw update or /claw uninstall")
             return 0
         in_pool = set(skills.pool(root))
         packages = skills.packages(root)
@@ -332,13 +332,28 @@ def _print_survey(s) -> None:
     )
     if s.behind:
         print(
-            "To realign with claw-sync --down: "
+            "To realign, /claw update in: "
             + ", ".join(sorted(p.name for p in s.behind))
         )
 
 
 def _claw() -> str:
-    return f'python "{FW.as_posix()}/claw.py"'
+    return "claw"
+
+
+def _confirm(yes: bool) -> bool | None:
+    """The ok on a plan just printed: `--yes` gives it; at a terminal it is
+    asked; without one — a skill, a script — there is nobody to ask, and
+    `None` says so: the caller leaves the plan saved for `--apply`."""
+    if yes:
+        return True
+    if not sys.stdin.isatty():
+        return None
+    try:
+        answer = input("\napply? [Y/n] ").strip().lower()
+    except EOFError:
+        return None
+    return answer in ("", "y", "yes", "s", "si", "sì")
 
 
 def _csv(text: str | None) -> list[str]:
@@ -370,8 +385,13 @@ def _lifecycle(args) -> int:
             for o in ops:
                 if o.action == lifecycle.KEEP and o.reason:
                     print(f"{o.action:<11} {o.path} — {o.reason}")
-            print(f'\nplan saved. To run it: {_claw()} {mode} "{prj}" --apply')
-            return 0
+            ok = _confirm(args.yes)
+            if ok is None:
+                print(f'\nplan saved. To run it: {_claw()} {mode} "{prj}" --apply')
+                return 0
+            if not ok:
+                print("nothing written")
+                return 0
         data = json.loads(plan.read_text(encoding="utf-8")) if plan.is_file() else {}
         if (data.get("project"), data.get("mode"), data.get("source")) != (
             str(Path(prj).resolve()), mode, str(FW)
@@ -451,7 +471,7 @@ def _status(path: Path | None) -> int:
     clone = master.is_clone(FW)
     print(f"source   {FW} v{version}")
     if not clone:
-        print("         not a git clone: upgraded by replacing it (claw-sync --upgrade)")
+        print("         not a git clone: updated by replacing it (/claw update explains how)")
     elif not master.upstream(FW):
         print("         git clone with no tracked branch")
     else:
@@ -463,7 +483,9 @@ def _status(path: Path | None) -> int:
             f"fetch · {local} uncommitted changes"
         )
     if path is None:
-        return 0
+        if source.read_manifest(Path(".")) is None:
+            return 0
+        path = Path(".")
     data = source.read_manifest(path)
     if data is None:
         print(f"project  {path}: not installed")
@@ -485,128 +507,68 @@ def _status(path: Path | None) -> int:
         print(f"         v{installed} → v{version}, {len(commits)} commits:")
         for c in commits:
             print(f"           {c}")
-    print(f'         to bring it up: {_claw()} down "{path}"')
+    print("         to bring it up: /claw update, in Claude Code in that project")
     return 0
 
 
-def _setup(apply: bool) -> int:
+def _setup(yes: bool) -> int:
+    """The `/claw` skill in the user's skills and the `claw` launcher on the PATH."""
     gaps = source.missing(FW)
     if gaps:
         print(f"{FW} is not a complete source: missing {', '.join(gaps)}")
         return 1
-    if not apply:
-        for action, folder in master.skill_plan(FW, SKILLS_HOME):
-            print(f"{action:<11} {folder}")
-        print(f"<FW> written as {FW.as_posix()}")
-        if not master.is_clone(FW):
-            print("not a git clone: `upgrade` will not work on this source")
-        print(f"\nto run it: {_claw()} setup --apply")
+    for action, target in master.skill_plan(FW, SKILLS_HOME) + master.launcher_plan(BIN_HOME):
+        print(f"{action:<11} {target}")
+    print(f"<FW> written as {FW.as_posix()}")
+    if not master.is_clone(FW):
+        print("not a git clone: `claw update` will not work on this source")
+    ok = _confirm(yes)
+    if not ok:
+        print("nothing written" if ok is False else f"to run it: {_claw()} setup --yes")
         return 0
     master.install_skills(FW, SKILLS_HOME)
-    print(f"setup: done — /claw-install in a project installs the framework from {FW}")
+    master.install_launcher(FW, BIN_HOME, sys.executable)
+    print("setup: done — /claw install, in Claude Code in a project, installs the framework")
+    if not master.on_path(BIN_HOME):
+        print(f"{BIN_HOME} is not on your PATH: add it, then open a new terminal, to type `claw`")
     return 0
 
 
-def _upgrade(apply: bool) -> int:
-    """The master up to its tracked branch: what arrives is shown, then merged."""
+def _update(yes: bool) -> int:
+    """The source up to its release: what arrives is shown, then merged, then the
+    `/claw` skill is refreshed. Projects move one at a time, with `/claw update`."""
     try:
         if not master.is_clone(FW) or not master.upstream(FW):
-            print("not a git clone with a tracked branch: claw-sync --upgrade")
+            print("not a git clone with a tracked branch: /claw update explains how to update it")
             return 1
         master.git(FW, "fetch", "--quiet")
         incoming = master.lines(FW, "log", "--oneline", "HEAD..@{u}")
         local = master.lines(FW, "status", "--porcelain")
-        if not apply:
-            print(f"{len(incoming)} incoming commits:")
-            for c in incoming:
-                print(f"  {c}")
-            if local:
-                print(f"{len(local)} uncommitted changes: commit them (they are promotions) first")
-            print(
-                f"\nthen the user-level skills are refreshed. To run it: {_claw()} upgrade --apply"
-            )
-            return 0
         if local:
-            print("uncommitted changes in the master, nothing merged: commit or discard them")
+            print(f"{len(local)} uncommitted changes in the source: commit them "
+                  "(they are promotions) or discard them first")
             return 1
+        if not incoming:
+            print(f"source already up to date: v{_source_version()}")
+            return 0
+        print(f"{len(incoming)} incoming commits:")
+        for c in incoming:
+            print(f"  {c}")
+        ok = _confirm(yes)
+        if not ok:
+            print("nothing merged" if ok is False else f"to run it: {_claw()} update --yes")
+            return 0
         conflicts = master.merge(FW)
     except RuntimeError as err:
         print(err)
         return 1
     if conflicts:
-        print("conflicts, the merge is left open: resolve them, then git commit\n  "
-              + "\n  ".join(conflicts))
+        print("conflicts, the merge is left open: resolve them (in Claude Code, /claw update "
+              "helps), then git commit:")
+        for c in conflicts:
+            print(f"  {c}")
         return 1
     master.install_skills(FW, SKILLS_HOME)
     version = (FW / "VERSION").read_text(encoding="utf-8").strip()
-    print(f"upgrade: done — source at v{version}. Projects: {_claw()} status <project>")
+    print(f"update: done — source at v{version}. Projects: /claw update in each, in Claude Code")
     return 0
-
-
-def _update(prj: Path, apply: bool) -> int:
-    """`upgrade` and `down` under one ok. The plan shows the commits that arrive
-    and the down the arriving version makes; `--apply` merges exactly those
-    commits, refreshes the user-level skills, then runs the down only if its
-    plan is still the one shown."""
-    plan = _plan_file(prj, "update")
-    try:
-        if not master.is_clone(FW) or not master.upstream(FW):
-            print("not a git clone with a tracked branch: claw-sync --upgrade")
-            return 1
-        if master.lines(FW, "status", "--porcelain"):
-            print("uncommitted changes in the master: commit them (they are promotions) first")
-            return 1
-        if not apply:
-            master.git(FW, "fetch", "--quiet")
-            head = master.git(FW, "rev-parse", "@{u}")
-            incoming = master.lines(FW, "log", "--oneline", f"HEAD..{head}")
-            with tempfile.TemporaryDirectory() as d:
-                if incoming:
-                    master.export(FW, head, Path(d))
-                ops = lifecycle.plan_down(prj, Path(d) if incoming else FW, cited=FW)
-            plan.write_text(
-                json.dumps({
-                    "project": str(Path(prj).resolve()), "source": str(FW), "head": head,
-                    "ops": [dataclasses.asdict(o) for o in ops],
-                }),
-                encoding="utf-8",
-            )
-            print(f"{len(incoming)} incoming commits:")
-            for c in incoming:
-                print(f"  {c}")
-            print("then the user-level skills are refreshed, and the project:\n")
-            print(lifecycle.render(ops))
-            for o in ops:
-                if o.action == lifecycle.KEEP and o.reason:
-                    print(f"{o.action:<11} {o.path} — {o.reason}")
-            print(f'\nplan saved. To run it: {_claw()} update "{prj}" --apply')
-            return 0
-        data = json.loads(plan.read_text(encoding="utf-8")) if plan.is_file() else {}
-        if (data.get("project"), data.get("source")) != (str(Path(prj).resolve()), str(FW)):
-            raise ValueError(f"no update plan saved for {prj} from this source: plan first")
-        conflicts = master.merge(FW, data["head"])
-        if conflicts:
-            print("conflicts, the merge is left open: resolve them, then git commit\n  "
-                  + "\n  ".join(conflicts))
-            return 1
-        master.install_skills(FW, SKILLS_HOME)
-        plan.unlink()
-    except (ValueError, FileNotFoundError, RuntimeError) as err:
-        print(err)
-        return 1
-    # The down runs on the code just merged, not on the one loaded in this process.
-    claw = [sys.executable, str(FW / "claw.py")]
-    run = dict(capture_output=True, text=True, encoding="utf-8", errors="replace")
-    down = subprocess.run([*claw, "down", str(prj)], **run)
-    down_plan = _plan_file(prj, "down")
-    shown = json.loads(down_plan.read_text(encoding="utf-8"))["ops"] if (
-        down.returncode == 0 and down_plan.is_file()
-    ) else None
-    if shown != data["ops"]:
-        print(down.stdout + down.stderr)
-        print(f"source updated, but the project's down differs from the plan shown: "
-              f'check the plan above, then {_claw()} down "{prj}" --apply')
-        return 1
-    done = subprocess.run([*claw, "down", str(prj), "--apply"], **run)
-    print(done.stdout + done.stderr, end="")
-    return done.returncode
