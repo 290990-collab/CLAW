@@ -6,7 +6,7 @@ description: >
   and secrets, redirects, headers. Use when the heart of the task is
   publication. Complex cloud infrastructure needs `infra`.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: orange
 ---

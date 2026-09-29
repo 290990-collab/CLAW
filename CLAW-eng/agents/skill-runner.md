@@ -6,7 +6,7 @@ description: >
   not enter the main conversation. One skill at a time, the one named in the
   prompt.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash, Skill
 color: purple
 ---

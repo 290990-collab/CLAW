@@ -105,7 +105,7 @@ Static portfolio, design-award ambition, no backend, published on static hosting
 | agent | source | proposed | why |
 |---|---|---|---|
 | `security-reviewer` | opus / high | sonnet / high | no backend and no forms: the surface is headers and dependencies |
-| `copywriter` | sonnet / high | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
+| `copywriter` | sonnet / medium | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
 | `architect` | opus / high | opus / medium | the structural decisions of a static site are few and shallow |
 | `frontend` | opus / medium | opus / medium | — (at the centre: stays) |
 

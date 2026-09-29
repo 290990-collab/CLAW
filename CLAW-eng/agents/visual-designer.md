@@ -5,7 +5,7 @@ description: >
   layout. Use together with the title, before the copy. Does not generate
   images: it produces specifications a tool or a person can execute.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write
 color: orange
 ---

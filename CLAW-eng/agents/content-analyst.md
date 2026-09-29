@@ -6,7 +6,7 @@ description: >
   every turn of the content cycle, once the numbers are available. Does not
   publish and does not plan the next turn.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 color: cyan
 ---

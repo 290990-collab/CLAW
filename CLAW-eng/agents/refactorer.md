@@ -6,7 +6,7 @@ description: >
   be made clearer without anything changing for whoever uses it. Not for adding
   features, not for fixing defects.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: blue
 ---

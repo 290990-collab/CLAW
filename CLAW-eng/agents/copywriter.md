@@ -5,7 +5,7 @@ description: >
   product descriptions. Use when the positioning is decided and the piece is
   needed. Does not decide the positioning and does not publish.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write
 color: green
 ---

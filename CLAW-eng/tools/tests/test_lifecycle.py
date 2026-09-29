@@ -614,7 +614,7 @@ class TestApplyDown(unittest.TestCase):
             claude = root / "CLAUDE.md"
             edit(claude, "## Current state\n", "## Current state\n\nmine\n")
 
-            edit(fw / "agents" / "implementer.md", "effort: high", "effort: low")
+            edit(fw / "agents" / "implementer.md", "effort: medium", "effort: low")
             edit(fw / "agents" / "tester.md", "effort: medium", "effort: low")
             edit(fw / "agents" / "explorer.md", "model: haiku\n", "model: haiku\nmemory: project\n")
             edit(fw / "method" / "20-evidence.md", "Every action starts", "Each action starts")

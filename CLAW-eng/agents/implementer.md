@@ -6,7 +6,7 @@ description: >
   has to be written. Not for debugging unknown causes, not for behaviour-
   preserving refactoring, not for writing the test suite.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: green
 ---

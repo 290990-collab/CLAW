@@ -233,9 +233,9 @@ ROUTING = """## This project's roster
 |---|---|---|
 | Where is / who uses X | `explorer` | haiku |
 | Design, multi-file plans, contracts | `architect` | opus high |
-| Writing production code | `implementer` | sonnet high |
+| Writing production code | `implementer` | sonnet medium |
 | Extending the tests | `tester` | sonnet medium |
-| Behaviour-preserving refactoring | `refactorer` | sonnet high |
+| Behaviour-preserving refactoring | `refactorer` | sonnet medium |
 | Bug with an unknown cause | `debugger` | opus high |
 | Signatures of external libraries | `api-scout` | sonnet medium |
 | Surface reachable by an attacker | `security-reviewer` | opus high |

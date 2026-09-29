@@ -6,7 +6,7 @@ description: >
   reconciliation and deduplication, synchronisation to storage and indexes. Use
   when the heart of the task is acquiring data correctly and repeatably.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: green
 ---
