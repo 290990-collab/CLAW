@@ -52,7 +52,7 @@ SHARED_DIRS = ("agents", "skills", "output-styles", "hooks", "shared")
 
 # A framework hook entry is recognised by the script it launches, not by the
 # whole command text: that changes between releases, and the user touches it up.
-HOOK_PATH_RE = re.compile(r"\.claude[\\/]+hooks[\\/]+([A-Za-z0-9_-]+)\.py")
+HOOK_PATH_RE = settings.HOOK_PATH_RE
 
 # Guides and styles have no kernel region: the text belongs to the framework,
 # the last section to the project. The source marks it with the placeholder,
@@ -526,6 +526,9 @@ def plan_down(
         current = _current_settings(prj)
         in_use = _referenced_hooks(current) | _referenced_hooks(manifest.get("settings_added"))
         in_use |= {n for n in settings.HOOKS if _hook_after(prj, n, ())}
+        # The closed ones belong to every installation: one born before them
+        # receives them here, or it never would.
+        in_use |= set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS)
         hooks = [n for n in settings.HOOKS if n in in_use]
     unknown = [n for n in hooks if n not in settings.HOOKS]
     if unknown:
@@ -562,8 +565,8 @@ def apply_down(
     Every new text is computed and every digest re-checked before the first
     byte is written: a failure leaves the project as it was. The regions take
     the source's method and keep what surrounds them; cards take their front
-    matter from `_frontmatter_merge`, and a roster row whose Model cell still
-    says the old value is rewritten. The manifest records the source cards'
+    matter from `_frontmatter_merge`, and every roster row's Model cell takes
+    its card's model and effort. The manifest records the source cards'
     front matter — the reference of the next `--down` — and the source.
     """
     prj, fw = Path(project_root), Path(framework_root)
@@ -574,7 +577,10 @@ def apply_down(
     record = dict(table) if isinstance(table, dict) else {}
     regions = [op.path for op in ops if op.action == MERGE and _is_kernel_file(op.path)]
     writes: dict[Path, str] = {}
-    cells: dict[str, tuple[str, str]] = {}
+    # The Model column is the cards' front matter, seen from the roster: every
+    # row follows its card, whatever it said before.
+    cells = {p.stem: _model_cell(p.read_text(encoding="utf-8"))
+             for p in (prj / ".claude" / "agents").glob("*.md")}
     for rel in regions:
         if not rel.startswith(".claude/agents/"):
             continue
@@ -588,8 +594,7 @@ def apply_down(
         domain = text[kernel.parse(text).end :].lstrip("\n")
         writes[prj / rel] = assemble.build_agent(fm, method, domain, version)
         record[name] = field_record(original)
-        if _model_cell(text) != _model_cell(fm):
-            cells[name] = (_model_cell(text), _model_cell(fm))
+        cells[name] = _model_cell(fm)
     for rel, method_dir in ((CLAUDE_MD, "method"), (ORCHESTRATION, "coordinator")):
         if rel not in regions:
             continue
@@ -662,7 +667,7 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
 
     added: dict = {}
     if SETTINGS in paths:
-        current = _current_settings(prj)
+        current, _ = _drop_framework_hooks(_current_settings(prj), only_stale=True)
         merged, added, _ = settings.merge(
             current, _framework_settings(prj, fw, manifest, (), current)
         )
@@ -680,9 +685,12 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
             data.pop("skills", None)
         if added:
             record = data.get("settings_added")
-            data["settings_added"] = settings.merge(
-                record if isinstance(record, dict) else {}, added
-            )[0]
+            # A replaced entry leaves the record too: uninstall removes what
+            # is equal to it, and the old one is no longer there.
+            record, _ = _drop_framework_hooks(
+                record if isinstance(record, dict) else {}, only_stale=True
+            )
+            data["settings_added"] = settings.merge(record, added)[0]
         _write_json(prj / MANIFEST, data)
 
 
@@ -854,13 +862,13 @@ def _model_cell(card: str) -> str:
     )
 
 
-def _roster_cells(sections: str, changes: dict[str, tuple[str, str]]) -> str:
-    """Rewrites a roster row's Model cell only where it still says the old value."""
+def _roster_cells(sections: str, cells: dict[str, str]) -> str:
+    """Rewrites every roster row's Model cell to its card's `model effort`."""
 
     def fix(m: re.Match) -> str:
         name, cell = m.group(2), m.group(3).strip()
-        if name in changes and cell == changes[name][0]:
-            return f"{m.group(1)}`{name}` | {changes[name][1]} |"
+        if name in cells and cell != cells[name]:
+            return f"{m.group(1)}`{name}` | {cells[name]} |"
         return m.group(0)
 
     return ROSTER_ROW_RE.sub(fix, sections)
@@ -998,12 +1006,20 @@ def _referenced_hooks(data: object) -> set[str]:
     return {n for n in HOOK_PATH_RE.findall(text) if n in settings.HOOKS}
 
 
-def _drop_framework_hooks(data: dict) -> tuple[dict, list[str]]:
-    """`(rest, dropped)`: every hook entry that launches a framework script goes.
+def _drop_framework_hooks(data: dict, only_stale: bool = False) -> tuple[dict, list[str]]:
+    """`(rest, dropped)`: every hook entry that launches a framework script goes
+    — with `only_stale`, only those that differ from the source's entry, so the
+    merge that follows writes the current one in their place.
 
     Single entries are removed, not the group: a user hook placed under the
     same `matcher` stays. Only the containers emptied here are pruned.
     """
+    def drops(entry: object) -> bool:
+        name = _hook_name(entry)
+        if name is None:
+            return False
+        return not only_stale or entry != settings.hook_entry(name)
+
     rest = copy.deepcopy(data)
     events = rest.get("hooks")
     if not isinstance(events, dict):
@@ -1019,11 +1035,11 @@ def _drop_framework_hooks(data: dict) -> tuple[dict, list[str]]:
             if not isinstance(inner, list) or not inner:
                 survivors.append(group)
                 continue
-            keep = [h for h in inner if _hook_name(h) is None]
+            keep = [h for h in inner if not drops(h)]
             dropped += [
                 f"{event} «{group.get('matcher', '')}» → .claude/hooks/{_hook_name(h)}.py"
                 for h in inner
-                if _hook_name(h) is not None
+                if drops(h)
             ]
             if keep:
                 survivors.append({**group, "hooks": keep})
@@ -1041,7 +1057,7 @@ def _uninstalled_settings(current: dict, record: object) -> tuple[dict, list[str
 
     A hook entry the user touched up is no longer equal to the record, and
     without a record none is removed: but the script it points to goes away,
-    and a closed hook without its script blocks every Edit and every Bash.
+    and a closed hook without its script blocks every `git` command and linter-configuration edit.
     """
     if isinstance(record, dict):
         rest, kept = settings.unmerge(current, record)
@@ -1068,7 +1084,7 @@ def _settings_uninstall_ops(prj: Path, manifest: dict) -> list[Operation]:
         ops.append(
             _op(prj, SETTINGS, MERGE, f"the hook entry {entry} goes too: it is not the "
                 "recorded one, but the script goes away and a closed hook without its "
-                "script blocks every Edit and Bash")
+                "script blocks every git command and linter-configuration edit")
         )
     return ops
 
@@ -1126,13 +1142,15 @@ def _framework_settings(
 def _settings_update_ops(
     prj: Path, fw: Path, manifest: dict, ops: Sequence[Operation]
 ) -> list[Operation]:
-    current = _current_settings(prj)
+    current, stale = _drop_framework_hooks(_current_settings(prj), only_stale=True)
     _, added, conflicts = settings.merge(
         current, _framework_settings(prj, fw, manifest, ops, current)
     )
     if not added:
         return []
     reason = "missing: " + ", ".join(sorted(added))
+    if stale:
+        reason += f"; replaced, from an older release: {', '.join(stale)}"
     if conflicts:
         reason += f"; your value stays on: {', '.join(conflicts)}"
     action = MERGE if (prj / SETTINGS).is_file() else CREATE

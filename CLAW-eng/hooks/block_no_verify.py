@@ -4,8 +4,8 @@ Blocks `--no-verify`, its `-n` on `commit` (inside a group like `-an` too) and
 any touch of `core.hooksPath`. A command that does not name `git` passes with no
 analysis.
 
-Closed hook: unreadable input, unclosed quotes in a command with `git`, any
-error → exit 2.
+Closed hook: unreadable input, any error → exit 2. A quote left open is read
+as prose, not as an error: an apostrophe in any language is normal text.
 
 Exit: 0 lets it through, 2 blocks with the reason on stderr.
 """
@@ -105,13 +105,30 @@ def _scan(command: str, posix: bool, depth: int) -> str | None:
 
 def _tokens(command: str, posix: bool) -> list[tuple[str, bool]]:
     """`(token, is punctuation)`. PowerShell is not POSIX: `\\` is a path
-    separator, not an escape, and the quotes stay in the token."""
+    separator, not an escape, and the quotes stay in the token.
+
+    A quote left open is almost always prose — an apostrophe (`l'utente`,
+    `don't`) or the body of a heredoc — not a bypass: the command is read again
+    with quotes as plain characters, stripped from every token, so a
+    `--no-verify` or a `-n` is still found and the text goes through."""
+    try:
+        return _lex(command, posix, quoting=True)
+    except ValueError:
+        return _lex(command, posix, quoting=False)
+
+
+def _lex(command: str, posix: bool, quoting: bool) -> list[tuple[str, bool]]:
     lex = shlex.shlex(command, posix=posix, punctuation_chars=True)
     lex.whitespace_split = True
+    if not quoting:
+        lex.quotes = ""
+        lex.escape = ""
     out = []
     for tok in lex:
         punct = tok != "" and all(c in lex.punctuation_chars for c in tok)
-        if not posix and len(tok) >= 2 and tok[0] == tok[-1] and tok[0] in "\"'":
+        if not quoting:
+            tok = tok.strip("\"'")
+        elif not posix and len(tok) >= 2 and tok[0] == tok[-1] and tok[0] in "\"'":
             tok = tok[1:-1]
         out.append((tok, punct))
     return out

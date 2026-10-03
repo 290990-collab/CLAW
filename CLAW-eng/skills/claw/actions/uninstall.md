@@ -8,7 +8,7 @@ Only what is byte-for-byte identical to the source is deleted; what the project 
 | skills and hooks | identical to the source → removed; different → archived |
 | cards, guides and styles that come from the source, `orchestration.md` | archived |
 | `.claude/settings.json` | the `settings_added` entries still equal go; those the user changed stay, and the plan names them. Without a record, the rest is not touched |
-| framework hook entries, even ones the user touched up | removed, **one plan line per entry**: the script goes, and a closed hook without its script blocks every edit or every command |
+| framework hook entries, even ones the user touched up | removed, **one plan line per entry**: the script goes, and a closed hook without its script blocks every `git` command or linter-configuration edit |
 | `docs/` | stay |
 | `.claude/framework.json` | archived last |
 

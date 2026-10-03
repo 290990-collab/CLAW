@@ -93,7 +93,6 @@ class TestConfigProtection(unittest.TestCase):
                 ("config_protection", not_utf8),
                 ("block_no_verify", b"{broken"),
                 ("block_no_verify", {"tool_input": {}}),
-                ("block_no_verify", shell('git commit -m "unclosed')),
             )
             for name, payload in cases:
                 with self.subTest(name=name, payload=payload):
@@ -140,6 +139,30 @@ class TestBlockNoVerify(unittest.TestCase):
             with self.subTest(command=command):
                 r = run_hook("block_no_verify", shell(command))
                 self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+
+    def test_an_open_quote_is_prose_not_a_block(self):
+        """An apostrophe — Italian `l'utente`, English `don't`, a heredoc body —
+        leaves a quote open: the text passes, a bypass next to it does not."""
+        prose = (
+            # Three apostrophes: shlex cannot pair them, as in the real case.
+            "git add docs && cat >> docs/status.md <<'EOF'\nl'utente decide\nEOF",
+            "git commit -m \"it's done\"",
+            "git commit -m it's",
+            'git commit -m "unclosed',
+        )
+        for command in prose:
+            with self.subTest(command=command):
+                r = run_hook("block_no_verify", shell(command))
+                self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+        bypass = (
+            "git commit -m l'utente --no-verify",
+            "git commit -m it's -n",
+            "git commit '--no-verify",
+            "git -c core.hooksPath=/dev/null commit -m l'utente",
+        )
+        for command in bypass:
+            with self.subTest(command=command):
+                self.assertEqual(run_hook("block_no_verify", shell(command)).returncode, 2)
 
     def test_block_no_verify_reads_past_a_git_that_is_an_option_value(self):
         """A `git` that is an option's value does not close the segment: the
@@ -203,7 +226,7 @@ class TestHookSources(unittest.TestCase):
     def test_every_hook_postpones_its_annotations(self):
         """The first `python` on the PATH can be a 3.9 (the stock one on macOS):
         there `str | None` in a signature raises at definition, and a closed
-        hook that never reaches `main` blocks every Edit and every Bash.
+        hook that never reaches `main` blocks every `git` command and linter-configuration edit.
         Compiled without inheriting the caller's flags, the import must be
         there."""
         for p in sorted(HOOKS_DIR.glob("*.py")):
@@ -215,6 +238,19 @@ class TestHookSources(unittest.TestCase):
 
 
 class TestInstalledCommand(unittest.TestCase):
+    def test_every_protected_name_passes_the_shell_prefilter(self):
+        """A protected name missing from the stems would never reach the script:
+        the closed hook would let its edit through."""
+        sys.path.insert(0, str(HOOKS_DIR))
+        try:
+            import config_protection
+        finally:
+            sys.path.remove(str(HOOKS_DIR))
+        stems = settings._RELEVANT["config_protection"]
+        for name in config_protection.PROTECTED:
+            with self.subTest(name=name):
+                self.assertTrue(any(s in name for s in stems))
+
     @unittest.skipUnless(shutil.which("sh"), "sh not available")
     def test_the_installed_hook_command_runs_under_sh(self):
         """The real command, run the way Claude Code runs it: `sh -c`, with a
@@ -233,12 +269,12 @@ class TestInstalledCommand(unittest.TestCase):
             (prj / ".eslintrc.json").write_text("{}", encoding="utf-8")
             env = hook_env(CLAUDE_PROJECT_DIR=str(prj))
 
-            def sh(name: str, file_path: str = ".eslintrc.json") -> int:
+            def sh(name: str, file_path: str = ".eslintrc.json", payload=None, run_env=None) -> int:
                 return subprocess.run(
                     ["sh", "-c", commands[name]],
-                    input=encode(edit(prj, str(prj / file_path))),
+                    input=encode(payload or edit(prj, str(prj / file_path))),
                     capture_output=True,
-                    env=env,
+                    env=run_env or env,
                     cwd=prj,
                     timeout=60,
                 ).returncode
@@ -246,13 +282,41 @@ class TestInstalledCommand(unittest.TestCase):
             self.assertEqual(sh("config_protection"), 2)
             # A 0 arrives only if the script read the payload: an empty stdin
             # would give 2 here too.
-            self.assertEqual(sh("config_protection", "src/app.py"), 0)
+            self.assertEqual(sh("config_protection", "new/.ESLINTRC.json"), 0)
+            self.assertEqual(sh("block_no_verify", payload=shell("GIT commit --no-verify")), 2)
             for broken in ("def (:\n", "import sys\nsys.exit(3)\n"):
                 with self.subTest(script=broken):
                     (installed / "config_protection.py").write_text(broken, encoding="utf-8")
-                    self.assertEqual(sh("config_protection", "src/app.py"), 2)
+                    self.assertEqual(sh("config_protection", "new/.eslintrc.json"), 2)
+                    # Nothing for the hook to say: the broken script is not reached.
+                    self.assertEqual(sh("config_protection", "src/app.py"), 0)
             (installed / "config_protection.py").unlink()
             self.assertEqual(sh("config_protection"), 2)
+            self.assertEqual(sh("config_protection", "src/app.py"), 0)
+            shutil.copy(HOOKS_DIR / "config_protection.py", installed)
+
+            # The Windows Store stub: found by `command -v`, it runs nothing.
+            stub = Path(d) / "stub"
+            stub.mkdir()
+            for exe in ("python", "python3"):
+                (stub / exe).write_text("#!/bin/sh\nexit 49\n", encoding="utf-8")
+                (stub / exe).chmod(0o755)
+            stubbed = {**env, "PATH": f"{stub}{os.pathsep}{env.get('PATH', '')}"}
+            with self.subTest(python="stub only"):
+                # 0 with a real Python: the 2 comes from the stub being refused.
+                self.assertEqual(sh("config_protection", "new/.eslintrc.json", run_env=stubbed), 2)
+                self.assertEqual(sh("block_no_verify", payload=shell("git status"), run_env=stubbed), 2)
+                refused = subprocess.run(
+                    ["sh", "-c", commands["block_no_verify"]],
+                    input=encode(shell("git status")),
+                    capture_output=True,
+                    env=stubbed,
+                    cwd=prj,
+                    timeout=60,
+                )
+                self.assertIn(b"python missing", refused.stderr)
+                self.assertEqual(sh("config_protection", "src/app.py", run_env=stubbed), 0)
+                self.assertEqual(sh("block_no_verify", payload=shell("npm test"), run_env=stubbed), 0)
             (installed / "gateguard.py").write_text("import sys\nsys.exit(1)\n", encoding="utf-8")
             self.assertNotEqual(sh("gateguard"), 2)
             (installed / "gateguard.py").unlink()

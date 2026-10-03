@@ -1,83 +1,99 @@
-<p align="center">
-  <img src="assets/claw.png" alt="CLAW, an orange block with two claws, sitting cross-legged in calm focus" width="440">
-</p>
+<div align="center">
 
-<h1 align="center">CLAW</h1>
+<img src="assets/claw.png" alt="CLAW, an orange block with two claws, sitting cross-legged in calm focus" width="360">
+
+# CLAW
 
 **A working method for Claude Code, installed in your project in one command.**
 
-Claude Code gives you agents, hooks and skills, but no method. CLAW adds one:
-the same rules and the same team of agents in every project, kept up to date
-from one source.
+[![Tests](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml/badge.svg)](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python&logoColor=white)
+![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-**Contents:** [What you get](#what-you-get) · [Install](#install) ·
-[Everyday use](#everyday-use) · [/claw in Claude Code](#claw-in-claude-code) ·
-[claw in the terminal](#claw-in-the-terminal) · [Agents](#agents) ·
-[Profiles](#profiles) · [Talking to it](#talking-to-it) · [Settings](#settings)
+[Features](#features) · [Getting started](#getting-started) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [Profiles](#profiles) · [Talking to it](#talking-to-it) · [Settings](#settings)
 
----
+</div>
 
-## What you get
+Claude Code gives you agents, hooks and skills, but no method. CLAW adds one: the
+same rules and the same team of agents in every project, kept up to date from one
+source.
 
-- **Claude works from evidence.** It cites only what it read or ran, says what it
-  did not check, finds the cause before fixing, and asks when a request is unclear.
-- **Small, safe changes.** No unrequested refactoring, tests never weakened to go
-  green. Commits, installs and anything irreversible wait for your ok.
-- **A team sized to the task.** A coordinator plans and hands work to specialised
-  agents; small changes it does itself.
-- **Work state across sessions.** `docs/TODO.md`, `docs/status.md` and
-  `docs/roadmap.md` say where the work is, and every session starts from them.
-- **Safety hooks.** Claude cannot skip your git hooks, relax a linter
-  configuration, or edit a file before checking what uses it.
-- **One source, many projects.** Update CLAW once, then bring each project up to
-  date. What you adapted stays.
+> [!NOTE]
+> CLAW does not run on its own. It installs files into your project (`CLAUDE.md`,
+> `.claude/agents/`, `.claude/shared/`, hooks, state files) that Claude Code reads
+> in every session.
 
----
+## Features
 
-## Install
+| | What it means for you |
+|---|---|
+| **Evidence first** | Claude cites only what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
+| **Small, safe changes** | No unrequested refactoring, tests never weakened to go green. Commits, installs and anything irreversible wait for your ok |
+| **A team sized to the task** | A coordinator hands searches, diagnoses and designs to specialised agents on its own, and does small changes itself |
+| **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
+| **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
+| **One source, many projects** | Update CLAW once, then bring each project up to date. What you adapted stays |
 
-Once per machine. You need Claude Code, git and Python 3.11 or later.
+## Getting started
 
-**macOS · Linux**
+### Prerequisites
+
+| You need | Why |
+|---|---|
+| [Claude Code](https://code.claude.com) | CLAW is a method for it |
+| Python 3.11 or later | The `claw` tool and the hooks. Standard library only, nothing to install |
+| git | `claw update` and `claw status` |
+
+### Install
+
+Once per machine:
 
 ```bash
+# macOS · Linux
 git clone https://github.com/290990-collab/CLAW.git ~/.claude/CLAW
 python ~/.claude/CLAW/CLAW-eng/claw.py setup
 ```
 
-**Windows · PowerShell**
-
 ```powershell
+# Windows · PowerShell
 git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
 python $HOME\.claude\CLAW\CLAW-eng\claw.py setup
 ```
 
 `setup` shows what it writes and asks for your ok. It adds the `/claw` skill to
-Claude Code and the `claw` command to `~/.local/bin`. If that folder is not on
-your PATH, `setup` tells you: add it and open a new terminal.
+Claude Code and the `claw` command to `~/.local/bin`.
 
-Then, in each project: open Claude Code in the project folder and run
-`/claw install`.
+> [!TIP]
+> If `~/.local/bin` is not on your PATH, `setup` tells you. Add it and open a new
+> terminal.
 
----
+Then, in each project, open Claude Code in the project folder and run:
+
+```text
+/claw install
+```
+
+It asks five questions, shows every file it will write and waits for your ok.
 
 ## Everyday use
 
 | I want to… | Do this |
 |---|---|
-| Set up a project | In Claude Code, in the project: `/claw install`. It asks five questions, shows every file it will write and waits for your ok |
+| Set up a project | In Claude Code, in the project: `/claw install` |
 | Get a new CLAW release | In a terminal: `claw update`. It lists what arrives and asks before merging |
 | Bring a project to the new release | In Claude Code, in that project: `/claw update`. Your adaptations stay |
 | See if a project is behind | In a terminal, in the project folder: `claw status` |
 | Check that a project is healthy | `claw doctor`, or `/claw fix` to also repair it |
 | Stop and resume later | Say `safe pause`. Claude writes where things are in `docs/TODO.md` |
 
-`claw update` touches only CLAW itself. Each project moves when you run
-`/claw update` in it, so nothing changes in a project you are not looking at.
+> [!IMPORTANT]
+> `claw update` touches only CLAW itself. A project changes only when you run
+> `/claw update` inside it, so nothing moves in a project you are not looking at.
 
----
+## Commands
 
-## /claw in Claude Code
+### `/claw` in Claude Code
 
 One skill, one action at a time. `/claw` alone lists the actions.
 
@@ -97,9 +113,7 @@ One skill, one action at a time. `/claw` alone lists the actions.
 
 Every action that writes shows its plan first and waits for your ok.
 
----
-
-## claw in the terminal
+### `claw` in the terminal
 
 | Command | What it does |
 |---|---|
@@ -107,17 +121,15 @@ Every action that writes shows its plan first and waits for your ok.
 | `claw status` | CLAW's version against the release; with a project in this folder, its version and what it is missing |
 | `claw doctor` | Checks the project in this folder. `--strict` fails on warnings too, `--json` is for CI |
 
-Commands that write ask before writing; add `--yes` to skip the question.
-`claw --help` lists the others (`setup`, `install`, `down`, `repair`,
-`uninstall`, `report`, `source`, `skills`): `/claw` runs them for you.
-
----
+Commands that write ask first; `--yes` skips the question. `claw --help` lists the
+others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
+`skills`): `/claw` runs them for you.
 
 ## Agents
 
 29 agents. A project installs only the ones its profile and your answers need.
 
-**Always installed:**
+**Always installed**
 
 | Agent | What it does |
 |---|---|
@@ -128,7 +140,7 @@ Commands that write ask before writing; add `--yes` to skip the question.
 | `refactorer` | Cleans up the structure, behaviour unchanged |
 | `final-reviewer` | Rereads the diff and reruns the tests before an important change is called done |
 
-**Added by profile or on request:**
+**Added by profile or on request**
 
 | Agent | What it does |
 |---|---|
@@ -151,7 +163,7 @@ Commands that write ask before writing; add `--yes` to skip the question.
 | `content-analyst` | Reads the numbers after publishing |
 
 **Reviewers of the critical surface.** `/claw install` asks what could make the
-work wrong even with perfect code, and adds the matching reviewer:
+work wrong even with perfect code, and adds the matching reviewer.
 
 | Agent | Watches for |
 |---|---|
@@ -162,12 +174,10 @@ work wrong even with perfect code, and adds the matching reviewer:
 | `perf-analyst` | A declared performance requirement |
 | `claim-reviewer` | Public claims about the product |
 
----
-
 ## Profiles
 
 The first question of `/claw install`. It picks the extra agents, the guides and
-the work cycle. `/claw change` switches it later.
+the work cycle; `/claw change` switches it later.
 
 | Profile | For |
 |---|---|
@@ -179,23 +189,18 @@ the work cycle. `/claw change` switches it later.
 | `llm` | A language model produces what the code uses |
 | `marketing` | Positioning, copy, images, campaigns |
 
-The orchestration is `orchestrator-worker` by default: the coordinator hands out
-work and collects reports. `agent-teams` lets agents message each other; it is
-experimental and needs an interactive session.
-
----
+| Orchestration | How agents work together |
+|---|---|
+| `orchestrator-worker` (default) | The coordinator hands out work and collects reports |
+| `agent-teams` | Agents message each other. Experimental, needs an interactive session |
 
 ## Talking to it
 
-**Rule names.** Write a rule's name in a message and Claude applies it to the
-current work, for example `minimal change here`, `proof level?`,
-`not a finding, skip it`. The 35 names are listed in
-[`CLAW-eng/output-styles/reporting.md`](CLAW-eng/output-styles/reporting.md).
-
-**Reference codes.** A reply with three or more findings, decisions or options
-numbers them (`F1`, `D1`, `O1`, …). Answer with the codes: `keep D1, drop O2`.
-
-**Aliases.** Send one as the whole message:
+| Feature | How it works | Example |
+|---|---|---|
+| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW-eng/output-styles/reporting.md) | `minimal change here`, `proof level?` |
+| **Reference codes** | A reply with three or more findings, decisions or options numbers them | `keep D1, drop O2` |
+| **Aliases** | Sent as the whole message, they rework the last reply | see below |
 
 | Alias | You get |
 |---|---|
@@ -204,26 +209,24 @@ numbers them (`F1`, `D1`, `O1`, …). Answer with the codes: `keep D1, drop O2`.
 | `ref` | The last reply with reference codes |
 | `eli` | The last reply explained simply |
 
----
-
 ## Settings
 
 | Setting | Effect |
 |---|---|
 | `language` in Claude Code's settings | The language Claude answers in. Without it, the language of your messages |
-| `FRAMEWORK_GATEGUARD=off` | Turns off the hook that checks a file's users before its first edit |
+| `FRAMEWORK_GATEGUARD=off` | Turns off the optional hook that checks a file's users before its first edit |
 | `accepted` in `.claude/framework.json` | Warnings of `claw doctor` you keep on purpose, each with a reason |
 
 To keep a warning, copy its code from the doctor's output into `accepted`:
 
-```
+```text
 WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel — 4300 in all, ≈5700 tokens paid at every spawn
 ```
 
 ```json
 {
   "source": "...",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
@@ -231,10 +234,5 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 }
 ```
 
-Errors cannot be accepted: they must be fixed.
-
----
-
-## Version 2.0.5
-
-MIT, see [LICENSE](LICENSE).
+> [!WARNING]
+> Errors cannot be accepted: they must be fixed.

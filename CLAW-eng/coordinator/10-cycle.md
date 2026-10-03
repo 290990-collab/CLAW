@@ -11,7 +11,7 @@
 4. **Verify:** `tester` only when the task touches domain logic or a contract: it extends coverage beyond the implementer's mini-tests (few solid tests on the domain's boundaries).
 5. **Review:** `final-reviewer`, which verifies from scratch without trusting the reports, only if the diff touches the **critical surface** (after that surface's reviewer) or the task is *important* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no).
    - **Double review** only at the user's request: two isolated `final-reviewer`s, same rubric, one after the other; it passes only if both pass. Fixes as per rule 9.
-6. **Integrate:** the coordinator resolves the findings and integrates. Commit ONLY at the user's request.
+6. **Integrate:** the coordinator resolves the findings and integrates. Commit ONLY at the user's request, or under a standing approval of theirs in `CLAUDE.md`.
 
 **Skipped step** (its condition held): it stays written — `skipped: <reason>`, one line, in the report and in `docs/TODO.md`. Deleting it removes the difference between assessed and forgotten.
 

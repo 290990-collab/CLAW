@@ -8,6 +8,7 @@ two dicts.
 """
 
 import copy
+import re
 from collections.abc import Sequence
 
 HOOKS = ("config_protection", "block_no_verify", "gateguard")
@@ -15,6 +16,9 @@ HOOKS = ("config_protection", "block_no_verify", "gateguard")
 # The one installed only if the project asks for it: it denies the first touch
 # of every file, and costs one extra turn per session.
 OPTIONAL_HOOKS = ("gateguard",)
+
+# Where a settings entry names a framework hook's script, whatever the separator.
+HOOK_PATH_RE = re.compile(r"\.claude[\\/]+hooks[\\/]+([A-Za-z0-9_-]+)\.py")
 
 # Closed hooks block even when they cannot run: a check that disappears because
 # the interpreter is missing is a check nobody knows is off.
@@ -24,6 +28,19 @@ _MATCHER = {
     "config_protection": "Edit|Write|MultiEdit",
     "block_no_verify": "Bash|PowerShell",
     "gateguard": "Edit|Write|MultiEdit",
+}
+
+# What a payload must contain for a closed hook to have anything to say: its
+# script lets everything else through anyway. The shell checks it before looking
+# for Python, so a machine without it loses only the checks that concern it, not
+# every Bash and every Edit. Every name in config_protection's PROTECTED
+# contains one of these stems: test_hooks holds the two lists together.
+_RELEVANT = {
+    "config_protection": (
+        "eslint", "prettier", "biome", "ruff", "shellcheck",
+        "stylelint", "markdownlint", "flake8", "pylint", "mypy",
+    ),
+    "block_no_verify": ("git",),
 }
 
 _TIMEOUT_SECONDS = 10
@@ -151,26 +168,44 @@ def _command(name: str) -> str:
 
     A closed hook is not run with `exec`: a script that does not compile
     (Python 2, or below 3.10) exits 1, and for Claude Code 1 means "no
-    objection". Every exit other than 0 becomes 2; stdin passes to the script
-    because `sh -c` does not read it.
+    objection". Every exit other than 0 becomes 2. It reads stdin itself, lets
+    through with shell builtins alone what none of its `_RELEVANT` stems names,
+    and takes only an interpreter that starts: the Windows Store stub is found
+    by `command -v` and runs nothing.
     """
     if name not in HOOKS:
         raise ValueError(f"unknown hook: {name}")
     if name in _CLOSED:
-        fallback = f'echo "{name}: script or python missing, blocking" >&2; exit 2;'
-        run = (
-            '"$P" "$F"; c=$?; [ $c -eq 0 ] && exit 0; '
+        relevant = "|".join(f"*{_any_case(s)}*" for s in _RELEVANT[name])
+        return (
+            f'I=$(cat) || {{ echo "{name}: stdin unreadable, blocking" >&2; exit 2; }}; '
+            f'case "$I" in {relevant}) ;; *) exit 0;; esac; '
+            f'F="$CLAUDE_PROJECT_DIR/.claude/hooks/{name}.py"; P=; '
+            'for c in python python3; do command -v "$c" >/dev/null 2>&1 && '
+            '"$c" -c 0 >/dev/null 2>&1 && { P=$c; break; }; done; '
+            f'[ -f "$F" ] && [ -n "$P" ] || {{ echo "{name}: script or python missing, '
+            'blocking" >&2; exit 2; }; '
+            'printf "%s" "$I" | "$P" "$F"; c=$?; [ $c -eq 0 ] && exit 0; '
             f'[ $c -eq 2 ] || echo "{name}: script exited with code $c, blocking" >&2; exit 2'
         )
-    else:
-        fallback = f'echo "{name}: script or python missing, letting it through" >&2; exit 0;'
-        run = 'exec "$P" "$F"'
+    fallback = f'echo "{name}: script or python missing, letting it through" >&2; exit 0;'
     return (
         f'F="$CLAUDE_PROJECT_DIR/.claude/hooks/{name}.py"; '
         "P=$(command -v python || command -v python3); "
         f'[ -f "$F" ] && [ -n "$P" ] || {{ {fallback} }}; '
-        + run
+        'exec "$P" "$F"'
     )
+
+
+def hook_entry(name: str) -> dict:
+    """The entry this release writes for a hook: one that differs is from an
+    older release, and `--down` replaces it."""
+    return {"type": "command", "command": _command(name), "timeout": _TIMEOUT_SECONDS}
+
+
+def _any_case(stem: str) -> str:
+    """A `case` pattern matching the stem in any case: `git` → `[gG][iI][tT]`."""
+    return "".join(f"[{c.lower()}{c.upper()}]" if c.isalpha() else c for c in stem)
 
 
 def hooks(names: Sequence[str]) -> dict:
@@ -187,16 +222,7 @@ def hooks(names: Sequence[str]) -> dict:
     return {
         "hooks": {
             "PreToolUse": [
-                {
-                    "matcher": _MATCHER[name],
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": _command(name),
-                            "timeout": _TIMEOUT_SECONDS,
-                        }
-                    ],
-                }
+                {"matcher": _MATCHER[name], "hooks": [hook_entry(name)]}
                 for name in names
             ]
         }

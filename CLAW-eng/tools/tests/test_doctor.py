@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from fwbuild import assemble, doctor, kernel
+from fwbuild import settings as fw_settings
 
 AGENT_FM = "---\nname: {n}\nmodel: opus\neffort: high\n---\n"
 # The source's version, not a literal: `VERSION_MISMATCH` compares the project
@@ -27,6 +28,7 @@ def make_project(
     leak=False,
     markers=True,
     settings=True,
+    hooks=True,
     guides=(),
     manifest=True,
     accepted=None,
@@ -42,13 +44,19 @@ def make_project(
             json.dumps(data), encoding="utf-8"
         )
     if settings:
-        (root / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
+        closed = [n for n in fw_settings.HOOKS if n not in fw_settings.OPTIONAL_HOOKS]
+        wired = fw_settings.hooks(closed) if hooks else {}
+        (root / ".claude" / "settings.json").write_text(json.dumps(wired), encoding="utf-8")
+        (root / ".claude" / "hooks").mkdir()
+        for n in closed if hooks else ():
+            (root / ".claude" / "hooks" / f"{n}.py").write_text("pass\n", encoding="utf-8")
     for rel in guides:
         g = root / ".claude" / "shared" / rel
         g.parent.mkdir(parents=True, exist_ok=True)
         g.write_text("# guide", encoding="utf-8")
     (root / "docs").mkdir(parents=True)
-    rows = "\n".join(f"| where | `{n}` | haiku |" for n in routing)
+    cell = ("fable" if fable else "opus") + " high"
+    rows = "\n".join(f"| where | `{n}` | {cell} |" for n in routing)
     if orchestration:
         # The routing table lives in the coordinator's guide, not in CLAUDE.md:
         # it is content the subagents must not pay for.
@@ -232,6 +240,36 @@ class TestDoctor(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             found = doctor.check(make_project(d, settings=False))
             self.assertIn("SETTINGS_MISSING", codes(found))
+
+    def test_detects_closed_hooks_not_wired(self):
+        """An installation born before the hooks has none of their checks, and
+        nothing else says so."""
+        with tempfile.TemporaryDirectory() as d:
+            found = [f for f in doctor.check(make_project(d, hooks=False)) if f.code == "HOOKS_MISSING"]
+            self.assertEqual({f.severity for f in found}, {"WARN"})
+            self.assertEqual(len(found), 2)
+
+    def test_detects_a_wired_hook_whose_script_is_gone(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = make_project(d)
+            (p / ".claude" / "hooks" / "block_no_verify.py").unlink()
+            found = [f for f in doctor.check(p) if f.code == "HOOKS_MISSING"]
+            self.assertEqual([f.severity for f in found], ["ERROR"])
+            self.assertIn("block_no_verify", found[0].message)
+
+    def test_detects_a_roster_model_behind_its_card(self):
+        """The coordinator reads the model to pass from this column: an old
+        `opus` next to a card lowered to sonnet makes it raise the model."""
+        with tempfile.TemporaryDirectory() as d:
+            p = make_project(d)
+            guide = p / ".claude" / "shared" / "orchestration.md"
+            guide.write_text(
+                guide.read_text(encoding="utf-8").replace("| opus high |", "| opus |"),
+                encoding="utf-8",
+            )
+            found = [f for f in doctor.check(p) if f.code == "ROSTER_MODEL"]
+            self.assertEqual(len(found), 1)
+            self.assertIn("explorer", found[0].message)
 
     def test_detects_shared_guide_nobody_cites(self):
         """The inverse of SHARED_MISSING: a guide installed and never cited is
@@ -441,7 +479,7 @@ class TestDoctor(unittest.TestCase):
             p = make_project(d)
             home = ("C:" + "\\Users\\" + "jsmith").encode("utf-8")
             hooks = p / ".claude" / "hooks"
-            hooks.mkdir()
+            hooks.mkdir(exist_ok=True)
             (hooks / "mine.py").write_bytes(b"# citt\xe0\n")
             (p / ".claude" / "skills" / "mine").mkdir(parents=True)
             (p / ".claude" / "skills" / "mine" / "SKILL.md").write_bytes(

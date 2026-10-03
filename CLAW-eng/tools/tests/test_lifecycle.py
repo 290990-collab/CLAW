@@ -37,6 +37,10 @@ def actions(ops) -> dict[str, str]:
     return {op.path: op.action for op in ops}
 
 
+def actions_reason(ops, path: str) -> str:
+    return " ".join(op.reason for op in ops if op.path == path)
+
+
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -264,7 +268,7 @@ class TestUninstall(unittest.TestCase):
         """A hook entry with a touched-up timeout is no longer equal to the
         record, and `unmerge` leaves it; without a record none is removed. But
         the script it points to goes away: a closed hook without its script
-        blocks every Edit and every Bash of the project, forever and without a
+        blocks every `git` command and linter-configuration edit, forever and without a
         finding."""
         cases = {
             "timeout touched up": lambda data, manifest: data["hooks"]["PreToolUse"][0][
@@ -603,7 +607,8 @@ class TestApplyDown(unittest.TestCase):
     def test_front_matter_follows_the_record(self):
         """A value the project never touched follows the source; one the
         project chose stays. The regions take the new method, the project
-        sections stay, a roster cell that still says the old value follows."""
+        sections stay, every roster cell follows its card — the one the project
+        changed by hand too, or the table would contradict the card."""
         with tempfile.TemporaryDirectory() as d:
             fw = source_copy(d)
             root = Path(d) / "prj"
@@ -635,7 +640,7 @@ class TestApplyDown(unittest.TestCase):
             self.assertEqual(kernel.parse(text).version, "9.9.9")
             roster = (root / lifecycle.ORCHESTRATION).read_text(encoding="utf-8")
             self.assertIn("| `implementer` | sonnet low |", roster)
-            self.assertIn("| `tester` | sonnet medium |", roster)
+            self.assertIn("| `tester` | opus low |", roster)
             manifest = read_json(root / source.MANIFEST)
             self.assertEqual(manifest["version"], "9.9.9")
             self.assertEqual(
@@ -658,6 +663,55 @@ class TestApplyDown(unittest.TestCase):
             self.assertEqual(actions(ops)[rel], lifecycle.CREATE)
             lifecycle.apply_down(root, FRAMEWORK, ops)
             self.assertTrue((root / rel).is_file())
+
+    def test_down_brings_the_closed_hooks_and_replaces_an_old_command(self):
+        """An installation born without hooks receives the closed ones, never
+        gateguard; an entry written by an older release is replaced, not
+        doubled, and leaves the record with it."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            data = read_json(root / SETTINGS)
+            data.pop("hooks", None)
+            write_json(root / SETTINGS, data)
+            manifest = read_json(root / source.MANIFEST)
+            manifest.get("settings_added", {}).pop("hooks", None)
+            write_json(root / source.MANIFEST, manifest)
+            for p in (root / ".claude" / "hooks").glob("*.py"):
+                p.unlink()
+
+            lifecycle.apply_down(root, FRAMEWORK, lifecycle.plan_down(root, FRAMEWORK))
+
+            closed = set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS)
+            text = (root / SETTINGS).read_text(encoding="utf-8")
+            self.assertEqual(lifecycle._referenced_hooks(read_json(root / SETTINGS)), closed)
+            for name in closed:
+                self.assertTrue((root / ".claude" / "hooks" / f"{name}.py").is_file())
+
+            old = "echo old-release; exit 0"
+            data = read_json(root / SETTINGS)
+            entry = data["hooks"]["PreToolUse"][0]["hooks"][0]
+            name = lifecycle._hook_name(entry)
+            current = entry["command"]
+            entry["command"] = old + f" # .claude/hooks/{name}.py"
+            write_json(root / SETTINGS, data)
+            manifest = read_json(root / source.MANIFEST)
+            manifest["settings_added"]["hooks"]["PreToolUse"][0]["hooks"][0] = entry
+            write_json(root / source.MANIFEST, manifest)
+
+            ops = lifecycle.plan_down(root, FRAMEWORK)
+            self.assertIn("from an older release", actions_reason(ops, SETTINGS))
+            lifecycle.apply_down(root, FRAMEWORK, ops)
+
+            text = (root / SETTINGS).read_text(encoding="utf-8")
+            self.assertNotIn(old, text)
+            self.assertEqual(text.count(f".claude/hooks/{name}.py"), 1)
+            commands = [
+                h["command"]
+                for g in read_json(root / SETTINGS)["hooks"]["PreToolUse"]
+                for h in g["hooks"]
+            ]
+            self.assertIn(current, commands)
+            self.assertNotIn(old, (root / source.MANIFEST).read_text(encoding="utf-8"))
 
     def test_down_writes_nothing_when_the_tree_changed_after_the_plan(self):
         with tempfile.TemporaryDirectory() as d:

@@ -73,7 +73,7 @@ class TestUnmerge(unittest.TestCase):
 
 class TestHooks(unittest.TestCase):
     def test_every_hook_in_the_settings_has_its_script(self):
-        """A hook declared without its script blocks every edit ("script
+        """A hook declared without its script blocks what it checks ("script
         missing, blocking"); a script not declared is copied and never runs.
         The command goes through the shell's encoding: ASCII only."""
         entries = settings.hooks(settings.HOOKS)["hooks"]["PreToolUse"]

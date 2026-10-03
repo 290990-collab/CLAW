@@ -1,12 +1,14 @@
 """The integrity checks of an installation.
 
-Twenty finding codes: seven of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
-SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, EXCLUSIVE, MANIFEST_MISSING) and
-thirteen of severity WARN (ROSTER_ORPHAN, KERNEL_DRIFT, COORDINATOR_LEAK,
-SKILLS_MISSING, VERSION_MISMATCH, SETTINGS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET,
-REPORT_FORMAT, ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). MANIFEST_MISSING
-is the only one that comes out at both: ERROR if the file is missing, WARN if it
-is incomplete.
+Twenty-two finding codes: eight of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
+SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, EXCLUSIVE, MANIFEST_MISSING,
+HOOKS_MISSING) and fifteen of severity WARN (ROSTER_ORPHAN, ROSTER_MODEL,
+KERNEL_DRIFT, COORDINATOR_LEAK, SKILLS_MISSING, VERSION_MISMATCH,
+SETTINGS_MISSING, HOOKS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET, REPORT_FORMAT,
+ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). Two come out at both:
+MANIFEST_MISSING, ERROR if the file is missing and WARN if it is incomplete;
+HOOKS_MISSING, ERROR if a closed hook is wired and its script is gone, WARN if
+it is not wired at all.
 Every code is explained, with what to do about it, in `/claw fix`
 (`skills/claw/actions/fix.md`).
 
@@ -15,11 +17,12 @@ declared it accepts in `framework.json`. It stays printed — an invisible waive
 is a forgotten waiver — but it does not make `--strict` fail.
 """
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import assemble, kernel, profile, source
+from . import assemble, kernel, profile, settings, source
 
 # One marker only, and deliberately not `{{...}}`: that is the template syntax
 # of half the world (Vue, Angular, Jinja, Handlebars), and a project naming it
@@ -33,6 +36,8 @@ PLACEHOLDER_RE = re.compile(r"TO FILL IN")
 # text the pattern must not touch.
 CONF_PERCENT_RE = re.compile(r"CONF:\s*(?:<[^>\n]*%|\d[^%\n]*%)")
 ROUTING_AGENT_RE = re.compile(r"^\|[^|]*\|\s*`([a-z-]+)`\s*\|", re.MULTILINE)
+# A roster row with its third cell, the Model one: `model effort` of the card.
+ROSTER_ROW_RE = re.compile(r"^(\|[^|\n]*\|\s*)`([a-z-]+)`\s*\|([^|\n]*)\|", re.MULTILINE)
 FABLE_RE = re.compile(r"^model:\s*fable\s*$", re.MULTILINE)
 SHARED_REF_RE = re.compile(r"\.claude/shared/([A-Za-z0-9_./-]+\.md)")
 # Characters the model reads and whoever reviews the file does not see:
@@ -291,6 +296,23 @@ def check(root: Path) -> list[Finding]:
                 f"{name}: file present, absent from the routing table",
             )
         )
+    # The coordinator picks the model it passes from this column: a cell behind
+    # its card makes it raise a model the card lowered.
+    table = texts.get(f".claude/{ORCHESTRATION}", claude_text)
+    for m in ROSTER_ROW_RE.finditer(table):
+        name, cell = m.group(2), m.group(3).strip()
+        if name not in present:
+            continue
+        want = _model_cell(texts[f".claude/agents/{name}.md"])
+        if cell != want:
+            out.append(
+                Finding(
+                    "ROSTER_MODEL",
+                    "WARN",
+                    f"{name}: the roster says “{cell}”, the card “{want}” — "
+                    "realign with /claw update",
+                )
+            )
 
     # The versions: first against each other, then against the source. No other
     # check sees them — on an old method the hash matches, because it matches
@@ -412,6 +434,34 @@ def check(root: Path) -> list[Finding]:
             )
         )
 
+    # The closed hooks belong to every installation with agents. Not wired: the
+    # checks they make are off and nobody knows. Wired without the script: the
+    # hook blocks every command it has something to say about.
+    settings_file = root / ".claude" / "settings.json"
+    if present and settings_file.is_file():
+        wired = json.dumps(json.loads(settings_file.read_text(encoding="utf-8")).get("hooks", {}))
+        wired_names = set(settings.HOOK_PATH_RE.findall(wired))
+        for name in settings.HOOKS:
+            script = root / ".claude" / "hooks" / f"{name}.py"
+            if name in wired_names and not script.is_file():
+                out.append(
+                    Finding(
+                        "HOOKS_MISSING",
+                        "ERROR",
+                        f".claude/hooks/{name}.py absent, its entry in settings.json "
+                        "still launches it — restore it with /claw fix",
+                    )
+                )
+            elif name not in wired_names and name not in settings.OPTIONAL_HOOKS:
+                out.append(
+                    Finding(
+                        "HOOKS_MISSING",
+                        "WARN",
+                        f"{name}: closed hook not wired in settings.json — "
+                        "/claw update installs it",
+                    )
+                )
+
     if present and f".claude/{ORCHESTRATION}" not in texts:
         out.append(
             Finding(
@@ -489,6 +539,16 @@ def check(root: Path) -> list[Finding]:
             )
 
     return _apply_accepted(root, out)
+
+
+def _model_cell(card: str) -> str:
+    """A card's `model effort`, from its front matter: what its roster row says."""
+    head = card.split("\n---", 1)[0]
+    return " ".join(
+        m.group(1)
+        for key in ("model", "effort")
+        if (m := re.search(rf"^{key}:\s*(\S+)\s*$", head, re.MULTILINE))
+    )
 
 
 def _match(finding: Finding, keys: list[str]) -> str | None:

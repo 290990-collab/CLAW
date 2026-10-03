@@ -2,7 +2,7 @@
 name: explorer
 description: >
   Low-cost codebase reconnaissance: finding files, symbols, uses of an API,
-  understanding where a feature lives. Use it BEFORE any non-trivial change and
+  understanding where a feature lives. Use it proactively, BEFORE any non-trivial change and
   every time you need to answer "where is / who uses / how is X built" without
   flooding the main context. Read only, never modifies.
 model: haiku

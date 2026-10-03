@@ -1,7 +1,7 @@
 ---
 name: architect
 description: >
-  Design and planning: use for tasks that touch 3+ files, change a contract
+  Design and planning: use proactively for tasks that touch 3+ files, change a contract
   (APIs between modules, persisted formats, protocols, schemas), touch the
   project's critical surface, or when the request is ambiguous and structural
   decisions are needed. Produces plans and analyses, never production code.

@@ -3,7 +3,7 @@
 ## Who does what
 
 - **Coordinator:** plans, delegates, verifies and integrates.
-- **Direct execution:** small changes (≤2-3 files, a few dozen lines, no contract touched) are executed directly: delegating costs more.
+- **Direct execution:** small changes (≤2-3 files, a few dozen lines, no contract touched) are executed directly: delegating costs more. Above them, not delegating costs too: the scans stay in the main context for the whole session, and the triggers in `CLAUDE.md` apply.
 - **Subagents:** execute the task and report to the coordinator, and spawn no subagents. Who communicates with whom is set by the orchestration model, in the section of this guide that names it.
 
 ## External skills

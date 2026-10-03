@@ -2,7 +2,7 @@
 name: debugger
 description: >
   Diagnosis of defects with an unknown cause: wrong behaviour, crashes, a test
-  failing for no evident reason, intermittent faults. Use when the cause is NOT
+  failing for no evident reason, intermittent faults. Use proactively when the cause is NOT
   already identified — if it is, the fix is the implementer's work. Finds and
   explains the mechanism; fixes only when the fix is a few obvious lines.
 model: opus

@@ -31,6 +31,12 @@ The agent's file exists but is not in the table: it costs context in every sessi
 
 **What to do:** add it to the table or deactivate it (`/claw remove <name>`). No exceptions: either the agent is superfluous, or the table is incomplete.
 
+### `ROSTER_MODEL` — WARNING
+
+A row's Model cell differs from its card's `model effort`. The coordinator picks the model it passes at the spawn from this column: an old `opus` next to a card lowered to sonnet makes it raise the model, which rule 2 forbids.
+
+**What to do:** `/claw update` rewrites every cell from its card. A model changed on purpose goes into the card, not into the table.
+
 ### `SHARED_MISSING` — ERROR
 
 An installed file — `CLAUDE.md`, an agent, a guide — points at a guide that was not installed. A broken pointer is worse than an absent one: the agent tries and finds nothing. The finding says **which file** it starts from.
@@ -87,6 +93,12 @@ The kernel regions do not all declare the same version, or the project is on a d
 ⚠️ **That prohibition covers the `Read` tool, not the shell.** An agent with `Bash` reads a `.env` with `cat` and no configuration prevents it. Where the secret matters, the only mechanical guard is not giving that agent the shell: it is why the reviewers that execute nothing have `Read, Grep, Glob` only.
 
 **What to do:** regenerate it by serialising the `Profile.settings` of the project's profile — its name is in `profile` inside `.claude/framework.json` — as in Step 5 of the installation.
+
+### `HOOKS_MISSING` — ERROR if a wired script is gone, WARNING if not wired
+
+`config_protection` and `block_no_verify` belong to every installation with agents. **Not wired** in `settings.json`: the checks they make are off and nothing else says so — the typical case is an installation born before the hooks. **Wired without its script:** the closed hook blocks every command it has something to say about (`git` for `block_no_verify`, a linter configuration for `config_protection`). `gateguard` is optional and never flagged as missing.
+
+**What to do:** not wired → `/claw update`, which installs them and replaces entries written by an older release. Script gone → the repair below puts it back.
 
 ### `SKILLS_MISSING` — WARNING
 
