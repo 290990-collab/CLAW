@@ -21,6 +21,7 @@ The criterion opens and closes on purpose: if an agent misses the target, almost
 - **Essential constraints:** few and hard. Ten constraints amount to no constraint.
 - **Zero echo:** do not repeat what is already in `CLAUDE.md`. Pass only the task's delta.
 - **Objective criterion:** verifiable by whoever receives it ("the tests in `tests/x.py` pass and the build is clean"), not "do a good job".
+- **Light model, narrow question:** whatever goes to a light model is answered by a list or a table it fills by searching. "Whether", "is it safe", "why" stay with you or go to a mid-tier agent: a verdict from an executor that cannot give it is paid twice, once by it and once by your check.
 - **Near misses named:** what a pressed agent returns in place of the result — narrower scope, a plan instead of the change, a check that never ran, a fix that holds only on the example. Each one named is an exit closed; none fits → the line is left out.
 - **Reviewer prompts:** MATERIAL lists how *this* change can look right and be wrong — the boundary it crosses, the consumer it may break. A generic "check it" finds less.
 - **Second round (rule 8):** for corrections or iterations continue the existing session sending ONLY the findings. Never rebuild the prompt from scratch.
