@@ -9,9 +9,12 @@ Append-only record of what has been **decided, measured or refuted**. It is not 
 
 **Question:** what we wanted to know or decide
 **Outcome:** CONFIRMED | REFUTED | DECIDED | DEFERRED
+**Rests on:** the premises that make it true — entries #N or facts; if one falls, this falls too. "-" if unconditional
 **Evidence:** file, output, real measurement. Never a number from memory
 **Consequence:** what changes from here on
 ```
+
+An entry whose premise falls is not deleted: it gets one line below it, `**Superseded:** by #N — <premise that fell>`, the only edit a closed entry admits.
 
 ## Removed on purpose
 
