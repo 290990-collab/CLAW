@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: CLAW-eng/tools
+        working-directory: CLAW/tools
 
     env:
       # The CLI forces UTF-8 on its own streams; trial_install.py does not.

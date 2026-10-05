@@ -35,20 +35,20 @@ class TestUpdate(unittest.TestCase):
         # Resolved as `cli.FW` is: git refuses Windows short names (ENRICO~1).
         d = Path(d).resolve()
         up = d / "up"
-        shutil.copytree(FRAMEWORK, up / "CLAW-eng",
+        shutil.copytree(FRAMEWORK, up / "CLAW",
                         ignore=shutil.ignore_patterns("__pycache__", "_build"))
         sh(up, "init", "-q")
         sh(up, "add", ".")
         sh(up, "commit", "-q", "-m", "release")
         sh(d, "clone", "-q", str(up), str(d / "mine"))
-        preamble = up / "CLAW-eng" / "method" / "00-preamble.md"
+        preamble = up / "CLAW" / "method" / "00-preamble.md"
         preamble.write_text(preamble.read_text(encoding="utf-8") + f"\n{LINE}\n", encoding="utf-8")
-        (up / "CLAW-eng" / "VERSION").write_text("9.9.9\n", encoding="utf-8")
+        (up / "CLAW" / "VERSION").write_text("9.9.9\n", encoding="utf-8")
         sh(up, "commit", "-q", "-am", "9.9.9")
         prj = d / "prj"
         with redirect_stdout(io.StringIO()):
             trial_install.install(prj)
-        return d / "mine" / "CLAW-eng", prj
+        return d / "mine" / "CLAW", prj
 
     def _run(self, fw: Path, home: Path, argv: list[str]) -> tuple[int, str]:
         buf = io.StringIO()

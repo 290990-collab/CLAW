@@ -52,13 +52,13 @@ Once per machine:
 ```bash
 # macOS · Linux
 git clone https://github.com/290990-collab/CLAW.git ~/.claude/CLAW
-python ~/.claude/CLAW/CLAW-eng/claw.py setup
+python ~/.claude/CLAW/CLAW/claw.py setup
 ```
 
 ```powershell
 # Windows · PowerShell
 git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
-python $HOME\.claude\CLAW\CLAW-eng\claw.py setup
+python $HOME\.claude\CLAW\CLAW\claw.py setup
 ```
 
 `setup` shows what it writes and asks for your ok. It adds the `/claw` skill to
@@ -198,7 +198,7 @@ the work cycle; `/claw change` switches it later.
 
 | Feature | How it works | Example |
 |---|---|---|
-| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW-eng/output-styles/reporting.md) | `minimal change here`, `proof level?` |
+| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW/output-styles/reporting.md) | `minimal change here`, `proof level?` |
 | **Reference codes** | A reply with three or more findings, decisions or options numbers them | `keep D1, drop O2` |
 | **Aliases** | Sent as the whole message, they rework the last reply | see below |
 

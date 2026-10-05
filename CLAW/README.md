@@ -51,7 +51,7 @@ Python 3.11+ and git; nothing else to install.
 
 ```bash
 git clone <repo> ~/.claude/CLAW
-python ~/.claude/CLAW/CLAW-eng/claw.py setup    # the /claw skill into ~/.claude/skills/, `claw` into ~/.local/bin/
+python ~/.claude/CLAW/CLAW/claw.py setup    # the /claw skill into ~/.claude/skills/, `claw` into ~/.local/bin/
 ```
 
 The clone is the master. From then on every new project is `/claw install`.

@@ -82,9 +82,9 @@ class TestRecord(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             (root / "VERSION").write_text("1.4.0\n", encoding="utf-8")
-            upgrade.write_record(root, "1.3.1", "CLAW-eng", "https://x/y.git")
+            upgrade.write_record(root, "1.3.1", "CLAW", "https://x/y.git")
             self.assertEqual(upgrade.base_version(root), "1.3.1")
-            self.assertEqual(upgrade.read_record(root)["edition"], "CLAW-eng")
+            self.assertEqual(upgrade.read_record(root)["edition"], "CLAW")
 
     def test_an_unreadable_record_is_a_missing_one(self):
         with tempfile.TemporaryDirectory() as d:
