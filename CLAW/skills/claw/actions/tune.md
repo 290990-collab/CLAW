@@ -43,7 +43,7 @@ For each installed agent, one row:
 
 | agent | source | current |
 |---|---|---|
-| `frontend` | opus / medium | opus / medium |
+| `frontend` | sonnet / medium | sonnet / medium |
 
 - **source**: `model:` and `effort:` of `<FW>/agents/<agent>.md`.
 - **current**: the same lines in the project's card.
@@ -75,7 +75,7 @@ A starting point for question 1, not a table to apply: the described idea always
 
 | profile | usually at the centre | usually at the margins |
 |---|---|---|
-| `web` | `frontend`, `final-reviewer` | `security-reviewer` if the site is static, `silent-failure-hunter` without I/O |
+| `web` | `visual-director`, `frontend`, `final-reviewer` | `security-reviewer` if the site is static, `silent-failure-hunter` without I/O |
 | `software` | `architect`, `debugger`, `security-reviewer` | `copywriter`, `visual-designer` |
 | `library` | `architect` (the public contract is the product), `tester` | `deploy`, `frontend` |
 | `data` | `data-ingestion`, `data-quality-reviewer` | `frontend`, `copywriter` |
@@ -92,7 +92,7 @@ Static portfolio, design-award ambition, no backend, published on static hosting
 | `security-reviewer` | opus / high | sonnet / high | no backend and no forms: the surface is headers and dependencies |
 | `copywriter` | sonnet / medium | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
 | `architect` | opus / high | opus / medium | the structural decisions of a static site are few and shallow |
-| `frontend` | opus / medium | opus / medium | — (at the centre: stays) |
+| `visual-director` | opus / medium | opus / medium | — (at the centre: stays) |
 
 ## Step 4 — Plan, then ok
 

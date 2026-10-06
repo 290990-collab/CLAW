@@ -6,7 +6,7 @@ description: >
   Use on a diff or on given files, before the final check. It classifies, it
   does not fix.
 model: sonnet
-effort: medium
+effort: low
 tools: Read, Grep, Glob
 color: green
 ---

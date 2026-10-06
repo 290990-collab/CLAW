@@ -2,7 +2,7 @@ name = "web"
 description = "Websites and web applications where visual rendering is part of the product."
 critical_surface = "What the user sees and what an outsider reaches: visual rendering and the surface exposed on the network."
 
-agents = ["frontend", "deploy", "security-reviewer", "api-scout", "debugger", "silent-failure-hunter", "conversation-analyzer"]
+agents = ["visual-director", "frontend", "deploy", "security-reviewer", "api-scout", "debugger", "silent-failure-hunter", "conversation-analyzer"]
 cycles = ["design"]
 recommended_orchestrations = ["agent-teams"]
 

@@ -127,7 +127,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 
 ## Agents
 
-29 agents. A project installs only the ones its profile and your answers need.
+30 agents. A project installs only the ones its profile and your answers need.
 
 **Always installed**
 
@@ -149,6 +149,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 | `silent-failure-hunter` | Finds swallowed errors and faults hidden behind defaults |
 | `comment-analyzer` | Finds comments that no longer tell the truth |
 | `conversation-analyzer` | Finds corrections that keep repeating in past sessions |
+| `visual-director` | Decides how the interface looks, then checks the rendering against it |
 | `frontend` | Views, components, style, motion, accessibility |
 | `deploy` | Simple hosting: build, domain, secrets. Never with `infra` |
 | `infra` | Infrastructure as code, environments, migrations. Never with `deploy` |
@@ -226,7 +227,7 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 ```json
 {
   "source": "...",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"

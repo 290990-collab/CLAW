@@ -25,6 +25,7 @@
 | Cause of the defect | Unknown → **`debugger`**, which delivers the diagnosis \| Known → **`implementer`** |
 | Nature of the change | Adds or changes behaviour → **`implementer`** \| Observable behaviour unchanged → **`refactorer`** |
 | Frontend or logic | Views, markup, style, motion → **`frontend`** \| Logic and services → **`implementer`** (if it weighs on both, `architect` splits the task) |
+| Look of the interface | How it should look, or whether the rendering keeps it → **`visual-director`** \| Applying a direction that exists → **`frontend`** |
 | Publishing | Simple hosting, a push updates it → **`deploy`** \| Resources as code, multiple environments → **`infra`**. They do not coexist |
 | Type of review | "Is the code correct?" → **`final-reviewer`** \| "Is it safe / valid / is the data right?" → the reviewer of the critical surface, FIRST |
 | Targeted review | Swallowed errors, invented defaults, branches that hide the cause → **`silent-failure-hunter`** \| Comments that no longer tell the truth → **`comment-analyzer`** |

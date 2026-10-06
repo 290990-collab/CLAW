@@ -19,7 +19,7 @@ class TestRealFramework(unittest.TestCase):
         self.assertTrue((FRAMEWORK / "VERSION").is_file())
 
     def test_all_twenty_nine_agents_present(self):
-        self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 29)
+        self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 30)
 
     def test_no_agent_declares_fable(self):
         for p in (FRAMEWORK / "agents").glob("*.md"):

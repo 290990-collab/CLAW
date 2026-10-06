@@ -240,8 +240,8 @@ ROUTING = """## This project's roster
 | Signatures of external libraries | `api-scout` | sonnet medium |
 | Surface reachable by an attacker | `security-reviewer` | opus high |
 | Swallowed errors, fallbacks that hide | `silent-failure-hunter` | sonnet medium |
-| Comments that no longer tell the truth | `comment-analyzer` | sonnet medium |
-| Recurring mistakes in the transcripts | `conversation-analyzer` | sonnet medium |
+| Comments that no longer tell the truth | `comment-analyzer` | sonnet low |
+| Recurring mistakes in the transcripts | `conversation-analyzer` | sonnet low |
 | Final check | `final-reviewer` | opus medium |
 
 ## Delegation notes for this project

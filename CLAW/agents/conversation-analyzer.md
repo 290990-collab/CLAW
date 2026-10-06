@@ -6,7 +6,7 @@ description: >
   evidence, classified as rule, memory or hook. Use in the maintenance of memory
   and method. It does not decide and does not write.
 model: sonnet
-effort: medium
+effort: low
 tools: Read, Grep, Glob
 color: purple
 ---

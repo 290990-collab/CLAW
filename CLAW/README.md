@@ -9,7 +9,7 @@ method/              COMMON kernel → CLAUDE.md, read by everyone at every spaw
 coordinator/         COORDINATOR kernel → shared/orchestration.md, on demand
 orchestrations/      orchestration models: one is appended to the guide, orchestrator-worker by default
 cycles/              domain cycles, appended to the guide if the profile asks
-agents/              29 agents: method + project [TO FILL IN] block
+agents/              30 agents: method + project [TO FILL IN] block
 shared/core/         generic guides, loaded on demand
 shared/domain/       domain guides (design, research, data, llm, marketing)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions

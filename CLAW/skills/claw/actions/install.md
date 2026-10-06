@@ -138,7 +138,7 @@ In the same question, **`gateguard` yes or no**: it denies the first touch of ev
 
 **Ask only about agents the roster does not have.** Compute it first (Step 4) and skip the questions already settled: a question that cannot change anything teaches the user that the questionnaire is a formality.
 
-Is there an interface? → `frontend` · Does external data come in? →
+Is there an interface? → `frontend`, and `visual-director` if its look matters · Does external data come in? →
 `data-ingestion` · Are there measurements to interpret? → `results-analyst` ·
 Is literature or academic writing needed? → `literature` · Does the project get
 published, and with simple hosting or infrastructure defined as code? →
