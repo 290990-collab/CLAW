@@ -55,10 +55,11 @@ python ~/.claude/CLAW/CLAW/claw.py setup    # the /claw skill into ~/.claude/ski
 ```
 
 The clone is the master. From then on every new project is `/claw install`.
-The reply language is Claude Code's `language` setting: the installation asks
-for it once if neither `~/.claude/settings.json` nor `~/.claude/CLAUDE.md`
-fixes one. Without it, the method's kernel answers in the language of the
-user's messages.
+The installation asks two languages per project: the chat's, written as
+Claude Code's `language` setting in the project's `.claude/settings.local.json`,
+and the codebase's (comments and identifiers), written in `conventions.md`.
+Without `language`, the method's kernel answers in the language of the user's
+messages.
 
 ## Commands
 
