@@ -5,8 +5,8 @@ description: >
   corrections, reverted changes, repeated mistakes. Returns candidates with
   evidence, classified as rule, memory or hook. Use in the maintenance of memory
   and method. It does not decide and does not write.
-model: sonnet
-effort: low
+model: haiku
+effort: high
 tools: Read, Grep, Glob
 color: purple
 ---

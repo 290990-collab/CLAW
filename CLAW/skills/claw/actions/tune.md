@@ -57,7 +57,7 @@ Each agent starts from the source value and moves only if **the scope gives a co
 ### Four questions per agent
 
 1. **How close is it to the critical surface?** An agent that produces or judges what the project declared critical is kept high, or raised. One that works on a part that in the project does not exist, or barely does, is lowered.
-2. **What kind of work does it do?** «Find and list» holds on `haiku`. «Classify, judge, compare» does not: it asks at least `sonnet`. «Decide a structure», «find an unknown cause», «be the last check before saying done»: `opus`.
+2. **What kind of work does it do?** «Find and list» holds on `haiku` at `medium`, never `low`: there it skips searches and checks on a long agent prompt. «Classify or extract into the card's fixed categories, with the evidence» holds on `haiku` at `high`. «Judge, compare» with no fixed categories asks at least `sonnet`. «Decide a structure», «find an unknown cause», «be the last check before saying done»: `opus`.
 3. **How much does its mistake cost, and who catches it?** A mistake that a reviewer downstream stops costs one more round; one that reaches the user or the network costs more. Lower where there is a safety net, not where you are the last one.
 4. **How often does it work?** An agent used constantly on routine tasks weighs on cost, and lowering it pays. One called rarely for critical cases costs little even on `opus`: lowering it saves little and risks a lot.
 
@@ -66,8 +66,8 @@ Each agent starts from the source value and moves only if **the scope gives a co
 ### Invariants
 
 - **A reviewer is not weaker than what it reviews.** If `frontend` is `opus`, `final-reviewer` does not drop to `sonnet`. If `implementer` goes up to `opus`, the same holds for the reviewer of its work.
-- **`explorer` stays `haiku`.** Its work is the use case of the light model; raising it multiplies the cost of reconnaissance.
-- **Never below the declared work.** If an agent's card gives it decisions or judgements, `haiku` is not enough, whatever the profile.
+- **`explorer` stays `haiku` / `medium`.** Its work is the use case of the light model; raising it multiplies the cost of reconnaissance.
+- **Never below the declared work.** If an agent's card gives it decisions or open judgements, `haiku` is not enough, whatever the profile.
 
 ### Where to look by profile
 

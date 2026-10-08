@@ -231,7 +231,7 @@ ROUTING = """## This project's roster
 
 | Situation | Agent | Model |
 |---|---|---|
-| Where is / who uses X | `explorer` | haiku |
+| Where is / who uses X | `explorer` | haiku medium |
 | Design, multi-file plans, contracts | `architect` | opus high |
 | Writing production code | `implementer` | sonnet medium |
 | Extending the tests | `tester` | sonnet medium |
@@ -240,8 +240,8 @@ ROUTING = """## This project's roster
 | Signatures of external libraries | `api-scout` | sonnet medium |
 | Surface reachable by an attacker | `security-reviewer` | opus high |
 | Swallowed errors, fallbacks that hide | `silent-failure-hunter` | sonnet medium |
-| Comments that no longer tell the truth | `comment-analyzer` | sonnet low |
-| Recurring mistakes in the transcripts | `conversation-analyzer` | sonnet low |
+| Comments that no longer tell the truth | `comment-analyzer` | haiku high |
+| Recurring mistakes in the transcripts | `conversation-analyzer` | haiku high |
 | Final check | `final-reviewer` | opus medium |
 
 ## Delegation notes for this project

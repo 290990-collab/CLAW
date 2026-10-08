@@ -5,8 +5,8 @@ description: >
   symbols that no longer exist, change chronicles, paraphrases, declared debt.
   Use on a diff or on given files, before the final check. It classifies, it
   does not fix.
-model: sonnet
-effort: low
+model: haiku
+effort: high
 tools: Read, Grep, Glob
 color: green
 ---
