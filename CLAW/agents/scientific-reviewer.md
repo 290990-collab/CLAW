@@ -5,7 +5,7 @@ description: >
   comparisons, saturated metrics or metrics misaligned with the goal, selection
   on the test set, significance, claims unsupported by the numbers. Use when a
   task changes what or how something is measured, before consolidating a result
-  and before writing about it. Never modifies the code.
+  and before writing about it.
 model: opus
 effort: high
 tools: Read, Grep, Glob

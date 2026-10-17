@@ -2,14 +2,16 @@
 
 **Understand → Design → Implement → Verify → Review → Integrate**
 
+Each step names its usual agent; whether to spawn it, § When delegating pays decides.
+
 1. **Understand:** `explorer` (repo) and/or `api-scout` (external libraries and docs).
-2. **Design:** `architect` ONLY IF the task touches ≥3 files or a contract, or if structural choices remain open (those on the *what* are settled first with the user). *Otherwise it is skipped:* a three-line plan is written by the coordinator.
+2. **Design:** `architect` when the task touches ≥3 files, a contract or the critical surface, or structural choices remain open (those on the *what* are settled first with the user). *Otherwise it is skipped:* a three-line plan is written by the coordinator.
    - *Approval:* big plan or open structural choices → recap it to the user and ask yes/no before implementing. From there the plan is not reopened on your own: changing one's mind is the user's call.
 3. **Implement:** `implementer`, one task at a time.
    - *Test-first mandatory:* new features, well-defined bug fixes, business or API logic.
    - *Test-first excluded:* refactoring, UI, prototypes, dependencies, documentation.
-4. **Verify:** `tester` only when the task touches domain logic or a contract: it extends coverage beyond the implementer's mini-tests (few solid tests on the domain's boundaries).
-5. **Review:** `final-reviewer`, which verifies from scratch without trusting the reports, only if the diff touches the **critical surface** (after that surface's reviewer) or the task is *important* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no).
+4. **Verify:** `tester` only when the task touches domain logic or a contract.
+5. **Review:** `final-reviewer` only if the diff touches the **critical surface** (after that surface's reviewer) or the task is *important* — long, complex, blocking a high-level goal, or declared so by the user (fixing or changing an existing feature yes, touching up an interface no).
    - **Double review** only at the user's request: two isolated `final-reviewer`s, same rubric, one after the other; it passes only if both pass. Fixes as per rule 9.
 6. **Integrate:** the coordinator resolves the findings and integrates. Commit ONLY at the user's request, or under a standing approval of theirs in `CLAUDE.md`.
 
@@ -19,7 +21,7 @@
 
 | Doubt | Decision |
 |---|---|
-| You need >2 files or do not know where to look | **`explorer`** \| Path already known → the coordinator reads it: spawning costs more |
+| You need >2 files or do not know where to look | **`explorer`** \| Path known or context already held → the coordinator reads it: spawning costs more |
 | Information inside or outside the repo | Repo → **`explorer`** \| Libraries, services, docs → **`api-scout`** |
 | Impact on structure or contracts | Real impact → **`architect`** \| Trivial change → the coordinator decides |
 | Cause of the defect | Unknown → **`debugger`**, which delivers the diagnosis \| Known → **`implementer`** |

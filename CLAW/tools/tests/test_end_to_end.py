@@ -19,7 +19,7 @@ class TestRealFramework(unittest.TestCase):
         self.assertTrue((FRAMEWORK / "VERSION").is_file())
 
     def test_all_twenty_nine_agents_present(self):
-        self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 30)
+        self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 31)
 
     def test_no_agent_declares_fable(self):
         for p in (FRAMEWORK / "agents").glob("*.md"):
@@ -57,6 +57,12 @@ class TestRealFramework(unittest.TestCase):
         ):
             text = (FRAMEWORK / "agents" / f"{name}.md").read_text(encoding="utf-8")
             self.assertIn("tools: Read, Grep, Glob\n", text, name)
+
+    def test_runner_cannot_edit(self):
+        """`runner` runs commands and never changes anything: Bash without
+        Write or Edit is the card's configuration of that promise."""
+        text = (FRAMEWORK / "agents" / "runner.md").read_text(encoding="utf-8")
+        self.assertIn("tools: Read, Grep, Glob, Bash\n", text)
 
     def test_every_profile_denies_the_same_secrets(self):
         """A permission that depends on the field is a permission somebody
@@ -315,6 +321,19 @@ class TestRealFramework(unittest.TestCase):
         for name in reviewers:
             self.assertTrue((FRAMEWORK / "agents" / f"{name}.md").is_file(), name)
 
+    def test_coordinator_routes_only_to_agents_that_exist(self):
+        """The coordinator's guide names agents in backticks: a rename in
+        `agents/` leaves the sentence that cites the old name standing, and the
+        coordinator delegates to a file that is not there."""
+        text = "".join(
+            assemble.read_method(FRAMEWORK / d)
+            for d in ("coordinator", "orchestrations", "cycles")
+        )
+        named = set(re.findall(r"`([a-z][a-z-]*)`", text))
+        self.assertGreaterEqual(len(named), 10, "agent names not read")
+        for name in sorted(named):
+            self.assertTrue((FRAMEWORK / "agents" / f"{name}.md").is_file(), name)
+
     def test_the_install_skill_protects_material_that_was_already_there(self):
         """Installation is the only step that can delete someone else's work:
         it writes `CLAUDE.md` and copies the three templates into `docs/`. On a
@@ -389,7 +408,7 @@ class TestRealFramework(unittest.TestCase):
         )
         block = text
         self.assertIn("aligned", block)
-        self.assertIn("`.claude/framework.json`", block)
+        self.assertIn("`.claude/claw.json`", block)
         self.assertIn("one thing at a time", block)
         self.assertIn("does not see new files", block)
 
@@ -618,7 +637,14 @@ class TestInstalledBudget(unittest.TestCase):
         """The threshold is the kernel, the only known quantity: the project
         does not write more than the method."""
         with tempfile.TemporaryDirectory() as d:
-            root = self._installed(d, 1400)
+            root = self._installed(d, 0)
+            claude = root / "CLAUDE.md"
+            m = doctor.measure(claude.read_text(encoding="utf-8"))
+            extra = m.kernel_words - m.project_words + 100
+            claude.write_text(
+                claude.read_text(encoding="utf-8") + "\n## Extra\n\n" + ("word " * extra) + "\n",
+                encoding="utf-8",
+            )
             found = [f for f in doctor.check(root) if f.code == "TOKEN_BUDGET"]
             self.assertEqual(len(found), 1)
             self.assertEqual(found[0].severity, "WARN")
@@ -653,7 +679,7 @@ class TestInstalledBudget(unittest.TestCase):
 
 
 class TestSourceReference(unittest.TestCase):
-    """How `.claude/framework.json` cites the source."""
+    """How `.claude/claw.json` cites the source."""
 
     def test_source_inside_the_project_is_recorded_relative(self):
         """The first of the three supported ways is the source inside the
@@ -684,7 +710,7 @@ class TestSourceReference(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 trial_install.install(root)
             recorded = json.loads(
-                (root / ".claude" / "framework.json").read_text(encoding="utf-8")
+                (root / ".claude" / "claw.json").read_text(encoding="utf-8")
             )["source"]
             self.assertEqual(
                 source.dereference(root, recorded).resolve(), FRAMEWORK.resolve()
@@ -770,13 +796,13 @@ class TestCli(unittest.TestCase):
             )
 
     def test_install_writes_a_complete_manifest(self):
-        """`framework.json` is the only place saying where the project was born
+        """`claw.json` is the only place saying where the project was born
         and what it is made of: the proof looks at the written file, not at the
         prose prescribing it."""
         with tempfile.TemporaryDirectory() as d:
             root = self._install(d)
             data = json.loads(
-                (root / ".claude" / "framework.json").read_text(encoding="utf-8")
+                (root / ".claude" / "claw.json").read_text(encoding="utf-8")
             )
             self.assertEqual(data["profile"], "software")
             self.assertEqual(
@@ -797,12 +823,24 @@ class TestCli(unittest.TestCase):
             self.assertEqual(code, 0, out)
             self.assertIn("CLAUDE.md", out)
             self.assertEqual({f.code for f in doctor.check(root)}, {"PLACEHOLDER"})
+            wired = lifecycle._referenced_hooks(json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8")))
+            self.assertEqual(wired, set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS))
+
+    def test_install_wires_gateguard_only_on_request(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "prj"
+            root.mkdir()
+            self._run(["install", str(root), "--profile", "software", "--gateguard"])
+            code, out = self._run(["install", str(root), "--apply"])
+            self.assertEqual(code, 0, out)
+            wired = lifecycle._referenced_hooks(json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8")))
+            self.assertIn("gateguard", wired)
 
     def test_down_plans_then_applies_once(self):
         """The plan runs once: a second `--apply` has nothing approved to run."""
         with tempfile.TemporaryDirectory() as d:
             root = self._install(d)
-            manifest = root / ".claude" / "framework.json"
+            manifest = root / ".claude" / "claw.json"
             data = json.loads(manifest.read_text(encoding="utf-8"))
             data["version"] = "1.0.0"
             manifest.write_text(json.dumps(data), encoding="utf-8")
@@ -843,7 +881,7 @@ class TestRealInstall(unittest.TestCase):
                 trial_install.install(root, orchestration="agent-teams")
             data = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
             record = json.loads(
-                (root / ".claude" / "framework.json").read_text(encoding="utf-8")
+                (root / ".claude" / "claw.json").read_text(encoding="utf-8")
             )["settings_added"]
             for key, value in env.items():
                 self.assertEqual(data["env"][key], value, key)

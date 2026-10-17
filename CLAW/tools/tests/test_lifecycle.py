@@ -90,7 +90,7 @@ class TestInstallPlan(unittest.TestCase):
             self.assertIn(".claude/agents/explorer.md", text)
             self.assertNotIn("docs/TODO.md", text)
 
-            (prj / ".claude" / "framework.json").write_text("{}", encoding="utf-8")
+            (prj / ".claude" / "claw.json").write_text("{}", encoding="utf-8")
             with self.assertRaises(ValueError):
                 lifecycle.plan_install(prj, targets)
 
@@ -132,7 +132,7 @@ class TestUninstall(unittest.TestCase):
             )
             self.assertFalse((root / ".claude" / "agents").exists())
             archive = root / doctor.ARCHIVE_DIR
-            self.assertTrue((archive / ".claude" / "framework.json").is_file())
+            self.assertTrue((archive / ".claude" / "claw.json").is_file())
             self.assertTrue((archive / ".claude" / "agents" / "explorer.md").is_file())
 
     def test_uninstall_never_deletes_what_it_did_not_write(self):
@@ -419,7 +419,7 @@ class TestDown(unittest.TestCase):
             self.assertEqual(got[".claude/agents/obsolete.md"].action, lifecycle.KEEP)
             self.assertEqual(got[skill].action, lifecycle.OVERWRITE)
             self.assertEqual(got[hook].action, lifecycle.CREATE)
-            self.assertEqual(got[".claude/framework.json"].action, lifecycle.MERGE)
+            self.assertEqual(got[".claude/claw.json"].action, lifecycle.MERGE)
 
             lifecycle.apply_update(root, FRAMEWORK, ops)
 

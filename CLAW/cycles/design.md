@@ -4,9 +4,7 @@ It slots into the code cycle between *Understand* and *Design*. Here visual rend
 
 **Understand → Direction → Design → Implement → Verify (functional *and* visual) → Review → Integrate.**
 
-The added step is the second:
-
-**Direction** (`visual-director`, before any markup): grid, type scale, palette, rhythm of space, tone of motion. Decided **before** the first component and expressed in tokens, not in adjectives; `frontend` applies it. An open brief → the directions go to the user, who picks one.
+**Direction** (`visual-director`): grid, type scale, palette, rhythm of space, tone of motion, expressed in tokens, not in adjectives; `frontend` applies it. An open brief → the directions go to the user, who picks one.
 
 Rules of the cycle:
 

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import doctor, kernel
 
-MARKER = Path(".claude") / "framework.json"
+MARKER = Path(".claude") / "claw.json"
 # The directories that contain no projects and are expensive to walk.
 SKIP = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build"}
 
@@ -39,7 +39,7 @@ class Project:
     def version(self) -> str:
         """The version to show: the files', not the declared one.
 
-        `framework.json` says where the project was born from; the kernel
+        `claw.json` says where the project was born from; the kernel
         region says what it contains now. When they diverge the second counts —
         the first gets updated by forgetting about it.
         """

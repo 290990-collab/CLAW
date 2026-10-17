@@ -4,8 +4,7 @@ description: >
   Read-only review of the correctness of data entering the system: schema,
   normalisation, duplicates, idempotence, stable keys, implicit units and
   currencies, silently discarded data. Use when a task touches ingestion,
-  transformation or migration of data, before consolidating. Does not modify
-  the code.
+  transformation or migration of data, before consolidating.
 model: opus
 effort: medium
 tools: Read, Grep, Glob

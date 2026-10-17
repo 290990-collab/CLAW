@@ -1,10 +1,8 @@
 import io
-import os
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
 
 from fwbuild import cli, source, upgrade
 from tests.test_doctor import make_project
@@ -93,11 +91,9 @@ class TestSourceCommand(unittest.TestCase):
         """Where the "no fallback" rule is really decided."""
         self.assertEqual(cli._bases(Path("/x")), [Path("/x")])
 
-    def test_env_var_comes_before_home(self):
-        """The "single master" way: without it, only the source in the project
-        remains."""
-        with patch.dict(os.environ, {"CLAUDE_FRAMEWORK": "/master"}):
-            self.assertEqual(cli._bases(None)[1], Path("/master"))
+    def test_no_path_is_the_running_source(self):
+        """Not the cwd: a project's folder must not stand in for the source."""
+        self.assertEqual(cli._bases(None), [cli.FW])
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from collections.abc import Sequence
 HOOKS = ("config_protection", "block_no_verify", "gateguard")
 
 # The one installed only if the project asks for it: it denies the first touch
-# of every file, and costs one extra turn per session.
+# of every file: a denied first touch plus a retry, per file, per session.
 OPTIONAL_HOOKS = ("gateguard",)
 
 # Where a settings entry names a framework hook's script, whatever the separator.

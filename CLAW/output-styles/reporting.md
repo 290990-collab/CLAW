@@ -53,29 +53,29 @@ indicated: open it if it is not in context, apply it to the work in progress and
 say which decision it changed. A name that is not here, or whose card is not
 installed, is not guessed: say so.
 
-| Name | What it demands | Where |
+| Name | What it demands | Where (`CLAUDE.md` unless named) |
 |---|---|---|
-| `strict scope` | only the assigned task, the rest goes into the report | `CLAUDE.md` · “Strict scope” |
-| `outside the mandate` | a choice that is not yours is reported with the options, not made | `CLAUDE.md` · “Decisions outside the mandate” |
-| `open request` | several possible readings: ask before picking one | `CLAUDE.md` · “Open request” |
-| `don't ask, run it` | an observable fact is observed, not asked | `CLAUDE.md` · “An observable fact is not asked” |
-| `stop criterion` | without a verifiable criterion you stop | `CLAUDE.md` · “Stop criterion” |
-| `zero redundancy` | green and nothing changed: do not re-run | `CLAUDE.md` · “Zero redundancy” |
-| `verified sources` | nothing cited without reading or running it in session | `CLAUDE.md` · “Verified sources” |
-| `proof level` | scale 1-5 and where it stopped; inconclusive is not green | `CLAUDE.md` · “How far it is proven” |
-| `hypotheses vs facts` | what is deduced kept apart from what is verified | `CLAUDE.md` · “Hypotheses vs facts” |
-| `blame the instrument` | empty or too easy: doubt the observation first | `CLAUDE.md` · “Empty searches” |
-| `rigorous debugging` | the cause explains every symptom, a refuted hypothesis is undone | `CLAUDE.md` · “Rigorous debugging” |
-| `honesty` | “I don't know” and “it's wrong”, never agreement against the evidence | `CLAUDE.md` · “Professional honesty” |
-| `which decision` | whoever cites a rule says what it changed | `CLAUDE.md` · “Citing a rule means naming the decision it changed” |
-| `minimal change` | the smallest change, one problem at a time | `CLAUDE.md` · “Minimal Safe Change” |
-| `existing pattern` | reuse what the repo already has | `CLAUDE.md` · “Existing Pattern First” |
-| `contract first` | find every consumer, of written rules too | `CLAUDE.md` · “Contract First” |
-| `kiss` | the simplest solution for today's requirement | `CLAUDE.md` · “KISS and local style” |
-| `real green` | never weaken a check; if the check is wrong, fix the check | `CLAUDE.md` · “No shortcut to green” |
-| `fail loudly` | no swallowed errors, no invented defaults | `CLAUDE.md` · “Fail loudly” |
-| `useful test` | which defect would make it fail? | `CLAUDE.md` · “Quality > quantity” |
-| `do it yourself` | small change: execute it directly, delegating costs more | `orchestration.md` · “Direct execution” |
+| `strict scope` | only the assigned task, the rest goes into the report | “Strict scope” |
+| `outside the mandate` | a choice that is not yours is reported with the options, not made | “Decisions outside the mandate” |
+| `open request` | several possible readings: ask before picking one | “Open request” |
+| `don't ask, run it` | an observable fact is observed, not asked | “An observable fact is not asked” |
+| `stop criterion` | without a verifiable criterion you stop | “Stop criterion” |
+| `zero redundancy` | green and nothing changed: do not re-run | “Zero redundancy” |
+| `verified sources` | nothing cited without reading or running it in session | “Verified sources” |
+| `proof level` | scale 1-5 and where it stopped; inconclusive is not green | “How far it is proven” |
+| `hypotheses vs facts` | what is deduced kept apart from what is verified | “Hypotheses vs facts” |
+| `blame the instrument` | empty or too easy: doubt the observation first | “Empty searches” |
+| `rigorous debugging` | the cause explains every symptom, a refuted hypothesis is undone | “Rigorous debugging” |
+| `honesty` | “I don't know” and “it's wrong”, never agreement against the evidence | “Professional honesty” |
+| `which decision` | whoever cites a rule says what it changed | “Citing a rule means naming the decision it changed” |
+| `minimal change` | the smallest change, one problem at a time | “Minimal Safe Change” |
+| `existing pattern` | reuse what the repo already has | “Existing Pattern First” |
+| `contract first` | find every consumer, of written rules too | “Contract First” |
+| `kiss` | the simplest solution for today's requirement | “KISS and local style” |
+| `real green` | never weaken a check; if the check is wrong, fix the check | “No shortcut to green” |
+| `fail loudly` | no swallowed errors, no invented defaults | “Fail loudly” |
+| `useful test` | which defect would make it fail? | “Quality > quantity” |
+| `do it yourself` | small change: usually cheaper done directly; the convenience test decides | `orchestration.md` · “Direct execution” |
 | `model to the task` | agent and model chosen on the task, never raised | `orchestration.md` · “Agent and model to the task, not to the role” |
 | `declared selection` | whoever duplicates says beforehand how they will choose | `orchestration.md` · “Parallelism by role and by cost” |
 | `proportionate review` | final reviewer only on critical surface or important task, double only on request | `orchestration.md` · “Proportionate review, one round only” |

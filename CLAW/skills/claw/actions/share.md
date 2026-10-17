@@ -1,6 +1,6 @@
 # `/claw share [what]` — promoting a local change into the source
 
-**Precondition: the project must be aligned with the source.** If `version` in `.claude/framework.json` is not the one in `<FW>/VERSION`, run `/claw update` first, then promote. From a project left behind, the local region differs from the source for **two** reasons — your change, and the one another project has already promoted — and step 1 does not tell them apart: promoting wholesale deletes the second one silently. Aligned means base and source coincide, and it is the only condition in which a two-tree comparison is correct.
+**Precondition: the project must be aligned with the source.** If `version` in `.claude/claw.json` is not the one in `<FW>/VERSION`, run `/claw update` first, then promote. From a project left behind, the local region differs from the source for **two** reasons — your change, and the one another project has already promoted — and step 1 does not tell them apart: promoting wholesale deletes the second one silently. Aligned means base and source coincide, and it is the only condition in which a two-tree comparison is correct.
 
 `[what]` names **one** change. With no argument, list what can be promoted and go **one thing at a time**: step 2 has to be asked case by case, and a wholesale promotion cannot ask it.
 

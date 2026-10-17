@@ -148,7 +148,7 @@ PROJECT_SKELETON = """## The project
 
 ## Shared guides
 
-- `.claude/shared/orchestration.md` — coordinator only, first if the session delegates: when to delegate and to whom, the work cycle, delegation prompts, state.
+- `.claude/shared/orchestration.md` — coordinator only, first on any task above one small change: when to delegate and to whom, the work cycle, delegation prompts, state.
 {guides}
 """
 
@@ -815,7 +815,7 @@ def _fields(text: str) -> dict[str, str]:
 
 
 def field_record(card: str) -> dict[str, str]:
-    """What `framework.json` records of a source card at every sync: key → digest."""
+    """What `claw.json` records of a source card at every sync: key → digest."""
     return {k: kernel.digest(v) for k, v in _fields(card).items()}
 
 

@@ -30,7 +30,7 @@ source.
 |---|---|
 | **Evidence first** | Claude cites only what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
 | **Small, safe changes** | No unrequested refactoring, tests never weakened to go green. Commits, installs and anything irreversible wait for your ok |
-| **A team sized to the task** | A coordinator hands searches, diagnoses and designs to specialised agents on its own, and does small changes itself |
+| **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
 | **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
 | **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
 | **One source, many projects** | Update CLAW once, then bring each project up to date. What you adapted stays |
@@ -91,6 +91,11 @@ It asks five questions, shows every file it will write and waits for your ok.
 > `claw update` touches only CLAW itself. A project changes only when you run
 > `/claw update` inside it, so nothing moves in a project you are not looking at.
 
+> [!WARNING]
+> **From 2.2 to 2.5:** the manifest is now `.claude/claw.json`. In each
+> project, rename `.claude/framework.json` to `.claude/claw.json` before `/claw update`.
+> `FRAMEWORK_GATEGUARD` is now `CLAW_GATEGUARD`.
+
 ## Commands
 
 ### `/claw` in Claude Code
@@ -109,7 +114,7 @@ One skill, one action at a time. `/claw` alone lists the actions.
 | `/claw tune` | Adjusts each agent's model and effort to this project |
 | `/claw memory` | Finds stale facts in Claude's memory of this project |
 | `/claw comply <rule>` | Measures how often Claude follows a rule. Uses your tokens, so it asks first |
-| `/claw uninstall` | Removes CLAW. What you adapted goes to `.claude/framework-archive/` |
+| `/claw uninstall` | Removes CLAW. What you adapted goes to `.claude/claw-archive/` |
 
 Every action that writes shows its plan first and waits for your ok.
 
@@ -127,7 +132,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 
 ## Agents
 
-30 agents. A project installs only the ones its profile and your answers need.
+31 agents. A project installs only the ones its profile and your answers need.
 
 **Always installed**
 
@@ -157,6 +162,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 | `results-analyst` | Reads measured results: is the change real, and why |
 | `literature` | Finds and reads publications |
 | `skill-runner` | Runs another author's skill for the coordinator |
+| `runner` | Runs tests, builds and logs, reports only the outcome |
 | `market-researcher` | Audience, alternatives, the promise the product keeps |
 | `campaign-planner` | Channel, cadence, headline, what to measure |
 | `copywriter` | Writes the copy, every claim with its proof |
@@ -215,8 +221,8 @@ the work cycle; `/claw change` switches it later.
 | Setting | Effect |
 |---|---|
 | `language` in Claude Code's settings | The language Claude answers in. Without it, the language of your messages |
-| `FRAMEWORK_GATEGUARD=off` | Turns off the optional hook that checks a file's users before its first edit |
-| `accepted` in `.claude/framework.json` | Warnings of `claw doctor` you keep on purpose, each with a reason |
+| `CLAW_GATEGUARD=off` | Turns off the optional hook that checks a file's users before its first edit |
+| `accepted` in `.claude/claw.json` | Warnings of `claw doctor` you keep on purpose, each with a reason |
 
 To keep a warning, copy its code from the doctor's output into `accepted`:
 
@@ -227,7 +233,7 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 ```json
 {
   "source": "...",
-  "version": "2.2.1",
+  "version": "2.5.0",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"

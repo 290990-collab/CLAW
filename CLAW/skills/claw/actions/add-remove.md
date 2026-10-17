@@ -34,4 +34,4 @@ python "<FW>/claw.py" skills remove <package>
 
 The **pool** is `<FW>/skills/pool.toml`: the skills the coordinator may invoke on its own. Everything connected and outside the pool stays invocable by the user and invisible to the model (`skillOverrides` in `settings.json`). A wrong name in the pool stops the commands instead of hiding a skill in silence.
 
-In the projects the skills arrive with `/claw update` or `/claw fix`, and they leave with `/claw uninstall` or after a `remove`. With the first package, `skill-runner` is to be activated (`/claw add`): it is the only agent that may invoke them, and the coordinator does not run them itself.
+In the projects the skills arrive with `/claw update` or `/claw fix`, and they leave with `/claw uninstall` or after a `remove`. With the first package, `skill-runner` is to be activated (`/claw add`): it is the only agent that invokes them on the coordinator's initiative; a skill the user launches, the coordinator runs.

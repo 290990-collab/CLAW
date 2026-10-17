@@ -1,9 +1,9 @@
 """Bringing a new release over a source the user has modified.
 
-`--up` exists because the source gets modified: whoever does it faces a flat
+`/claw share` exists because the source gets modified: whoever does it faces a flat
 choice at the next release — overwrite and lose their own work, or stay behind
 forever. One datum is enough to avoid it: **which release that copy came
-from**. The number in `VERSION` is not enough, because `--up` increments it
+from**. The number in `VERSION` is not enough, because `/claw share` increments it
 and from then on it matches nothing published.
 
 The comparison is over three trees and the classification has four outcomes, no
@@ -47,7 +47,7 @@ def read_record(root: Path) -> dict | None:
 
 
 def write_record(root: Path, base: str, edition: str, repo: str) -> dict:
-    """Writes the record. The caller decides *when*: at the first `--up` it
+    """Writes the record. The caller decides *when*: at the first `/claw share` it
     carries the release being left, after an upgrade the one just taken."""
     data = {"base": base, "edition": edition, "repo": repo}
     (Path(root) / RECORD).write_text(
@@ -60,7 +60,7 @@ def base_version(root: Path) -> str:
     """The release to compare from.
 
     With no record it falls back to `VERSION`, and the fallback is **right**
-    exactly in the case where the record is missing: no `--up` was ever done, so
+    exactly in the case where the record is missing: no `/claw share` was ever done, so
     `VERSION` is still a published number.
     """
     record = read_record(root)

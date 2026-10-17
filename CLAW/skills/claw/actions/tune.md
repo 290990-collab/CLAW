@@ -1,14 +1,14 @@
 # `/claw tune` — the model the work asks for, in this project
 
-The source gives every agent a model and effort meant for any project. A `security-reviewer` on Opus makes sense for a service with authentication, not for a static site; a `copywriter` on Sonnet is fine for a changelog, less so for the page that presents a person. Here each card is tuned to the scope of **this** project.
+The source gives every agent a model and effort meant for any project. Here each card is tuned to the scope of **this** project.
 
-**What the written value becomes.** The card's value is the coordinator's default and its ceiling: the delegation rule «agent and model to the task» can only lower it at spawn, never raise it. Claw-fair moves that ceiling, up or down, within the absolute ceiling.
+**What the written value becomes.** The card's value is the coordinator's default and its ceiling: the delegation rule «agent and model to the task» can only lower it at spawn, never raise it. `/claw tune` moves that ceiling, up or down, within the absolute ceiling.
 
 **The coordinator invokes it, at the user's request.** It writes nothing without the user's ok on the plan.
 
 ## Constraints — not negotiable
 
-- **Only these change:** the `model:` line and the `effort:` line in the frontmatter of `.claude/agents/<agent>.md`, and the *Model* cell of that agent's row in the roster table. No other line of any file: not the method, not `## Project context`, not `framework.json`, not `CLAUDE.md` outside the table. A problem noticed elsewhere goes in the report, not in the diff.
+- **Only these change:** the `model:` line and the `effort:` line in the frontmatter of `.claude/agents/<agent>.md`, and the *Model* cell of that agent's row in the roster table. No other line of any file: not the method, not `## Project context`, not `claw.json`, not `CLAUDE.md` outside the table. A problem noticed elsewhere goes in the report, not in the diff.
 - **Absolute ceiling: `opus` / `xhigh`.** Never `max`, even if the idea seems to ask for it: the cost of `max` has never been measured on these roles.
 - **Allowed models:** `haiku` < `sonnet` < `opus`. **Never `fable`**: it bills outside the plan on most plans; only the user sets it.
 - **Allowed effort:** `low` < `medium` < `high` < `xhigh`. `xhigh` **only with `opus`**, and avoided: at most `architect`, with a concrete reason.
@@ -16,7 +16,7 @@ The source gives every agent a model and effort meant for any project. A `securi
 
 ## Step 0 — Is it a framework project?
 
-`<PRJ>` is the project root. It needs `<PRJ>/.claude/framework.json`: if missing, the framework is not installed → say so and stop.
+`<PRJ>` is the project root. It needs `<PRJ>/.claude/claw.json`: if missing, the framework is not installed → say so and stop.
 
 `<FW>/agents/` does not exist → stop: without the source value there is nowhere to start from.
 
@@ -26,7 +26,7 @@ The roster is the list of files in `<PRJ>/.claude/agents/`. The roster table is 
 
 Sources, in this order:
 
-1. `profile` in `.claude/framework.json` — the domain.
+1. `profile` in `.claude/claw.json` — the domain.
 2. `CLAUDE.md`, sections `## The project` and `## Critical surface` — the idea and where a mistake costs most.
 3. `README.md`, `docs/` (roadmap, TODO) and, if there is any, the code: what the product does, who uses it, what it exposes on the network.
 
@@ -90,7 +90,7 @@ Static portfolio, design-award ambition, no backend, published on static hosting
 | agent | source | proposed | why |
 |---|---|---|---|
 | `security-reviewer` | opus / high | sonnet / high | no backend and no forms: the surface is headers and dependencies |
-| `copywriter` | sonnet / medium | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
+| `copywriter` | sonnet / low | opus / medium | bio and project descriptions are few lines carrying the whole first impression |
 | `architect` | opus / high | opus / medium | the structural decisions of a static site are few and shallow |
 | `visual-director` | opus / medium | opus / medium | — (at the centre: stays) |
 
@@ -104,7 +104,7 @@ Show the user **a single table**, with every installed agent, including those th
 Below the table, three lines:
 - how many agents change, and how many go up and how many go down;
 - the agents not touched because they do not exist in the source;
-- **what happens next:** at every `/claw update`, each card different from the source is named and sync asks whether to bring it back to the source value. To keep the tuning, answer no.
+- **what happens next:** at every `/claw update`, the tuned values are kept and named as local; `--adopt <card>` brings back the source value.
 
 Ask with the multiple-choice tool: apply all / apply only some (which) / cancel. **No writing without an answer.** Cancel → stop: it is not a failure.
 

@@ -18,7 +18,7 @@ def hook_env(**extra: str) -> dict:
     """Claude Code's environment, not that of whoever runs the tests: without
     `PYTHONIOENCODING` and without UTF-8 mode, so a hook that reads stdin as
     text falls on cp1252 the way it would in use."""
-    drop = ("PYTHONIOENCODING", "PYTHONUTF8", "FRAMEWORK_GATEGUARD", "CLAUDE_PROJECT_DIR")
+    drop = ("PYTHONIOENCODING", "PYTHONUTF8", "CLAW_GATEGUARD", "CLAUDE_PROJECT_DIR")
     env = {k: v for k, v in os.environ.items() if k not in drop}
     env.update(extra)
     return env
@@ -202,7 +202,7 @@ class TestGateguard(unittest.TestCase):
         outside = self.base / "elsewhere" / "b.py"
         self.assertEqual(self.gate(edit(self.prj, str(outside))).returncode, 0)
         self.assertEqual(self.gate(edit(self.prj, "docs/status.md")).returncode, 0)
-        off = self.gate(edit(self.prj, "src/a.py"), FRAMEWORK_GATEGUARD="off")
+        off = self.gate(edit(self.prj, "src/a.py"), CLAW_GATEGUARD="off")
         self.assertEqual(off.returncode, 0)
         # Turned off, it records nothing: turned back on, the first touch is still to come.
         self.assertEqual(self.gate(edit(self.prj, "src/a.py")).returncode, 2)

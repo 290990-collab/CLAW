@@ -30,7 +30,6 @@ How code is structured, independently of the language, plus the block for this p
 - Every dependency is a permanent cost — maintenance, security, updates: for a few lines of code, you write the lines.
 - External dependencies are isolated behind a project boundary: replacing them must touch a single point.
 - **Adoption criteria:** active maintenance, verifiable publisher, compatibility with the project's versions. One is missing, it does not get in.
-- **No installation without the user's explicit confirmation.**
 
 ## Concurrency
 

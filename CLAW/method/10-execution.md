@@ -1,6 +1,6 @@
 ## Execution obligations
 
-They hold for every agent that receives a task, coordinator included when it works directly.
+They bind the coordinator too, when it works directly.
 
 - **Strict scope:** execute *only* the assigned task. Any extra problem noticed goes into the report, NEVER into the diff.
 - **Decisions outside the mandate:** a choice the task does not assign you — structure, contract, alternatives not indicated — is not yours to make: stop and report it at the top of the report with the options, and resume on the answer.

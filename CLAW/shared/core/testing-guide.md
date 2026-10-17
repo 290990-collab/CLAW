@@ -40,7 +40,6 @@ An invariant covers infinite cases and does not age:
 - Dependencies on execution order or on state left by another test.
 - Fakes so permissive that anything passes: they verify the fake, not the real thing.
 - Fixed time waits instead of a condition: slow and flaky.
-- Weakening an assertion to make a red test pass.
 
 ## When a risk is not testable
 

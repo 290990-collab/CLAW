@@ -4,7 +4,7 @@ description: >
   Read-only analysis of the session transcripts the coordinator points to: user
   corrections, reverted changes, repeated mistakes. Returns candidates with
   evidence, classified as rule, memory or hook. Use in the maintenance of memory
-  and method. It does not decide and does not write.
+  and method. It does not decide.
 model: haiku
 effort: high
 tools: Read, Grep, Glob

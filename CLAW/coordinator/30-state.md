@@ -1,6 +1,6 @@
 ## State that keeps itself up to date
 
-The state is written **exclusively by the coordinator**: whoever writes it must have seen the whole picture, and an agent that has seen only one task does not have it. Subagents just report.
+The state is written **exclusively by the coordinator**: whoever writes it must have seen the whole picture, which an agent that saw one task has not.
 
 | Lvl | File | Content | Update | Ceiling |
 |---|---|---|---|---|
@@ -18,7 +18,6 @@ The state is written **exclusively by the coordinator**: whoever writes it must 
 - **Pickup:** the trail left behind is authoritative input: it is read, not redone. Re-verifying from scratch what level 2 records as closed is work paid twice; you verify what you are about to act on, its premises included: a decision whose `Rests on` no longer holds goes back to *Open decisions*, not into the work.
 - **A decision falls with its premise.** When a decision closes or is reversed, in the same step look in levels 1 and 2 for what rests on it (`Rests on`, or its subject searched as a string): each one is re-confirmed or marked `Superseded`. To the user a recorded decision is cited with its reason — "not X, because Y (#N)": without the why they cannot see it has gone stale.
 - **Compression at the ceiling:** past the ceiling you compress at task end, not before adding; the long trace goes down a level, it does not inflate the current one.
-- **Session start:** level 1 first, always. **Task end:** level 1 always; level 2 if something closed; level 3 if the picture changes.
 - **Long or asynchronous operations:** as soon as something starts that the user has to launch or wait for, the line goes into *Waiting* on level 1, with what they must report back.
 - **Zero duplication:** TODO = operational | `status.md` = results | `CLAUDE.md` = picture | memory = what survives the session.
 

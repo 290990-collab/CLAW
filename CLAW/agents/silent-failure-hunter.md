@@ -4,7 +4,7 @@ description: >
   Read-only review of error handling: swallowed exceptions, defaults that hide a
   fault, causes lost on re-raise, external operations with no timeout or
   rollback. Use when a task touches error handling, I/O, external calls or
-  asynchronous code, before the final check. Does not modify the code.
+  asynchronous code, before the final check.
 model: sonnet
 effort: medium
 tools: Read, Grep, Glob

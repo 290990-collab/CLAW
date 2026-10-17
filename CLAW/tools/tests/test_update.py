@@ -58,7 +58,7 @@ class TestUpdate(unittest.TestCase):
         return code, buf.getvalue()
 
     def _version(self, prj: Path) -> str:
-        return json.loads((prj / ".claude" / "framework.json").read_text(encoding="utf-8"))["version"]
+        return json.loads((prj / ".claude" / "claw.json").read_text(encoding="utf-8"))["version"]
 
     def test_it_shows_then_takes_the_release_into_the_source_only(self):
         with tempfile.TemporaryDirectory() as d:

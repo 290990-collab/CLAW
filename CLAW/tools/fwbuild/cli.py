@@ -5,7 +5,6 @@ import argparse
 import dataclasses
 import hashlib
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -36,19 +35,13 @@ def _force_utf8_stdout() -> None:
 
 
 def _bases(path: Path | None) -> list[Path]:
-    """The source search order. It is the impure part, and it is here on purpose.
+    """The source candidates. It is the impure part, and it is here on purpose.
 
     A path that was given is the **only** candidate: if it does not hold it is
-    an error, not a fallback onto the next one.
+    an error, not a fallback onto the next one. Without a path, the source is
+    the one running.
     """
-    if path is not None:
-        return [path]
-    env = os.environ.get("CLAUDE_FRAMEWORK")
-    return [
-        Path.cwd(),
-        *([Path(env)] if env else []),
-        Path.home() / ".claude" / "framework",
-    ]
+    return [FW if path is None else path]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -65,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("path", type=Path, nargs="?", default=Path("."))
     # A complete installation has no findings of any severity: --strict is that
     # rule made mechanical, for CI and for Step 6.
-    # Notes — the warnings `framework.json` declares it accepts — do not make
+    # Notes — the warnings `claw.json` declares it accepts — do not make
     # it fail: they have been looked at once and the decision is written down.
     d.add_argument(
         "--strict", action="store_true", help="exit 1 even with warnings only"
@@ -106,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     i.add_argument("--agents", default="", help="extra agents, comma-separated")
     i.add_argument("--drop", default="", help="profile agents to leave out, comma-separated")
     i.add_argument("--guides", default="", help="extra guides under shared/, comma-separated")
-    i.add_argument("--no-gateguard", action="store_true", help="leave out the optional hook")
+    i.add_argument("--gateguard", action="store_true", help="add the optional hook")
     i.add_argument("--orchestration", default=assemble.DEFAULT_ORCHESTRATION)
     for name, help_text in (
         ("down", "bring this source's version into a project"),
@@ -148,13 +141,13 @@ def main(argv: list[str] | None = None) -> int:
         version = (root / "VERSION").read_text(encoding="utf-8").strip()
         print(f"{root} v{version}")
         # Without the record, an update by replacement takes the source to be intact and
-        # replaces it with the release: what `--up` promoted is lost there.
+        # replaces it with the release: what `/claw share` promoted is lost there.
         record = upgrade.read_record(root)
         if record is None:
             print("no upstream record: intact, updated by replacing it")
         else:
             print(
-                f"modified with --up: base v{upgrade.base_version(root)}, "
+                f"modified by `/claw share`: base v{upgrade.base_version(root)}, "
                 f"from {record.get('repo') or 'repo not declared'}"
             )
         return 0
@@ -178,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
         for f in findings:
             print(f"{f.severity:5} {f.code:17} {f.message}")
         if not blocking:
-            print("OK — only waivers declared in framework.json")
+            print("OK — only waivers declared in claw.json")
         return code
 
     if args.command == "report":
@@ -301,7 +294,7 @@ def _print_survey(s) -> None:
     of the method are out there.
     """
     if not s.projects:
-        print("no installation found (looking for .claude/framework.json)")
+        print("no installation found (looking for .claude/claw.json)")
         return
 
     width = max([len("project")] + [len(p.name) for p in s.projects])
@@ -451,7 +444,7 @@ def _plan(args) -> tuple[list[lifecycle.Operation], dict]:
         "profile_name": prof.name,
         "roster": roster,
         "guides": profile.guides(FW, prof, roster, _csv(args.guides)),
-        "hooks": [h for h in settings.HOOKS if not (args.no_gateguard and h == "gateguard")],
+        "hooks": [h for h in settings.HOOKS if args.gateguard or h not in settings.OPTIONAL_HOOKS],
         "orchestration": args.orchestration,
     }
     print(

@@ -29,7 +29,7 @@ Open only the file of the action asked, from this skill's folder. No action, or 
 
 **For every action:**
 
-- **Only at the user's request:** `install`, `share`, `comply`, `uninstall`. The others you may run when the situation calls for them — `fix` after a hand edit, `memory` at the start of a long session.
+- **Only at the user's request:** `install`, `share`, `comply`, `tune`, `uninstall`. The others you may run when the situation calls for them — `fix` after a hand edit, `memory` at the start of a long session.
 - **Commands:** `python "<FW>/claw.py" <command>` — the terminal's `claw` is the same program.
 - **Plan, ok, then write.** `install`, `down`, `repair`, `uninstall` print their plan and save it; after the user's ok the same command with `--apply` runs that plan, never a recomputed one: a file changed in between stops everything before the first byte.
 - **Close** every action that writes with `python "<FW>/claw.py" doctor --strict "<PRJ>"`.

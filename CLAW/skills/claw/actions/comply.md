@@ -58,7 +58,7 @@ for p in sorted(Path('<folder>').glob('*.jsonl')):
 ```
 
 - Every run, step by step: **done · skipped · not applicable**, with the criterion from Step 1. A right outcome in a run that never read what triggers the rule is **not applicable**: blindness, not compliance.
-- The labelling is done by the coordinator or by an agent on a mid-tier model, never a light one: it is classifying, and a light model finds and lists, it does not classify.
+- The labelling is done by the coordinator or by an agent on a mid-tier model, never a light one: it is a judgment, and a light model finds, lists and sorts into fixed categories; it does not judge.
 - An `INTERRUPTED` run leaves the denominator and is reported separately.
 
 ## Step 5 — Table and candidates

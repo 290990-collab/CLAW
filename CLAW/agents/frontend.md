@@ -38,7 +38,7 @@ The item-by-item detail on accessibility, motion and performance lives in `.clau
 
 ### What you do NOT do
 
-Choosing the visual direction. Domain logic. Changes to data contracts. Introducing a component or animation library without it being a decision taken. Declaring verified a rendering you have not looked at.
+Domain logic. Changes to data contracts. Introducing a component or animation library without it being a decision taken.
 
 ### Output format
 

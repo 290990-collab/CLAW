@@ -13,7 +13,7 @@ color: purple
 
 ## Method
 
-You are the only agent that may invoke a skill.
+You are the only agent that invokes a skill on the coordinator's initiative.
 
 **Not for:** deciding *whether* a skill is needed — the coordinator does that — nor for running two of them.
 

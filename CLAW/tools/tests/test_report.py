@@ -17,7 +17,7 @@ def installed(tmp, name, version=VERSION, declared=None):
     """A project `discover` can find: the marker plus the fixture's files.
 
     `make_project` builds a valid installation but does not write
-    `framework.json` — it is the file that says "there is an installation
+    `claw.json` — it is the file that says "there is an installation
     here", and without it the report has nothing to start from.
     """
     root = Path(tmp) / name
@@ -34,7 +34,7 @@ def installed(tmp, name, version=VERSION, declared=None):
                     t[: r.start] + kernel.wrap(r.body, version) + t[r.end + 1 :],
                     encoding="utf-8",
                 )
-    (root / ".claude" / "framework.json").write_text(
+    (root / ".claude" / "claw.json").write_text(
         json.dumps(
             {
                 "source": "framework",
@@ -85,7 +85,7 @@ class TestDiscovery(unittest.TestCase):
 
 class TestSurvey(unittest.TestCase):
     def test_the_version_shown_is_the_one_in_the_files(self):
-        """`framework.json` says where the project was born from, the kernel
+        """`claw.json` says where the project was born from, the kernel
         region says what it contains now. When they diverge the second counts:
         the first gets updated by forgetting about it."""
         with tempfile.TemporaryDirectory() as d:
@@ -166,7 +166,7 @@ class TestReportCli(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             code, out = self._run(["report", d])
             self.assertEqual(code, 0)
-            self.assertIn("framework.json", out)
+            self.assertIn("claw.json", out)
 
 
 if __name__ == "__main__":

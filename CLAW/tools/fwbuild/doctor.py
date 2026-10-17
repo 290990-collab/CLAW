@@ -13,7 +13,7 @@ Every code is explained, with what to do about it, in `/claw fix`
 (`skills/claw/actions/fix.md`).
 
 A third severity, NOTE, is not produced here: it is a WARN the project has
-declared it accepts in `framework.json`. It stays printed — an invisible waiver
+declared it accepts in `claw.json`. It stays printed — an invisible waiver
 is a forgotten waiver — but it does not make `--strict` fail.
 """
 
@@ -67,7 +67,7 @@ STATE_FILES = ("TODO.md", "status.md", "roadmap.md")
 ORCHESTRATION = "shared/orchestration.md"
 # Where the uninstall moves what the project had adapted, keeping the relative
 # path.
-ARCHIVE_DIR = Path(".claude") / "framework-archive"
+ARCHIVE_DIR = Path(".claude") / "claw-archive"
 
 # Titles that belong to the coordinator's guide. If they reappear in
 # CLAUDE.md, every subagent pays for them at every spawn without being able to
@@ -185,7 +185,7 @@ def _scanned_files(root: Path) -> list[Path]:
 
     Wider than `_markdown_files`: skills and hooks are copied verbatim, but a
     hidden character in a skill is exactly the vehicle being looked for, and a
-    personal path gets there the same way. **Never `framework.json`:** its
+    personal path gets there the same way. **Never `claw.json`:** its
     `source` is absolute by construction when the source sits outside the
     project, and flagging it would give a warning on every installation made
     that way.
@@ -374,7 +374,7 @@ def check(root: Path) -> list[Finding]:
             Finding(
                 "MANIFEST_MISSING",
                 "ERROR",
-                ".claude/framework.json absent or unreadable: /claw update cannot "
+                ".claude/claw.json absent or unreadable: /claw update cannot "
                 "find the source and the fleet report does not see the project",
             )
         )
@@ -389,7 +389,7 @@ def check(root: Path) -> list[Finding]:
                 Finding(
                     "MANIFEST_MISSING",
                     "WARN",
-                    f".claude/framework.json without {', '.join(gaps)}: "
+                    f".claude/claw.json without {', '.join(gaps)}: "
                     "the installation no longer knows what it was born from",
                 )
             )
@@ -401,7 +401,7 @@ def check(root: Path) -> list[Finding]:
                 Finding(
                     "VERSION_MISMATCH",
                     "WARN",
-                    f".claude/framework.json declares v{manifest['version'].strip()}, "
+                    f".claude/claw.json declares v{manifest['version'].strip()}, "
                     f"the markers say v{'/'.join(declared)}",
                 )
             )
@@ -606,6 +606,6 @@ def _apply_accepted(root: Path, findings: list[Finding]) -> list[Finding]:
             else "no finding matches"
         )
         out.append(
-            Finding("ACCEPTED_UNUSED", "WARN", f'framework.json accepts "{key}": {why}')
+            Finding("ACCEPTED_UNUSED", "WARN", f'claw.json accepts "{key}": {why}')
         )
     return out

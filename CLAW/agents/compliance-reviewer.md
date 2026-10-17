@@ -4,7 +4,7 @@ description: >
   Read-only review of regulatory aspects: personal data and legal basis,
   minimisation and retention, licences of the code and of dependencies, terms
   of use of data sources. Use when the task touches personal data, licences or
-  a source's terms of use, before the final check. Does not modify the code.
+  a source's terms of use, before the final check.
 model: opus
 effort: medium
 tools: Read, Grep, Glob

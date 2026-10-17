@@ -42,7 +42,7 @@ def resolve(bases: Sequence[Path]) -> Path:
     """
     tried = []
     for base in bases:
-        for cand in (Path(base), Path(base) / "framework"):
+        for cand in (Path(base), Path(base) / "CLAW"):
             gaps = missing(cand)
             if not gaps:
                 return cand
@@ -54,7 +54,7 @@ def resolve(bases: Sequence[Path]) -> Path:
 
 
 def reference(project_root: Path, framework_root: Path) -> str:
-    """How `.claude/framework.json` must cite the source.
+    """How `.claude/claw.json` must cite the source.
 
     The first of the three supported ways is the source **inside** the project:
     there an absolute path is the machine of whoever installed it, and the
@@ -74,7 +74,7 @@ def reference(project_root: Path, framework_root: Path) -> str:
 
 
 def dereference(project_root: Path, recorded: str) -> Path:
-    """The inverse: the `source` read from `framework.json` as a real path.
+    """The inverse: the `source` read from `claw.json` as a real path.
 
     A relative path resolves against the project root, not against the working
     directory: `/claw` runs from `<FW>/tools`,
@@ -84,7 +84,7 @@ def dereference(project_root: Path, recorded: str) -> Path:
     return p if p.is_absolute() else (Path(project_root) / p).resolve()
 
 
-MANIFEST = Path(".claude") / "framework.json"
+MANIFEST = Path(".claude") / "claw.json"
 
 
 def manifest(
@@ -95,7 +95,7 @@ def manifest(
     settings_added: dict | None = None,
     skills: dict[str, str] | None = None,
 ) -> dict:
-    """The contents of `.claude/framework.json`.
+    """The contents of `.claude/claw.json`.
 
     `source` and `version` say where the project was born. `profile` says what
     it is **made of**: without it, `SETTINGS_MISSING` prescribes regenerating

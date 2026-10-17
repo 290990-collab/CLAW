@@ -209,7 +209,7 @@ class TestInstalledProject(unittest.TestCase):
         data = json.loads((self.prj / ".claude" / "settings.json").read_text(encoding="utf-8"))
         self.assertEqual(data["skillOverrides"], {"alfa": "user-invocable-only"})
         record = json.loads(
-            (self.prj / ".claude" / "framework.json").read_text(encoding="utf-8")
+            (self.prj / ".claude" / "claw.json").read_text(encoding="utf-8")
         )
         self.assertEqual(record["settings_added"]["skillOverrides"], {"alfa": "user-invocable-only"})
         self.assertEqual(record["skills"], {"alfa": self.pkg.name})

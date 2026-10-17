@@ -43,7 +43,7 @@ An installed file — `CLAUDE.md`, an agent, a guide — points at a guide that 
 
 Special case: **`orchestration.md` absent** with installed agents. Without it, whoever delegates has neither the delegation rules nor the routing table, and the doctor cannot check the roster.
 
-**What to do:** copy the guide from `<FW>/shared/` and fill in its project block, or remove the pointer. For `orchestration.md`, regenerate it by assembling `<FW>/coordinator/` and adding the project's routing table.
+**What to do:** copy the guide from `<FW>/shared/` and fill in its project block, or remove the pointer. For `orchestration.md`: `assemble.build_document(<FW>/coordinator, <VERSION>, <roster sections>, extra=[assemble.orchestration_file(<FW>, '<name>'), *assemble.cycle_files(<FW>, <profile cycles>)])` — `<name>` is the project's orchestration, `orchestrator-worker` unless the user chose another. Without `extra` the guide lacks the delegation model and the cycles, and the next `update` stops.
 
 ### `SHARED_ORPHAN` — WARNING
 
@@ -59,7 +59,7 @@ A guide installed in `.claude/shared/` that no file cites: context carried aroun
 
 **What to do:** move the section into `.claude/shared/orchestration.md`, leaving at most a one-line pointer. If the content is really needed by whoever executes, rewrite it as an execution obligation in `<FW>/method/`: that is a different thing.
 
-⚠️ The check compares **titles**, not meaning: the same section under a different title does not trigger it. The finding covers only the six known titles; on content leakage, reading is what counts.
+⚠️ The check compares **titles**, not meaning: the same section under a different title does not trigger it. The finding covers only the eight known titles; on content leakage, reading is what counts.
 
 ### `KERNEL_MISSING` — ERROR
 
@@ -92,17 +92,17 @@ The kernel regions do not all declare the same version, or the project is on a d
 
 ⚠️ **That prohibition covers the `Read` tool, not the shell.** An agent with `Bash` reads a `.env` with `cat` and no configuration prevents it. Where the secret matters, the only mechanical guard is not giving that agent the shell: it is why the reviewers that execute nothing have `Read, Grep, Glob` only.
 
-**What to do:** regenerate it by serialising the `Profile.settings` of the project's profile — its name is in `profile` inside `.claude/framework.json` — as in Step 5 of the installation.
+**What to do:** `claw repair "<PRJ>"`, then `--apply`: it rebuilds the whole file (profile permissions, hooks, orchestration variables, skill overrides, spawn depth) and updates `settings_added`. Serialising `Profile.settings` alone loses the rest.
 
 ### `HOOKS_MISSING` — ERROR if a wired script is gone, WARNING if not wired
 
-`config_protection` and `block_no_verify` belong to every installation with agents. **Not wired** in `settings.json`: the checks they make are off and nothing else says so — the typical case is an installation born before the hooks. **Wired without its script:** the closed hook blocks every command it has something to say about (`git` for `block_no_verify`, a linter configuration for `config_protection`). `gateguard` is optional and never flagged as missing.
+`config_protection` and `block_no_verify` belong to every installation with agents. **Not wired** in `settings.json`: the checks they make are off and nothing else says so — the typical case is an installation born before the hooks. **Wired without its script:** the closed hook blocks every command it has something to say about (`git` for `block_no_verify`, a linter configuration for `config_protection`). `gateguard` is optional: not wired, it is not flagged; wired without its script, it is flagged like the others.
 
 **What to do:** not wired → `/claw update`, which installs them and replaces entries written by an older release. Script gone → the repair below puts it back.
 
 ### `SKILLS_MISSING` — WARNING
 
-A skill of a connected package, which `framework.json` says the project received, is not in `.claude/skills/`: it exists in the source but is not invocable here. Nobody notices until it is needed.
+A skill of a connected package, which `claw.json` says the project received, is not in `.claude/skills/`: it exists in the source but is not invocable here. Nobody notices until it is needed.
 
 **What to do:** the repair below puts it back.
 
@@ -114,13 +114,13 @@ One of `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md` is missing.
 
 ### `MANIFEST_MISSING` — ERROR if the file is missing, WARNING if incomplete
 
-`.claude/framework.json` absent, unreadable, or missing one of `source`, `version`, `profile`. It is the file that ties an installation to its source: without it `/claw update` does not know where to update from, and `fwbuild report` does not even count the project — it disappears from the fleet report instead of showing up in it as broken.
+`.claude/claw.json` absent, unreadable, or missing one of `source`, `version`, `profile`. It is the file that ties an installation to its source: without it `/claw update` does not know where to update from, and `fwbuild report` does not even count the project — it disappears from the fleet report instead of showing up in it as broken.
 
 **What to do:** rewrite it with `source.manifest(<PRJ>, <FW>, version, profile)`. The profile is the one chosen at Step 3; if nobody remembers it, deduce it from the installed agents and guides, and write it down **before** needing it again.
 
 ### `ACCEPTED_UNUSED` — WARNING
 
-A waiver declared in `framework.json` covers no finding: either the finding is gone, or it is an ERROR (which cannot be accepted), or it is written without a reason. A waiver that does not apply stays there and next time silences something else.
+A waiver declared in `claw.json` covers no finding: either the finding is gone, or it is an ERROR (which cannot be accepted), or it is written without a reason. A waiver that does not apply stays there and next time silences something else.
 
 **What to do:** remove it if the finding is gone, write the reason if it is missing, fix the error if it is an error.
 
@@ -128,7 +128,7 @@ A waiver declared in `framework.json` covers no finding: either the finding is g
 
 `model: fable`: on most plans Fable bills to usage credits, outside the plan's limits.
 
-**What to do:** not intended → the source card's `model:` and `effort:`; intended → accept it in `framework.json`.
+**What to do:** not intended → the source card's `model:` and `effort:`; intended → accept it in `claw.json`.
 
 ### `EXCLUSIVE` — ERROR
 
@@ -138,7 +138,7 @@ A waiver declared in `framework.json` covers no finding: either the finding is g
 
 ### `TOKEN_BUDGET` — WARNING
 
-The project sections of `CLAUDE.md` have exceeded the kernel region in words. The ceiling that breaks the build sits on the **source** and constrains only the method; the assembled `CLAUDE.md` is what every subagent pays at **every spawn**, and the part the installation writes had no threshold at all — and it is the only one that grows, because it grows with the project.
+The project sections of `CLAUDE.md` have exceeded the kernel region in words. The ceiling that breaks the build sits on the **source** and constrains only the method; every subagent pays the whole assembled `CLAUDE.md` at **every spawn**, and the part the installation writes has no other threshold and is the only one that grows with the project.
 
 The threshold is the kernel itself, the only known quantity: *the project does not write more than the method*. It is a judgement call, not a measure of effectiveness. Below the ceiling the framework sets itself for the method alone the finding stays silent: on a small file the ratio is true and irrelevant.
 
@@ -162,7 +162,7 @@ WARNING and not error: the ZWJ (U+200D) also composes emoji and legitimate scrip
 
 An installed file contains a path inside a user's folder — `C:\Users\<name>`, `/Users/<name>`, `/home/<name>`, doubled JSON backslashes included. The file travels with the repository: on another machine the path does not exist, and it carries the name of whoever wrote it. Template placeholder names (`user`, `username`, `yourname`, `you`, `me`, `example`) do not count. The message gives file and line, not the path.
 
-**`.claude/framework.json` is not scanned:** its `source` is absolute by construction when the source sits outside the project, because a relative path does not hold there — the depth of the clone is not known. Flagging it would give a warning on every installation made that way.
+**`.claude/claw.json` is not scanned:** its `source` is absolute by construction when the source sits outside the project, because a relative path does not hold there — the depth of the clone is not known. Flagging it would give a warning on every installation made that way.
 
 ⚠️ The check compares text: a URL with `/home/` or `/Users/` in its path triggers it.
 
@@ -172,7 +172,7 @@ An installed file contains a path inside a user's folder — `C:\Users\<name>`, 
 
 A warning can be wrong **for this project**: a deliberate `KERNEL_DRIFT`, a large `CLAUDE.md` because the project is large. Without a valve `--strict` stays red forever and the team learns to ignore it — which is how a check dies.
 
-In `.claude/framework.json`:
+In `.claude/claw.json`:
 
 ```json
 "accepted": {
@@ -193,7 +193,7 @@ Before adding a row here, the question is the drift one: *a waiver for this proj
 python "<FW>/claw.py" report <folder-of-repositories>
 ```
 
-`doctor` answers "does this installation hold?". `report` answers **how many versions of the method are out there, and where**: it looks for `.claude/framework.json` under the given paths (two levels, `--depth` to change that), calls the doctor on each and lines up version, findings and the size of `CLAUDE.md`.
+`doctor` answers "does this installation hold?". `report` answers **how many versions of the method are out there, and where**: it looks for `.claude/claw.json` under the given paths (two levels, `--depth` to change that), calls the doctor on each and lines up version, findings and the size of `CLAUDE.md`.
 
 The reference is the version of the **source** you run from, not the most widespread one: the majority is not a reference. `--strict` exits 1 if a project diverges or has findings; `--json` gives the same report for CI.
 

@@ -48,7 +48,7 @@ class TestResolve(unittest.TestCase):
     def test_finds_framework_subdirectory(self):
         """Source copied inside the project: the project root is passed."""
         with tempfile.TemporaryDirectory() as d:
-            root = make_root(Path(d) / "framework")
+            root = make_root(Path(d) / "CLAW")
             self.assertEqual(source.resolve([Path(d)]), root)
 
     def test_first_valid_candidate_wins(self):
@@ -91,7 +91,7 @@ class TestManifest(unittest.TestCase):
             prj = Path(d)
             self.assertIsNone(source.read_manifest(prj))
             (prj / ".claude").mkdir()
-            (prj / ".claude" / "framework.json").write_text("{", encoding="utf-8")
+            (prj / ".claude" / "claw.json").write_text("{", encoding="utf-8")
             self.assertIsNone(source.read_manifest(prj))
 
     def test_accepted_keeps_entries_without_a_reason(self):
@@ -100,7 +100,7 @@ class TestManifest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             prj = Path(d)
             (prj / ".claude").mkdir()
-            (prj / ".claude" / "framework.json").write_text(
+            (prj / ".claude" / "claw.json").write_text(
                 json.dumps({"accepted": {"A": "a reason", "B": "  ", "C": 3}}),
                 encoding="utf-8",
             )

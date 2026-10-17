@@ -2,8 +2,6 @@
 
 For projects whose product is not "software that runs" but **reproducible evidence**.
 
-> **Guiding principle.** Every decision is motivated by data, experiments or literature; every result is explainable, reproducible and verifiable by others.
-
 ## Evidence and honesty
 
 1. **Evidence first** — every technical statement rests on a measurement, a source or an experiment, never on a plausible supposition.

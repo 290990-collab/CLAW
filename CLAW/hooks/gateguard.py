@@ -10,7 +10,7 @@ through with a warning on stderr instead of blocking the work, and the only
 block is the first touch, recorded before denying it: without the record the
 second attempt would be denied again, forever.
 
-Turned off with `FRAMEWORK_GATEGUARD=off` (or `0`, `false`).
+Turned off with `CLAW_GATEGUARD=off` (or `0`, `false`).
 
 Exit: 0 lets it through, 2 denies the first touch with the facts on stderr.
 """
@@ -36,7 +36,7 @@ STATE_DIR = "claw-gateguard"
 
 def verdict(data: object) -> str | None:
     """The facts to present at the first touch, or `None` if the operation passes."""
-    if os.environ.get("FRAMEWORK_GATEGUARD", "").strip().lower() in OFF:
+    if os.environ.get("CLAW_GATEGUARD", "").strip().lower() in OFF:
         return None
     if not isinstance(data, dict) or not isinstance(data.get("tool_input"), dict):
         raise ValueError("tool_input missing or not an object")

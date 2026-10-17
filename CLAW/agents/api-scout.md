@@ -5,7 +5,7 @@ description: >
   differences between versions of third-party libraries and services. Use
   BEFORE writing code that uses a library whose signatures are not already
   visible in the repo, so the expensive agent does not look them up at full
-  price. Read only, modifies nothing.
+  price. Read only.
 model: sonnet
 effort: medium
 maxTurns: 25

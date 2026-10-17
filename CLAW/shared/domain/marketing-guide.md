@@ -57,3 +57,9 @@ For projects that must be found, not only work.
 - **No claim the product does not keep,** not even for a better title: the cost is paid once and is not recovered.
 - **No invented third-party data:** market numbers, quotes and comparisons carry the source with its date, or they stay out.
 - **Nothing nobody has read gets published:** it is irreversible, and the user decides it.
+
+## In this project
+
+[TO FILL IN — the product and who it is for, the positioning chosen, the channels
+in use and their cadence, the claims approved and their evidence, the metrics
+tracked and where they live.]

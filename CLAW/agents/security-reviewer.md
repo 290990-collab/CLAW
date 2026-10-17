@@ -4,7 +4,7 @@ description: >
   Read-only security review of the code the project produces: untrusted input,
   secrets, authentication and authorisation, data exposure, trust boundaries,
   dependencies. Use when the task touches a surface reachable by an attacker,
-  before the final check. Does not modify the code.
+  before the final check.
 model: opus
 effort: high
 tools: Read, Grep, Glob

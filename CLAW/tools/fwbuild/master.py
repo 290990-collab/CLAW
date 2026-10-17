@@ -1,7 +1,7 @@
 """The master: the git clone the source lives in, and the user-level skills it serves.
 
 Upgrading is git's job: fetch, show what arrives, merge. A change promoted with
-`--up` is a commit, and git carries it through the merge or stops on the
+`/claw share` is a commit, and git carries it through the merge or stops on the
 conflict. The `/claw` skill is copied into the user's skills with `<FW>` written as the
 master's path: one skill for every project, no search for the source, no path
 to type. `claw` on the PATH is a launcher of this source's `claw.py`.

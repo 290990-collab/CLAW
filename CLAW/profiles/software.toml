@@ -2,7 +2,7 @@ name = "software"
 description = "Applications, services, command-line tools, desktop software."
 critical_surface = "Runtime behaviour in the face of input the project does not control."
 
-agents = ["debugger", "security-reviewer", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer"]
+agents = ["debugger", "security-reviewer", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer", "runner"]
 cycles = []
 recommended_orchestrations = []
 

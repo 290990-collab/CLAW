@@ -40,7 +40,7 @@ def make_project(
         data = {"source": "framework", "version": VERSION, "profile": "software"}
         if accepted is not None:
             data["accepted"] = accepted
-        (root / ".claude" / "framework.json").write_text(
+        (root / ".claude" / "claw.json").write_text(
             json.dumps(data), encoding="utf-8"
         )
     if settings:
@@ -159,7 +159,7 @@ class TestDoctor(unittest.TestCase):
         naming an absent skill, and no finding says so."""
         with tempfile.TemporaryDirectory() as d:
             root = make_project(d)
-            path = root / ".claude" / "framework.json"
+            path = root / ".claude" / "claw.json"
             data = json.loads(path.read_text(encoding="utf-8"))
             data["skills"] = {"alfa": "someone-skills"}
             path.write_text(json.dumps(data), encoding="utf-8")
@@ -289,7 +289,7 @@ class TestDoctor(unittest.TestCase):
             self.assertNotIn("SHARED_ORPHAN", codes(doctor.check(p)))
 
     def test_detects_missing_manifest(self):
-        """Without `framework.json` `/claw` cannot find the source and
+        """Without `claw.json` `/claw` cannot find the source and
         the fleet report does not count the project: it is not a clean
         installation."""
         with tempfile.TemporaryDirectory() as d:
@@ -301,7 +301,7 @@ class TestDoctor(unittest.TestCase):
         carried out."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
-            (p / ".claude" / "framework.json").write_text(
+            (p / ".claude" / "claw.json").write_text(
                 json.dumps({"source": "framework", "version": VERSION}),
                 encoding="utf-8",
             )
@@ -394,18 +394,18 @@ class TestDoctor(unittest.TestCase):
             self.assertIn("VERSION_MISMATCH", codes(doctor.check(p)))
 
     def test_detects_a_manifest_left_on_the_previous_version(self):
-        """The version in `framework.json` is the one readable without opening a
+        """The version in `claw.json` is the one readable without opening a
         generated document — the fleet report starts from it: if it stays on the
         previous one, the finding says so."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
-            path = p / ".claude" / "framework.json"
+            path = p / ".claude" / "claw.json"
             data = json.loads(path.read_text(encoding="utf-8"))
             data["version"] = "0.3.0"
             path.write_text(json.dumps(data), encoding="utf-8")
             found = [f for f in doctor.check(p) if f.code == "VERSION_MISMATCH"]
             self.assertEqual([f.severity for f in found], ["WARN"])
-            self.assertIn("framework.json", found[0].message)
+            self.assertIn("claw.json", found[0].message)
 
     def test_detects_installation_behind_the_source(self):
         """An old but internally consistent method: it is the fork between
@@ -493,7 +493,7 @@ class TestDoctor(unittest.TestCase):
         clone is not known."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
-            (p / ".claude" / "framework.json").write_text(
+            (p / ".claude" / "claw.json").write_text(
                 json.dumps(
                     {
                         "source": "C:" + "\\Users\\" + "jsmith" + "\\framework",

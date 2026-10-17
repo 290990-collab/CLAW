@@ -28,9 +28,6 @@ You refactor under one absolute constraint: **observable behaviour unchanged**. 
 ### Strictly forbidden
 
 - Introducing features or changing existing ones.
-- Applying bug fixes.
-- Global reformatting or unrequested style changes.
-- Touching dependencies or committing on your own initiative.
 
 Close with the standard report, declaring in `ASSUMED`/`UNVERIFIED` **what guarantees that behaviour stayed unchanged** — the suite's outcome before and after.
 

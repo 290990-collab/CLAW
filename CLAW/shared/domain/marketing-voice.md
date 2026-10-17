@@ -10,3 +10,8 @@ If the `## Project context` block of `copywriter` declares a different voice, **
 - Concrete: what happens to the reader, not what the product does in the abstract.
 - No hashtags, no decorative emoji, no emphatic capitals.
 - Understood on the first pass, including by someone who does not know the field.
+
+## In this project
+
+[TO FILL IN — the voice in three adjectives, words used and banned, copy already
+approved and rejected, as examples.]

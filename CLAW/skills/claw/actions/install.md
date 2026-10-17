@@ -8,7 +8,7 @@ You are the coordinator: you read a project, ask questions, decide a roster, fil
 
 ## Step 0 — Validate the source
 
-`<FW>` is the source: `claw.py setup` writes its path into this skill. Where it is still literal (a skill copied by hand), take the first that **exists** of `./framework/`, `$CLAUDE_FRAMEWORK`, `~/.claude/framework/`.
+`<FW>` is the source: `claw.py setup` writes its path into this skill. Where it is still literal (a skill copied by hand), it is `~/.claude/CLAW/CLAW`, the master `claw setup` makes.
 
 ```bash
 python "<FW>/claw.py" source "<FW>"
@@ -32,7 +32,7 @@ ls -A | head -50
 
 ### The code — only if there is any
 
-**Do not read the repository yourself:** delegate to `explorer`. Prompt in the mandatory structure:
+**Delegate the reading to `explorer`;** a repository of a few files you read yourself. Prompt in the mandatory structure:
 
 ```
 TASK: map this repository in order to adapt a working framework.
@@ -58,7 +58,7 @@ CONSTRAINTS:
 DONE WHEN: the 8 points above, in compact form, with file:line where needed.
 ```
 
-Large repository → several `explorer`s in parallel on disjoint subtrees: it is the only agent with free parallelism.
+Large repository → several `explorer`s in parallel on disjoint subtrees: a light model, so no parallel limit (rule 1).
 
 ### Instructions already there — only if there are any
 
@@ -71,7 +71,7 @@ Then show the user **one single table**:
 | one change at a time, no unrequested refactoring | `CLAUDE.md:12` | yes — `method/30-code-principles.md`, *Minimal Safe Change* |
 | commit messages in English | `CLAUDE.md:40` | no |
 
-**A "yes" is cited, not asserted:** the column carries the framework file that covers that directive. Without it, it is a statement from memory — exactly what the evidence rules forbid, and the installation cannot be the first to break them. When in doubt: "no", and it gets integrated.
+**A "yes" is cited, not asserted:** the column carries the framework file that covers that directive. Without it, it is a statement from memory — exactly what the evidence rules forbid. When in doubt: "no", and it gets integrated.
 
 On the "no" rows ask **one single question** — which ones to keep — and for those:
 
@@ -132,7 +132,7 @@ Two reviewers only if the project really has two distinct critical surfaces.
 
 **4. Autonomy** — what can be done without asking. Conservative default: **none of this**. Commits · publication · installing dependencies · long or expensive runs · irreversible changes.
 
-In the same question, **`gateguard` yes or no**: it denies the first touch of every file in a session until the facts are presented — who imports it, what public surface changes — and it costs one extra turn per file; `FRAMEWORK_GATEGUARD=off` turns it off. The other hooks in `settings.HOOKS` are always installed.
+In the same question, **`gateguard` yes or no**, default no: it denies the first touch of every file in a session until the facts are presented — who imports it, what public surface changes — and it costs two extra turns per file, each rereading the whole context; `CLAW_GATEGUARD=off` turns it off. The other hooks in `settings.HOOKS` are always installed.
 
 **5. Orchestration** → a file from `<FW>/orchestrations/`, **one** per project. Propose `assemble.DEFAULT_ORCHESTRATION`; name as useful for the field those in the profile's `recommended_orchestrations`, with the **When** point of their module, and the others as available. `agent-teams` is experimental and needs an interactive session: say so before the choice. It is changed later with `/claw change`.
 
@@ -158,10 +158,10 @@ Regulatory constraints and performance requirements belong to **question 2**: th
 **Six cannot be removed** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: the code cycle; `--drop` ignores them.
 
 ```bash
-python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop a,b] [--guides domain/x.md] [--no-gateguard] [--orchestration <name>]
+python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop a,b] [--guides domain/x.md] [--gateguard] [--orchestration <name>]
 ```
 
-`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--no-gateguard`: question 4 said no. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `framework.json` already there: the project is installed → `/claw update`.
+`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--gateguard`: question 4 said yes. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `claw.json` already there: the project is installed → `/claw update`.
 
 **Show the plan and wait for the ok.**
 
@@ -171,7 +171,7 @@ python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop
 python "<FW>/claw.py" install "<PRJ>" --apply
 ```
 
-It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `framework.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `/claw fix`).
+It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `claw.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `/claw fix`).
 
 | document | kernel | who reads it | cost |
 |---|---|---|---|
