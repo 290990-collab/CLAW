@@ -2,9 +2,9 @@
 
 Upgrading is git's job: fetch, show what arrives, merge. A change promoted with
 `/claw share` is a commit, and git carries it through the merge or stops on the
-conflict. The `/claw` skill is copied into the user's skills with `<FW>` written as the
-master's path: one skill for every project, no search for the source, no path
-to type. `claw` on the PATH is a launcher of this source's `claw.py`.
+conflict. The `/claw` and `/delegate` skills are copied into the user's skills with
+`<FW>` written as the master's path: one copy for every project, no search for
+the source, no path to type. `claw` on the PATH is a launcher of this source's `claw.py`.
 """
 
 import os
@@ -13,7 +13,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-USER_SKILLS = ("claw",)
+USER_SKILLS = ("claw", "delegate")
 TOKEN = "<FW>"
 
 

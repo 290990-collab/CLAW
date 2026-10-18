@@ -61,8 +61,8 @@ git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
 python $HOME\.claude\CLAW\CLAW\claw.py setup
 ```
 
-`setup` shows what it writes and asks for your ok. It adds the `/claw` skill to
-Claude Code and the `claw` command to `~/.local/bin`.
+`setup` shows what it writes and asks for your ok. It adds the `/claw` and
+`/delegate` skills to Claude Code and the `claw` command to `~/.local/bin`.
 
 > [!TIP]
 > If `~/.local/bin` is not on your PATH, `setup` tells you. Add it and open a new
@@ -117,6 +117,12 @@ One skill, one action at a time. `/claw` alone lists the actions.
 | `/claw uninstall` | Removes CLAW. What you adapted goes to `.claude/claw-archive/` |
 
 Every action that writes shows its plan first and waits for your ok.
+
+### `/delegate` in Claude Code
+
+`/delegate <task>` makes Claude the manager of that task: it splits the work
+into pieces, shows you who does each one, hands them to the agents, then checks
+the results. Claude may also start it on its own for a long task, and says so.
 
 ### `claw` in the terminal
 

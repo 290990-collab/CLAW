@@ -69,7 +69,11 @@ class TestMaster(unittest.TestCase):
             for name in master.USER_SKILLS:
                 text = (home / name / "SKILL.md").read_text(encoding="utf-8")
                 self.assertNotIn(master.TOKEN, text, name)
-                self.assertIn(FRAMEWORK.resolve().as_posix(), text, name)
+                source = (FRAMEWORK / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+                if master.TOKEN in source:
+                    self.assertIn(FRAMEWORK.resolve().as_posix(), text, name)
+            claw = (home / "claw" / "SKILL.md").read_text(encoding="utf-8")
+            self.assertIn(FRAMEWORK.resolve().as_posix(), claw)
 
     def test_the_launcher_runs_this_source_with_the_setup_python(self):
         """`claw` on the PATH must run this source's `claw.py`, not another

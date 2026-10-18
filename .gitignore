@@ -11,6 +11,7 @@ _build/
 # pool that names the ones the coordinator may call is a local choice too.
 CLAW/skills/*
 !CLAW/skills/claw/
+!CLAW/skills/delegate/
 
 # Working material: stays on the machine, not in the published package.
 # UPDATE.md is the decision log, docs/ the plans and evaluations,

@@ -244,7 +244,7 @@ ROUTING = """## This project's roster
 | Extending the tests | `tester` | sonnet medium |
 | Behaviour-preserving refactoring | `refactorer` | sonnet medium |
 | Bug with an unknown cause | `debugger` | opus high |
-| Signatures of external libraries | `api-scout` | sonnet medium |
+| Signatures of external libraries | `api-scout` | haiku high |
 | Surface reachable by an attacker | `security-reviewer` | opus high |
 | Swallowed errors, fallbacks that hide | `silent-failure-hunter` | sonnet medium |
 | Comments that no longer tell the truth | `comment-analyzer` | haiku high |

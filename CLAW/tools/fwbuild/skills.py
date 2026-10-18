@@ -23,11 +23,13 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+from .master import USER_SKILLS
+
 PACKAGE_FILE = "PACKAGE.toml"
 POOL_FILE = "pool.toml"
-# The framework's own skill, `claw`: it is published and does not come from a
-# package. A package skill of the same name would cover it.
-RESERVED = "claw"
+# The framework's own skills: they are published and do not come from a
+# package. A package skill of the same name would cover them.
+RESERVED = USER_SKILLS
 # How Claude Code names a skill: the installed folder takes this name.
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FRONTMATTER_NAME_RE = re.compile(r"^name:\s*(\S+)\s*$", re.MULTILINE)
@@ -189,7 +191,7 @@ def add(framework_root: Path, repo: str, commit: str | None = None) -> Package:
             raise ValueError(f"{repo}: no SKILL.md, there is nothing to connect")
 
         taken = set(installed(fw)) | {
-            p.name for p in (fw / "skills").glob(f"{RESERVED}*")
+            p.name for name in RESERVED for p in (fw / "skills").glob(f"{name}*")
         }
         clash = sorted(set(found) & taken)
         if clash:

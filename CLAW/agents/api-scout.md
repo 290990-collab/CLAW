@@ -6,8 +6,8 @@ description: >
   BEFORE writing code that uses a library whose signatures are not already
   visible in the repo, so the expensive agent does not look them up at full
   price. Read only.
-model: sonnet
-effort: medium
+model: haiku
+effort: high
 maxTurns: 25
 tools: Read, Grep, Glob, WebSearch, WebFetch
 color: cyan
