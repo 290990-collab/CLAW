@@ -2,7 +2,7 @@ name = "library"
 description = "Reusable libraries and packages: the public contract is the product."
 critical_surface = "The public contract — signatures, semantics, behaviour across versions: breaking it breaks code that is not in this repository."
 
-agents = ["debugger", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer", "runner"]
+agents = ["debugger", "api-scout", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer", "runner", "light-implementer"]
 cycles = []
 recommended_orchestrations = []
 

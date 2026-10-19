@@ -7,7 +7,7 @@ Each step names its usual agent; whether to spawn it, § When delegating pays de
 1. **Understand:** `explorer` (repo) and/or `api-scout` (external libraries and docs).
 2. **Design:** `architect` when the task touches ≥3 files, a contract or the critical surface, or structural choices remain open (those on the *what* are settled first with the user). *Otherwise it is skipped:* a three-line plan is written by the coordinator.
    - *Approval:* big plan or open structural choices → recap it to the user and ask yes/no before implementing. From there the plan is not reopened on your own: changing one's mind is the user's call.
-3. **Implement:** `implementer`, one task at a time.
+3. **Implement:** `implementer`, or `light-implementer` on a closed specification, one task at a time.
    - *Test-first mandatory:* new features, well-defined bug fixes, business or API logic.
    - *Test-first excluded:* refactoring, UI, prototypes, dependencies, documentation.
 4. **Verify:** `tester` only when the task touches domain logic or a contract.
@@ -26,6 +26,7 @@ Each step names its usual agent; whether to spawn it, § When delegating pays de
 | Impact on structure or contracts | Real impact → **`architect`** \| Trivial change → the coordinator decides |
 | Cause of the defect | Unknown → **`debugger`**, which delivers the diagnosis \| Known → **`implementer`** |
 | Nature of the change | Adds or changes behaviour → **`implementer`** \| Observable behaviour unchanged → **`refactorer`** |
+| Weight of the change | Files, signature, behaviour and an acceptance test all fixed → **`light-implementer`**; the test from `tester` or verbatim examples \| A choice left open, a contract, security → **`implementer`** |
 | Frontend or logic | Views, markup, style, motion → **`frontend`** \| Logic and services → **`implementer`** (if it weighs on both, `architect` splits the task) |
 | Look of the interface | How it should look, or whether the rendering keeps it → **`visual-director`** \| Applying a direction that exists → **`frontend`** |
 | Publishing | Simple hosting, a push updates it → **`deploy`** \| Resources as code, multiple environments → **`infra`**. They do not coexist |

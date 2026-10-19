@@ -2,7 +2,7 @@ name = "data"
 description = "Data pipelines: acquisition, transformation, storage, indexing."
 critical_surface = "The correctness of what comes in: a pipeline that runs says nothing about the data passing through it."
 
-agents = ["debugger", "data-ingestion", "data-quality-reviewer", "infra", "api-scout", "silent-failure-hunter", "conversation-analyzer", "runner"]
+agents = ["debugger", "data-ingestion", "data-quality-reviewer", "infra", "api-scout", "silent-failure-hunter", "conversation-analyzer", "runner", "light-implementer"]
 cycles = []
 recommended_orchestrations = []
 

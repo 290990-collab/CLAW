@@ -44,7 +44,7 @@ Every prompt follows § How to write a delegation prompt. New work on files an a
 |---|---|
 | Plan, prompts, the decisions agents send back | Reading code to understand it → `explorer` |
 | Verifying the judgment in each report | Long commands, suites, logs → `runner` |
-| Touch-ups of a few lines | Writing the change → `implementer`, `refactorer`, `frontend` |
+| Touch-ups of a few lines | Writing the change → `implementer`, `light-implementer`, `refactorer`, `frontend` |
 | Integration and state files | Unknown causes → `debugger` |
 
 Reading a range to verify a report is yours; reading to do the work in its place is not.

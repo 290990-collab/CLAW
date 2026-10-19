@@ -138,7 +138,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 
 ## Agents
 
-31 agents. A project installs only the ones its profile and your answers need.
+32 agents. A project installs only the ones its profile and your answers need.
 
 **Always installed**
 
@@ -169,6 +169,7 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 | `literature` | Finds and reads publications |
 | `skill-runner` | Runs another author's skill for the coordinator |
 | `runner` | Runs tests, builds and logs, reports only the outcome |
+| `light-implementer` | Writes code from a closed specification and its acceptance test, cheaply |
 | `market-researcher` | Audience, alternatives, the promise the product keeps |
 | `campaign-planner` | Channel, cadence, headline, what to measure |
 | `copywriter` | Writes the copy, every claim with its proof |

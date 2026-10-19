@@ -2,7 +2,7 @@ name = "research"
 description = "Experimental research: the product is reproducible evidence, not software that runs."
 critical_surface = "The validity of the conclusion: a number produced by a wrong protocol is indistinguishable from a right one."
 
-agents = ["debugger", "api-scout", "results-analyst", "literature", "scientific-reviewer", "silent-failure-hunter", "conversation-analyzer", "runner"]
+agents = ["debugger", "api-scout", "results-analyst", "literature", "scientific-reviewer", "silent-failure-hunter", "conversation-analyzer", "runner", "light-implementer"]
 cycles = ["research"]
 recommended_orchestrations = ["agent-teams"]
 

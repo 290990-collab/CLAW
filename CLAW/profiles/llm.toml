@@ -2,7 +2,7 @@ name = "llm"
 description = "Systems in which a language model produces text, decisions or actions that the code uses."
 critical_surface = "The model's behaviour is not in the code: a prompt that holds on three examples says nothing about the rest, and without repeatable evaluation every change is an opinion."
 
-agents = ["debugger", "api-scout", "scientific-reviewer", "results-analyst", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer", "runner"]
+agents = ["debugger", "api-scout", "scientific-reviewer", "results-analyst", "silent-failure-hunter", "conversation-analyzer", "comment-analyzer", "runner", "light-implementer"]
 cycles = ["research"]
 recommended_orchestrations = []
 

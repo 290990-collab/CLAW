@@ -4,7 +4,8 @@ description: >
   Implementation of features, changes and fixes already planned: use when it is
   clear WHAT to do (from an architect's plan or a precise request) and the code
   has to be written. Not for debugging unknown causes, not for behaviour-
-  preserving refactoring, not for writing the test suite.
+  preserving refactoring, not for writing the test suite, not for a closed
+  specification with its acceptance test (`light-implementer`).
 model: sonnet
 effort: medium
 tools: Read, Grep, Glob, Edit, Write, Bash
