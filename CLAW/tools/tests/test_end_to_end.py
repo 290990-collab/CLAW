@@ -223,7 +223,7 @@ class TestRealFramework(unittest.TestCase):
     def test_orchestration_headings_are_recognizable(self):
         """`installed_orchestration` recognises a module by its first heading
         inside the region: if that heading appeared in the coordinator's kernel,
-        in a cycle or in another module, `--down` would find an orchestration
+        in a cycle or in another module, `down` would find an orchestration
         the project does not have, or two, and would rewrite the wrong guide.
         The opposite direction holds too: a cycle's heading inside a module
         would make `installed_cycles` find a cycle the profile does not have."""
@@ -501,7 +501,7 @@ class TestRealFramework(unittest.TestCase):
             self.assertNotRegex(text, doctor.UNSAFE_CHARS_RE, rel)
 
     def test_sync_down_preserves_domain_cycles(self):
-        """The `--down` procedure reassembles the coordinator's guide from the
+        """The `down` procedure reassembles the coordinator's guide from the
         source: if it does not pass the cycles back, a `web` project loses the
         design cycle at every update, silently and with no findings."""
         version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
@@ -523,7 +523,7 @@ class TestRealFramework(unittest.TestCase):
 
     def test_sync_down_preserves_the_orchestration(self):
         """Like the cycles, the orchestration sits inside the region and no file
-        says which one it is: `--down` has to find it again, in the same order,
+        says which one it is: `down` has to find it again, in the same order,
         for the reassembled region to verify. A region in which none is
         recognised is refused: the default in its place would hide a renamed
         heading."""

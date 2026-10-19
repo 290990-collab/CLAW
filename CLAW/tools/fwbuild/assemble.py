@@ -82,7 +82,7 @@ def installed_cycles(region_body: str, framework_root: Path) -> list[Path]:
     """The domain cycles already present in an installed kernel region.
 
     A project does not record which profile it was born from: reassembling from
-    `coordinator/` without this would silently delete them at every `--down`,
+    `coordinator/` without this would silently delete them at every `down`,
     and no doctor finding would see it. They are recognised by their first
     heading.
     """

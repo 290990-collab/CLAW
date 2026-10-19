@@ -424,7 +424,7 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
 
     A skill or a hook that differs from the source is a local change and
     stays. At a different version "what is missing" would be measured against
-    the wrong source: `--down` first.
+    the wrong source: `down` first.
     """
     prj, fw = Path(project_root), Path(framework_root)
     manifest = _manifest(prj)
@@ -567,7 +567,7 @@ def apply_down(
     the source's method and keep what surrounds them; cards take their front
     matter from `_frontmatter_merge`, and every roster row's Model cell takes
     its card's model and effort. The manifest records the source cards'
-    front matter — the reference of the next `--down` — and the source.
+    front matter — the reference of the next `down` — and the source.
     """
     prj, fw = Path(project_root), Path(framework_root)
     _verify(prj, [op for op in ops if op.action != KEEP])
@@ -697,7 +697,7 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
 def project_heading(text: str) -> str | None:
     """The heading of the project block of a guide or style in the source: the
     last `## ` section, if it holds every placeholder of the file. `None`
-    without placeholders, or with one outside the last section: there `--down`
+    without placeholders, or with one outside the last section: there `down`
     could not tell what belongs to the project."""
     heads = list(SECTION_RE.finditer(text))
     total = len(doctor.PLACEHOLDER_RE.findall(text))
@@ -828,7 +828,7 @@ def _record(manifest: dict, name: str) -> dict | None:
 def _frontmatter_merge(
     installed: str, original: str, record: dict | None, adopt: bool
 ) -> tuple[str, list[str], list[str]]:
-    """`(front matter, taken, kept)` after `--down`.
+    """`(front matter, taken, kept)` after `down`.
 
     A key the project still has at the value recorded at the last sync is taken
     from the source: nobody chose it. A different value is a local choice and

@@ -389,7 +389,7 @@ class TestRepair(unittest.TestCase):
 
 class TestDown(unittest.TestCase):
     def test_down_plan_on_an_older_install(self):
-        """`--down` also brings skills and hooks, not only the kernel regions. A
+        """`down` also brings skills and hooks, not only the kernel regions. A
         region touched up by hand is lost, and the plan says so first."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
@@ -473,7 +473,7 @@ class TestDown(unittest.TestCase):
             self.assertEqual(tree(root), before)
 
     def test_down_brings_guides_and_style_keeping_the_project_block(self):
-        """Guides and the style have no kernel region, and `--down` never touched
+        """Guides and the style have no kernel region, and `down` never touched
         them: a new rule in a guide reached no installed project. The text comes
         from the source, the block the project filled in stays."""
         with tempfile.TemporaryDirectory() as d:
@@ -503,7 +503,7 @@ class TestDown(unittest.TestCase):
                 self.assertEqual((root / rel).read_text(encoding="utf-8"), expected, rel)
 
     def test_down_keeps_a_guide_whose_project_block_is_gone(self):
-        """Without the block's heading `--down` cannot tell what belongs to the
+        """Without the block's heading `down` cannot tell what belongs to the
         project, and replacing the whole file would erase the adaptation: it stays
         as it is, and the plan names it."""
         with tempfile.TemporaryDirectory() as d:
@@ -525,7 +525,7 @@ class TestDown(unittest.TestCase):
             self.assertEqual(p.read_bytes(), before)
 
     def test_every_placeholder_in_a_guide_sits_in_its_last_section(self):
-        """`--down` recognises the project block by the placeholder in the last
+        """`down` recognises the project block by the placeholder in the last
         section. A section added after the block would move it, and that guide
         would stop updating in projects without anything failing."""
         paths = sorted((FRAMEWORK / "shared").rglob("*.md")) + sorted(
@@ -568,7 +568,7 @@ class TestApplyInstall(unittest.TestCase):
     def test_install_leaves_only_placeholders_and_records_the_cards(self):
         """What the tool writes is complete but for the project's words: the only
         finding is PLACEHOLDER, and the record of every card is there for the
-        first `--down`."""
+        first `down`."""
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / "prj"
             root.mkdir()

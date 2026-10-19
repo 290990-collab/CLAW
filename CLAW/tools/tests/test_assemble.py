@@ -106,7 +106,7 @@ class TestSplitSource(unittest.TestCase):
 
 class TestInstalledCycles(unittest.TestCase):
     def test_detects_only_the_cycles_actually_present(self):
-        """`--down` reassembles from `coordinator/`: without detecting the
+        """`down` reassembles from `coordinator/`: without detecting the
         cycles already installed it would delete them, and the project does not
         record its profile."""
         root = Path(__file__).resolve().parents[2]
@@ -128,7 +128,7 @@ class TestInstalledOrchestration(unittest.TestCase):
 
     def test_region_without_a_module_is_an_error(self):
         """No module recognised usually means a heading renamed in the source:
-        falling back on the default would rewrite the wrong model at `--down`,
+        falling back on the default would rewrite the wrong model at `down`,
         in silence. The choice goes back to whoever reassembles."""
         with self.assertRaises(ValueError) as e:
             assemble.installed_orchestration("## Delegation", self.ROOT)
