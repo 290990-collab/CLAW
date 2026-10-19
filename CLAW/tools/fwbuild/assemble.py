@@ -4,6 +4,7 @@ The generated method lives inside the kernel region; front matter and project
 blocks stay outside, because they are the surface the user adapts.
 """
 
+import tomllib
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -21,6 +22,10 @@ COORDINATOR_WORD_BUDGET = 3800
 
 # The orchestration of whoever does not choose one.
 DEFAULT_ORCHESTRATION = "orchestrator-worker"
+
+# The frontmatter keys generated from `agents/agents.toml`; name and description stay in the card.
+CARD_KEYS = ("model", "effort", "maxTurns", "tools", "color")
+REQUIRED_CARD_KEYS = ("model", "effort", "tools", "color")
 
 
 def read_method(method_dir: Path, extra: Sequence[Path] = ()) -> str:
@@ -171,3 +176,53 @@ def split_source(text: str) -> tuple[str, str, str]:
     if d_at < m_at:
         raise ValueError(f"{DOMAIN_HEADING} precedes {METHOD_HEADING}")
     return frontmatter, rest[m_at:d_at], rest[d_at:]
+
+
+def agent_rows(framework_root: Path) -> dict[str, dict[str, str | int]]:
+    """The calibration row of each agent, from `agents/agents.toml`.
+
+    Rows and cards must match one to one: a row without a card, or a card
+    without a row, would leave an agent calibrated by nobody.
+    """
+    text = (framework_root / "agents" / "agents.toml").read_text(encoding="utf-8")
+    rows = tomllib.loads(text)
+    for name, row in rows.items():
+        for key, value in row.items():
+            if key not in CARD_KEYS:
+                raise ValueError(f"agents.toml [{name}]: unknown key {key!r}")
+            if isinstance(value, bool) or not isinstance(value, (str, int)):
+                raise ValueError(f"agents.toml [{name}]: {key} must be a string or an integer")
+        for key in REQUIRED_CARD_KEYS:
+            if key not in row:
+                raise ValueError(f"agents.toml [{name}]: missing {key}")
+    cards = {p.stem for p in (framework_root / "agents").glob("*.md")}
+    for name in rows:
+        if name not in cards:
+            raise ValueError(f"agents.toml [{name}]: no agents/{name}.md")
+    orphans = sorted(cards - set(rows))
+    if orphans:
+        raise ValueError(f"agents/{orphans[0]}.md has no row in agents.toml")
+    return rows
+
+
+def render_card(text: str, row: dict) -> str:
+    """Rewrites the calibration keys of an agent card from its row.
+
+    Idempotent: the old calibration lines are dropped and the row's are placed
+    just before the closing '---'; the rest of the card is left as it is.
+    """
+    lines = text.replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        raise ValueError("source without front matter")
+    close = next(
+        (i for i in range(1, len(lines)) if lines[i].strip() == "---"), None
+    )
+    if close is None:
+        raise ValueError("front matter not closed")
+    kept = [
+        line
+        for line in lines[:close]
+        if not any(line.startswith(f"{key}:") for key in CARD_KEYS)
+    ]
+    kept += [f"{key}: {row[key]}" for key in CARD_KEYS if key in row]
+    return "\n".join(kept + lines[close:])

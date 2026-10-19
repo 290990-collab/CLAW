@@ -21,6 +21,17 @@ class TestRealFramework(unittest.TestCase):
     def test_all_twenty_nine_agents_present(self):
         self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 32)
 
+    def test_cards_match_agents_toml(self):
+        """The calibration lives in `agents/agents.toml`: a value changed in a card
+        alone is a value the next sync silently undoes."""
+        rows = assemble.agent_rows(FRAMEWORK)
+        for path in sorted((FRAMEWORK / "agents").glob("*.md")):
+            text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+            self.assertEqual(
+                assemble.render_card(text, rows[path.stem]), text,
+                f"{path.name} differs from agents.toml: edit the row, then run sync_cards.py",
+            )
+
     def test_no_agent_declares_fable(self):
         for p in (FRAMEWORK / "agents").glob("*.md"):
             self.assertNotIn("model: fable", p.read_text(encoding="utf-8"), p.name)

@@ -45,7 +45,7 @@ For each installed agent, one row:
 |---|---|---|
 | `frontend` | sonnet / medium | sonnet / medium |
 
-- **source**: `model:` and `effort:` of `<FW>/agents/<agent>.md`.
+- **source**: `model` and `effort` of the agent's row in `<FW>/agents/agents.toml`.
 - **current**: the same lines in the project's card.
 
 **Always reason from the source, never from the current value.** A second run must give the same result as the first, not move the values again at every round. If current ≠ source, the difference comes from a previous `/claw tune` or from a hand: it is flagged in the plan, not added up.

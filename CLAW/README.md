@@ -9,7 +9,7 @@ method/              COMMON kernel → CLAUDE.md, read by everyone at every spaw
 coordinator/         COORDINATOR kernel → shared/orchestration.md, on demand
 orchestrations/      orchestration models: one is appended to the guide, orchestrator-worker by default
 cycles/              domain cycles, appended to the guide if the profile asks
-agents/              31 agents: method + project [TO FILL IN] block
+agents/              32 agents: method + project [TO FILL IN] block; agents.toml holds their model, effort, tools
 shared/core/         generic guides, loaded on demand
 shared/domain/       domain guides (design, research, data, llm, marketing)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions
@@ -20,6 +20,7 @@ skills/claw/         the /claw skill: SKILL.md routes, actions/ holds one file p
 skills/              plus the packages connected with `claw skills add` and pool.toml: local, never published
 tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
+tools/sync_cards.py  writes the cards' front matter from agents/agents.toml
 tools/tests/         the tests
 claw.py              the command line
 ```

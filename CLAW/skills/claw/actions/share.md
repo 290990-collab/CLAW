@@ -13,7 +13,7 @@
    |---|---|
    | what holds for anyone executing a task | `<FW>/method/` |
    | when to delegate, to whom, with what prompt, the project's state | `<FW>/coordinator/` |
-   | the mandate of a specific role | `<FW>/agents/<name>.md` |
+   | the mandate of a specific role | `<FW>/agents/<name>.md`; model, effort and tools in its row of `<FW>/agents/agents.toml`, then `python <FW>/tools/sync_cards.py` |
    | reference material of a domain | `<FW>/shared/` |
    | a check the agent must not be able to skip | `<FW>/hooks/`, and its entry in `<FW>/tools/fwbuild/settings.py` |
 

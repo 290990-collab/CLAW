@@ -22,4 +22,5 @@ The criterion opens and closes on purpose: if an agent misses the target, almost
 - **Light model, narrow question:** whatever goes to a light model is answered by a list or a table it fills by searching, or by sorting into categories its card fixes. "Whether", "is it safe", "why" stay with you or go to a mid-tier agent: a verdict from an executor that cannot give it is paid twice, once by it and once by your check.
 - **Near misses named:** what a pressed agent returns in place of the result — narrower scope, a plan instead of the change, a check that never ran, a fix that holds only on the example. Each one named is an exit closed; none fits → the line is left out.
 - **Reviewer prompts:** MATERIAL lists how *this* change can look right and be wrong — the boundary it crosses, the consumer it may break. A generic "check it" finds less.
+- **Report kept:** a deliverable you ask for — signatures, a table, counts — goes above the standard report, never in place of it.
 - **Second round (rule 8):** ONLY the findings, never a prompt rebuilt from scratch.

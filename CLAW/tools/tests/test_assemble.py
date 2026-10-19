@@ -142,5 +142,95 @@ class TestInstalledOrchestration(unittest.TestCase):
             assemble.installed_orchestration(body, self.ROOT)
 
 
+class TestAgentRows(unittest.TestCase):
+    ROW = (
+        'model = "opus"\neffort = "high"\nmaxTurns = 25\n'
+        'tools = "Read, Grep"\ncolor = "blue"\n'
+    )
+
+    def _root(self, d, toml, cards=("a", "b")):
+        root = Path(d)
+        (root / "agents").mkdir()
+        (root / "agents" / "agents.toml").write_text(toml, encoding="utf-8")
+        for name in cards:
+            (root / "agents" / f"{name}.md").write_text(SOURCE, encoding="utf-8")
+        return root
+
+    def test_valid_rows_are_returned_with_int_maxturns(self):
+        toml = f"[a]\n{self.ROW}\n[b]\nmodel = \"haiku\"\neffort = \"low\"\ntools = \"Read\"\ncolor = \"red\"\n"
+        with tempfile.TemporaryDirectory() as d:
+            rows = assemble.agent_rows(self._root(d, toml))
+        self.assertEqual(set(rows), {"a", "b"})
+        self.assertEqual(rows["a"]["maxTurns"], 25)
+        self.assertIsInstance(rows["a"]["maxTurns"], int)
+        self.assertEqual(rows["b"]["model"], "haiku")
+        self.assertNotIn("maxTurns", rows["b"])
+
+    def _rejects(self, toml, cards=("a",)):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                assemble.agent_rows(self._root(d, toml, cards))
+
+    def test_unknown_key_is_rejected(self):
+        self._rejects(f"[a]\n{self.ROW}efort = \"x\"\n")
+
+    def test_bool_value_is_rejected(self):
+        self._rejects(f"[a]\n{self.ROW.replace('maxTurns = 25', 'maxTurns = true')}")
+
+    def test_nested_table_value_is_rejected(self):
+        self._rejects(f"[a]\n{self.ROW}\n[a.extra]\nx = 1\n")
+
+    def test_missing_required_key_is_rejected(self):
+        no_color = self.ROW.replace('color = "blue"', "")
+        self._rejects("[a]\n" + no_color)
+
+    def test_row_without_card_is_rejected(self):
+        self._rejects(f"[a]\n{self.ROW}\n[ghost]\n{self.ROW}", cards=("a",))
+
+    def test_card_without_row_is_rejected(self):
+        self._rejects(f"[a]\n{self.ROW}", cards=("a", "orphan"))
+
+
+class TestRenderCard(unittest.TestCase):
+    BODY = "\n## Method\n\nDo the thing.\n---\nrule above\n"
+    TEXT = (
+        "---\nname: implementer\n"
+        "description: >\n  First line of the folded\n  block continues here.\n"
+        "color: red\nmodel: sonnet\ntools: Read\nmaxTurns: 25\neffort: low\n"
+        "---\n" + BODY
+    )
+    ROW = {"model": "opus", "effort": "high", "maxTurns": 40, "tools": "Read, Grep", "color": "blue"}
+
+    def test_calibration_lines_rewritten_rest_untouched(self):
+        out = assemble.render_card(self.TEXT, self.ROW)
+        self.assertEqual(
+            out,
+            "---\nname: implementer\n"
+            "description: >\n  First line of the folded\n  block continues here.\n"
+            "model: opus\neffort: high\nmaxTurns: 40\ntools: Read, Grep\ncolor: blue\n"
+            "---\n" + self.BODY,
+        )
+
+    def test_idempotent(self):
+        once = assemble.render_card(self.TEXT, self.ROW)
+        self.assertEqual(assemble.render_card(once, self.ROW), once)
+
+    def test_row_without_maxturns_drops_the_line(self):
+        row = {k: v for k, v in self.ROW.items() if k != "maxTurns"}
+        out = assemble.render_card(self.TEXT, row)
+        self.assertNotIn("maxTurns", out)
+        self.assertIn("model: opus\neffort: high\ntools:", out)
+
+    def test_missing_frontmatter_is_an_error(self):
+        with self.assertRaises(ValueError) as e:
+            assemble.render_card("no front matter\n", self.ROW)
+        self.assertEqual(str(e.exception), "source without front matter")
+
+    def test_unclosed_frontmatter_is_an_error(self):
+        with self.assertRaises(ValueError) as e:
+            assemble.render_card("---\nname: x\nmodel: opus\n", self.ROW)
+        self.assertEqual(str(e.exception), "front matter not closed")
+
+
 if __name__ == "__main__":
     unittest.main()

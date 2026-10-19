@@ -1,0 +1,34 @@
+# Every card's calibration: the frontmatter keys after `description`.
+# Edit here, then `python CLAW/tools/sync_cards.py`; test_cards_match_agents_toml holds the two together.
+api-scout = { model = "haiku", effort = "high", maxTurns = 25, tools = "Read, Grep, Glob, WebSearch, WebFetch", color = "cyan" }
+architect = { model = "opus", effort = "high", tools = "Read, Grep, Glob, Bash", color = "purple" }
+campaign-planner = { model = "opus", effort = "medium", tools = "Read, Grep, Glob", color = "blue" }
+claim-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob", color = "red" }
+comment-analyzer = { model = "haiku", effort = "high", tools = "Read, Grep, Glob", color = "green" }
+compliance-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob", color = "red" }
+content-analyst = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Bash", color = "cyan" }
+conversation-analyzer = { model = "haiku", effort = "high", tools = "Read, Grep, Glob", color = "purple" }
+copywriter = { model = "sonnet", effort = "low", tools = "Read, Grep, Glob, Edit, Write", color = "green" }
+data-ingestion = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "green" }
+data-quality-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob", color = "cyan" }
+debugger = { model = "opus", effort = "high", tools = "Read, Grep, Glob, Edit, Bash", color = "yellow" }
+deploy = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "orange" }
+explorer = { model = "haiku", effort = "medium", maxTurns = 30, tools = "Read, Grep, Glob", color = "cyan" }
+final-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, Bash", color = "pink" }
+frontend = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "purple" }
+implementer = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "green" }
+infra = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "orange" }
+light-implementer = { model = "haiku", effort = "medium", maxTurns = 25, tools = "Read, Grep, Glob, Edit, Write, Bash", color = "green" }
+literature = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, WebSearch, WebFetch", color = "purple" }
+market-researcher = { model = "opus", effort = "low", tools = "Read, Grep, Glob, WebSearch, WebFetch", color = "yellow" }
+perf-analyst = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, Bash", color = "yellow" }
+refactorer = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "blue" }
+results-analyst = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, Bash", color = "cyan" }
+runner = { model = "haiku", effort = "medium", maxTurns = 20, tools = "Read, Grep, Glob, Bash", color = "blue" }
+scientific-reviewer = { model = "opus", effort = "high", tools = "Read, Grep, Glob", color = "orange" }
+security-reviewer = { model = "opus", effort = "high", tools = "Read, Grep, Glob", color = "red" }
+silent-failure-hunter = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob", color = "red" }
+skill-runner = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash, Skill", color = "purple" }
+tester = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "yellow" }
+visual-designer = { model = "sonnet", effort = "low", tools = "Read, Grep, Glob, Edit, Write", color = "orange" }
+visual-director = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, WebSearch, WebFetch", color = "pink" }
