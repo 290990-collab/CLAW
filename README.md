@@ -4,7 +4,7 @@
 
 # CLAW
 
-### It asks one question. Then it sends in the crew.
+### Let's send Claude to meditate.
 
 **A working method for Claude Code: one set of rules and a crew of agents, installed in your project in one command.**
 
