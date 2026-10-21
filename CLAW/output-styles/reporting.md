@@ -68,10 +68,10 @@ installed, is not guessed: say so.
 | `rigorous debugging` | the cause explains every symptom, a refuted hypothesis is undone | “Rigorous debugging” |
 | `honesty` | “I don't know” and “it's wrong”, never agreement against the evidence | “Professional honesty” |
 | `which decision` | whoever cites a rule says what it changed | “Citing a rule means naming the decision it changed” |
-| `minimal change` | the smallest change, one problem at a time | “Minimal Safe Change” |
-| `existing pattern` | reuse what the repo already has | “Existing Pattern First” |
+| `minimal change` | the smallest complete change, the cause fixed where it lives, one problem at a time | “Minimal Safe Change” |
+| `existing pattern` | before new code: the repo, then standard library and platform, then installed dependencies | “Existing Pattern First” |
 | `contract first` | find every consumer, of written rules too | “Contract First” |
-| `kiss` | the simplest solution for today's requirement | “KISS and local style” |
+| `kiss` | the simplest solution for today's requirement, never cutting safety | “KISS and local style” |
 | `real green` | never weaken a check; if the check is wrong, fix the check | “No shortcut to green” |
 | `fail loudly` | no swallowed errors, no invented defaults | “Fail loudly” |
 | `useful test` | which defect would make it fail? | “Quality > quantity” |
