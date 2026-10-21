@@ -6,7 +6,9 @@
 
 ### Let's send Claude to meditate.
 
-**Clear mind, sharper code.** One command gives Claude Code a method to think by and a crew of agents to build with.
+*Clear mind, sharper code.*
+
+One command gives Claude Code a method to think by and a crew of agents to build with.
 
 [![Tests](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml/badge.svg)](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python&logoColor=white)
