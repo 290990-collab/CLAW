@@ -24,6 +24,8 @@ source.
 > `.claude/agents/`, `.claude/shared/`, hooks, state files) that Claude Code reads
 > in every session.
 
+<br>
+
 ## Features
 
 | | What it means for you |
@@ -34,6 +36,8 @@ source.
 | **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
 | **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
 | **One source, many projects** | Update CLAW once, then bring each project up to date. What you adapted stays |
+
+<br>
 
 ## Getting started
 
@@ -76,6 +80,8 @@ Then, in each project, open Claude Code in the project folder and run:
 
 It asks five questions, shows every file it will write and waits for your ok.
 
+<br>
+
 ## Everyday use
 
 | I want to… | Do this |
@@ -95,6 +101,8 @@ It asks five questions, shows every file it will write and waits for your ok.
 > **From 2.2 to 2.5:** the manifest is now `.claude/claw.json`. In each
 > project, rename `.claude/framework.json` to `.claude/claw.json` before `/claw update`.
 > `FRAMEWORK_GATEGUARD` is now `CLAW_GATEGUARD`.
+
+<br>
 
 ## Commands
 
@@ -135,6 +143,8 @@ the results. Claude may also start it on its own for a long task, and says so.
 Commands that write ask first; `--yes` skips the question. `claw --help` lists the
 others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 `skills`): `/claw` runs them for you.
+
+<br>
 
 ## Agents
 
@@ -188,6 +198,8 @@ work wrong even with perfect code, and adds the matching reviewer.
 | `perf-analyst` | A declared performance requirement |
 | `claim-reviewer` | Public claims about the product |
 
+<br>
+
 ## Profiles
 
 The first question of `/claw install`. It picks the extra agents, the guides and
@@ -208,6 +220,8 @@ the work cycle; `/claw change` switches it later.
 | `orchestrator-worker` (default) | The coordinator hands out work and collects reports |
 | `agent-teams` | Agents message each other. Experimental, needs an interactive session |
 
+<br>
+
 ## Talking to it
 
 | Feature | How it works | Example |
@@ -222,6 +236,8 @@ the work cycle; `/claw change` switches it later.
 | `foc` | Only the real signal of the last reply |
 | `ref` | The last reply with reference codes |
 | `eli` | The last reply explained simply |
+
+<br>
 
 ## Settings
 
