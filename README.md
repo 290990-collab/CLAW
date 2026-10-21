@@ -311,7 +311,7 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 ```json
 {
   "source": "...",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "profile": "software",
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
