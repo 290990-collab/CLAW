@@ -4,20 +4,38 @@
 
 # CLAW
 
-**A working method for Claude Code, installed in your project in one command.**
+### It asks before it guesses. It proves before it claims.
+
+**A working method for Claude Code: one set of rules and a team of agents, installed in your project in one command.**
 
 [![Tests](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml/badge.svg)](https://github.com/290990-collab/CLAW/actions/workflows/tests.yml)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-[Features](#features) · [Getting started](#getting-started) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [Profiles](#profiles) · [Talking to it](#talking-to-it) · [Settings](#settings)
+<table>
+<tr>
+<td align="center" width="33%"><h3>22,000 lines</h3>a billing service and its tests, built from one request<br><sub><a href="#proof">948 tests green, 2 h</a></sub></td>
+<td align="center" width="33%"><h3>16 of 16</h3>bug tickets fixed in one prompt<br><sub><a href="#proof">checked by hidden tests</a></sub></td>
+<td align="center" width="33%"><h3>91%</h3>of the build's tokens went to cheaper agents<br><sub><a href="#proof">Opus plans, Sonnet writes</a></sub></td>
+</tr>
+</table>
+
+[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
 
 </div>
 
-Claude Code gives you agents, hooks and skills, but no method. CLAW adds one: the
-same rules and the same team of agents in every project, kept up to date from one
-source.
+<br>
+
+## Why
+
+Claude Code is brilliant on a small task and drifts on a big one. It guesses what an
+unclear request meant, says "done" on what it never ran, rewrites a failing test until it
+passes, and spends Opus tokens reading files a cheaper model could read.
+
+Claude Code gives you agents, hooks and skills, but no method. CLAW adds one: the same
+rules and the same team of agents in every project, kept up to date from one source.
+Built for long tasks and large repos, where those habits cost the most.
 
 > [!NOTE]
 > CLAW does not run on its own. It installs files into your project (`CLAUDE.md`,
@@ -26,7 +44,22 @@ source.
 
 <br>
 
-## Features
+## Before / after
+
+| You say | Claude Code alone, often | With CLAW |
+|---|---|---|
+| "Add an export" | Picks a format and builds it | Asks the one question that changes the work: CSV or JSON, and for whom |
+| "Fix the failing test" | Edits the expected value until it is green | Fixes the cause. If the test is what is wrong, it says so and fixes it in its own change |
+| "Add a date field" | Writes a date picker by hand | Checks the repo, then the platform: reuses your input with `type="date"` |
+| "Is it done?" | "Done!" | "Done. Not verified: the migration was not run on a real database" |
+| A long task | One expensive model does everything | Opus plans and checks; cheaper agents read, run and write |
+| "Commit and push it" | Commits and pushes | Shows what will change and waits for your ok |
+
+<sub>Illustrative. Each row is a rule in the installed <code>CLAUDE.md</code>, not a recorded transcript.</sub>
+
+<br>
+
+## What's inside
 
 | | What it means for you |
 |---|---|
@@ -79,6 +112,23 @@ Then, in each project, open Claude Code in the project folder and run:
 ```
 
 It asks five questions, shows every file it will write and waits for your ok.
+
+<br>
+
+## Proof
+
+Measured with `claude -p` on Claude Code 2.1.294 to 2.1.301, Opus 5.5 as coordinator. Nothing rounded up, and the row that loses stays.
+
+| Task | Result | Cost |
+|---|---|---|
+| **Build** `tally`, a B2B billing service, from one request | 10,846 lines of code, 11,390 lines of tests, 948 tests green, in 2 h 01 min. 7 `implementer` agents on Sonnet 5.5; 91% of the tokens were theirs, 9% Opus | 85% of one Pro session, read in the app |
+| **Fix** 16 seeded bugs in `tally`, given as 16 tickets in one prompt | 16 of 16 fixed in both runs, checked by hidden tests | $3.89 and $5.95 |
+| **Small tasks**: one bug fix, one medium feature | Both solved, with and without CLAW | **CLAW costs more**: +31% and +15% to +96% |
+
+What this does not show yet: a run of the 16 tickets *without* CLAW, so no saving is
+claimed. On small tasks the method is overhead, and CLAW accepts it: it is tuned for
+the long tasks where an unchecked guess costs hours. The test repositories are built
+for the eval and are smaller than most production code.
 
 <br>
 
@@ -150,6 +200,9 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 
 32 agents. A project installs only the ones its profile and your answers need.
 
+<details>
+<summary><strong>The full roster</strong>: always installed, by profile, reviewers of the critical surface</summary>
+
 **Always installed**
 
 | Agent | What it does |
@@ -197,6 +250,8 @@ work wrong even with perfect code, and adds the matching reviewer.
 | `compliance-reviewer` | Personal data, licences, terms of use |
 | `perf-analyst` | A declared performance requirement |
 | `claim-reviewer` | Public claims about the product |
+
+</details>
 
 <br>
 
@@ -266,3 +321,29 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 
 > [!WARNING]
 > Errors cannot be accepted: they must be fixed.
+
+<br>
+
+## FAQ
+
+**Does it work with Codex, Cursor or Gemini?**
+No. CLAW is built on Claude Code's agents, hooks and skills.
+
+**Does it slow Claude down?**
+On a small task, a little: see [Proof](#proof). On a long one, the questions it asks and
+the checks it runs are what keep the work from going wrong.
+
+**Will it commit, push or install anything on its own?**
+Never. Commits, pushes, installs and anything irreversible wait for your ok, on a preview.
+
+**What does it need?**
+Python 3.11 and git. No packages, no service, no account.
+
+**I changed a rule for my project. Will an update overwrite it?**
+No. Your project sections and your adaptations stay; `/claw update` shows what changes first.
+
+<br>
+
+## License
+
+[MIT](LICENSE).
