@@ -381,13 +381,13 @@ class TestRealFramework(unittest.TestCase):
         _, _, domain = assemble.split_source(text)
         self.assertIn("critical surface", domain)
 
-    def test_the_memory_skill_pairs_every_conflict_with_the_repo(self):
-        """Memory lives outside the repository: no finding sees it, and a
+    def test_the_tidy_skill_pairs_every_conflict_with_the_repo(self):
+        """The TODO and memory drift from the repository: no finding sees them, and a
         conflict declared without the line that contradicts it becomes an
         invented alarm that survives across sessions. The paired column is the
         only thing preventing that, and it is prose: it would vanish in a
         rewrite."""
-        text = (FRAMEWORK / "skills" / "claw" / "actions" / "memory.md").read_text(
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "tidy.md").read_text(
             encoding="utf-8"
         )
         block = text[text.index("## Step 4") : text.index("## Step 5")]

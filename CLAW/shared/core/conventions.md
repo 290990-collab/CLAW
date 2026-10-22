@@ -28,6 +28,7 @@ Cross-cutting rules of form.
 - **No chronicle:** no history of the change ("used to be", "fix for") and no IDs of internal documents. The constraint is stated in the present tense; the history lives in the commit.
 - They are updated or removed together with the code they describe.
 - Unused commented-out code is deleted.
+- **Declared debt:** a shortcut taken on purpose leaves `TODO: <what it does not handle> — <when to revisit>` where it lives. A bare `TODO` is a note, not debt: whoever reads it cannot tell when it stops being acceptable.
 
 ## Documentation
 

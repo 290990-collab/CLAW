@@ -168,7 +168,7 @@ One skill, one action at a time. `/claw` alone lists the actions.
 | `/claw change` | Changes the profile or the orchestration |
 | `/claw share` | Makes a change you made here part of CLAW, for every project |
 | `/claw tune` | Adjusts each agent's model and effort to this project |
-| `/claw memory` | Finds stale facts in Claude's memory of this project |
+| `/claw tidy` | Finds what is stale in the to-do list and in Claude's memory of this project, and the shortcuts left in the code |
 | `/claw comply <rule>` | Measures how often Claude follows a rule. Uses your tokens, so it asks first |
 | `/claw uninstall` | Removes CLAW. What you adapted goes to `.claude/claw-archive/` |
 
