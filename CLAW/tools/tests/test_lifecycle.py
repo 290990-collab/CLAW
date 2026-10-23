@@ -851,5 +851,51 @@ class TestUpdate(unittest.TestCase):
             self.assertIn("agents", str(e.exception))
 
 
+class TestUpdateLeavesNoResidue(unittest.TestCase):
+    """An updated installation is byte for byte the fresh installation of its
+    final choices: whatever an update forgets to take away — a card, a guide,
+    a cycle, a roster row, a settings entry, a hook — shows up as a difference."""
+
+    SEQUENCES = {
+        "agent and guide in and out": [
+            {"add": ["frontend", "domain/llm-guide.md"]},
+            {"remove": ["frontend", "domain/llm-guide.md"]},
+        ],
+        "profile there and back": [{"profile_name": "web"}, {"profile_name": "software"}],
+        "profile to another field": [{"profile_name": "data"}, {"profile_name": "web"}],
+        "orchestration there and back": [
+            {"orchestration": "agent-teams"},
+            {"orchestration": "orchestrator-worker"},
+        ],
+        "gateguard off and on": [{"gateguard": "off"}, {"gateguard": "on"}],
+        "everything at once": [
+            {"add": ["perf-analyst", "domain/llm-guide.md"]},
+            {"profile_name": "data", "orchestration": "agent-teams"},
+            {"gateguard": "off", "remove": ["domain/llm-guide.md"]},
+            {"profile_name": "web", "remove": ["deploy"]},
+        ],
+    }
+
+    def test_an_updated_installation_equals_a_fresh_one(self):
+        for label, steps in self.SEQUENCES.items():
+            with self.subTest(label), tempfile.TemporaryDirectory() as d:
+                root = install(d)
+                for changes in steps:
+                    run_update(root, **changes)
+                final = lifecycle.installed_choices(read_json(root / MANIFEST))
+
+                fresh = Path(d) / "fresh"
+                (fresh / ".claude").mkdir(parents=True)
+                (fresh / "CLAUDE.md").write_bytes(trial_install.PROJECT_SECTIONS.encode("utf-8"))
+                (fresh / USER_RULES).write_bytes(trial_install.USER_RULES.encode("utf-8"))
+                lifecycle.apply_install(fresh, FRAMEWORK, lifecycle.plan_install(fresh, FRAMEWORK, final), final)
+
+                updated, new = tree(root), tree(fresh)
+                diff = sorted(
+                    rel for rel in updated.keys() | new.keys() if updated.get(rel) != new.get(rel)
+                )
+                self.assertEqual(diff, [])
+
+
 if __name__ == "__main__":
     unittest.main()
