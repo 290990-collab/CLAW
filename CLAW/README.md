@@ -52,11 +52,27 @@ Python 3.11+; nothing else to install.
 The folder is a Claude Code plugin (`/plugin marketplace add 290990-collab/CLAW`,
 `/plugin install claw@claw`): `/claw install`, in Claude Code in a project, installs
 the framework.
-The installation asks two languages per project: the chat's, written as
-Claude Code's `language` setting in the project's `.claude/settings.local.json`,
-and the codebase's (comments and identifiers), written in `conventions.md`.
-Without `language`, the method's kernel answers in the language of the user's
-messages.
+The installation asks the chat's language, written as Claude Code's `language`
+setting in the project's `.claude/settings.local.json`. Without it, the method's
+kernel answers in the language of the user's messages.
+
+## What it runs and writes
+
+- **Runs** only `python "<FW>/claw.py"`, from the `/claw` skill: Python standard
+  library, no network access, no other program started, nothing sent anywhere.
+- **Writes** into the project, and only after the user approves a plan that
+  names every file: `CLAUDE.md` (the kernel region), `.claude/agents/`,
+  `.claude/shared/`, `.claude/output-styles/`, `.claude/hooks/`, `.claude/claw.json`,
+  `.claude/user-rules.md` (created empty) and the missing `docs/` state files.
+- **Changes Claude Code's settings** in the project's `.claude/settings.json`:
+  `deny` rules that stop the `Read` tool on `.env`, keys and certificates; the
+  `PreToolUse` hooks above, which run locally and can block a `git` command
+  with `--no-verify` or an edit to a linter configuration (and, only if chosen,
+  `gateguard`, which asks for the facts before the first edit of a file); `outputStyle`
+  set to CLAW's reply style; the
+  `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` variable, and the agent-teams variables
+  when that orchestration is chosen. The user's own values stay, and every entry
+  CLAW adds is recorded in `claw.json` so `uninstall` removes exactly those.
 
 ## Commands
 
