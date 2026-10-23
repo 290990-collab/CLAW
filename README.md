@@ -71,7 +71,7 @@ Built for long tasks and large repos, where those habits cost the most.
 | **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
 | **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
 | **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
-| **One source, many projects** | Update CLAW once, then bring each project up to date. What you adapted stays |
+| **One plugin, many projects** | Update CLAW once, then bring each project up to date. Your own rules stay |
 
 <br>
 
@@ -82,31 +82,20 @@ Built for long tasks and large repos, where those habits cost the most.
 | You need | Why |
 |---|---|
 | [Claude Code](https://code.claude.com) | CLAW is a method for it |
-| Python 3.11 or later | The `claw` tool and the hooks. Standard library only, nothing to install |
-| git | `claw update` and `claw status` |
+| Python 3.11 or later | The installer and the hooks. Standard library only, nothing to install |
 
 ### Install
 
-Once per machine:
+CLAW is a Claude Code plugin. Once per machine, in Claude Code:
 
-```bash
-# macOS · Linux
-git clone https://github.com/290990-collab/CLAW.git ~/.claude/CLAW
-python ~/.claude/CLAW/CLAW/claw.py setup
+```text
+/plugin marketplace add 290990-collab/CLAW
+/plugin install claw@claw
 ```
-
-```powershell
-# Windows · PowerShell
-git clone https://github.com/290990-collab/CLAW.git $HOME\.claude\CLAW
-python $HOME\.claude\CLAW\CLAW\claw.py setup
-```
-
-`setup` shows what it writes and asks for your ok. It adds the `/claw` and
-`/delegate` skills to Claude Code and the `claw` command to `~/.local/bin`.
 
 > [!TIP]
-> If `~/.local/bin` is not on your PATH, `setup` tells you. Add it and open a new
-> terminal.
+> In `/plugin` → Marketplaces, turn on auto-update for this marketplace: new releases
+> arrive by themselves.
 
 Then, in each project, open Claude Code in the project folder and run:
 
@@ -135,20 +124,14 @@ a codebase built for the eval and smaller than most production code.
 | I want to… | Do this |
 |---|---|
 | Set up a project | In Claude Code, in the project: `/claw install` |
-| Get a new CLAW release | In a terminal: `claw update`. It lists what arrives and asks before merging |
-| Bring a project to the new release | In Claude Code, in that project: `/claw update`. Your adaptations stay |
-| See if a project is behind | In a terminal, in the project folder: `claw status` |
-| Check that a project is healthy | `claw doctor`, or `/claw fix` to also repair it |
+| Get a new CLAW release | The plugin updates (automatically, or in `/plugin`). Restart Claude Code |
+| Bring a project to the new release | In Claude Code, in that project: `/claw update`. Your rules stay |
+| Check that a project is healthy | `/claw fix` explains every finding and repairs it |
 | Stop and resume later | Say `safe pause`. Claude writes where things are in `docs/TODO.md` |
 
 > [!IMPORTANT]
-> `claw update` touches only CLAW itself. A project changes only when you run
-> `/claw update` inside it, so nothing moves in a project you are not looking at.
-
-> [!WARNING]
-> **From 2.2 to 2.5:** the manifest is now `.claude/claw.json`. In each
-> project, rename `.claude/framework.json` to `.claude/claw.json` before `/claw update`.
-> `FRAMEWORK_GATEGUARD` is now `CLAW_GATEGUARD`.
+> A project changes only when you run `/claw update` inside it, so nothing moves in a
+> project you are not looking at.
 
 <br>
 
@@ -161,12 +144,9 @@ One skill, one action at a time. `/claw` alone lists the actions.
 | Action | What it does |
 |---|---|
 | `/claw install` | Sets up CLAW in this project |
-| `/claw update` | Brings this project to the CLAW version you have, keeping your changes |
-| `/claw fix` | Checks the installation, explains every finding, puts back missing files |
-| `/claw add <agent or guide>` | Adds an agent (for example `frontend`) or a guide |
-| `/claw remove <agent or guide>` | Removes it from this project |
-| `/claw change` | Changes the profile or the orchestration |
-| `/claw share` | Makes a change you made here part of CLAW, for every project |
+| `/claw update` | Brings this project to the CLAW version you have. Also adds or removes an agent or guide, and changes the profile or the orchestration |
+| `/claw rule` | Writes a rule of your own for this project, or for one agent |
+| `/claw fix` | Checks the installation, explains every finding, regenerates what is missing |
 | `/claw tune` | Adjusts each agent's model and effort to this project |
 | `/claw tidy` | Finds what is stale in the to-do list and in Claude's memory of this project, and the shortcuts left in the code |
 | `/claw comply <rule>` | Measures how often Claude follows a rule. Uses your tokens, so it asks first |
@@ -180,23 +160,16 @@ Every action that writes shows its plan first and waits for your ok.
 into pieces, shows you who does each one, hands them to the agents, then checks
 the results. Claude may also start it on its own for a long task, and says so.
 
-### `claw` in the terminal
+### Checks in CI
 
-| Command | What it does |
-|---|---|
-| `claw update` | Takes the new CLAW release. Stops if you have uncommitted changes in it |
-| `claw status` | CLAW's version against the release; with a project in this folder, its version and what it is missing |
-| `claw doctor` | Checks the project in this folder. `--strict` fails on warnings too, `--json` is for CI |
-
-Commands that write ask first; `--yes` skips the question. `claw --help` lists the
-others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
-`skills`): `/claw` runs them for you.
+`python claw.py doctor --strict --json <project>`, from the plugin's folder, fails on
+warnings too and prints JSON.
 
 <br>
 
 ## Agents
 
-32 agents. A project installs only the ones its profile and your answers need.
+31 agents. A project installs only the ones its profile and your answers need.
 
 <details>
 <summary><strong>The full roster</strong>: always installed, by profile, reviewers of the critical surface</summary>
@@ -228,7 +201,6 @@ others (`setup`, `install`, `down`, `repair`, `uninstall`, `report`, `source`,
 | `data-ingestion` | Pipelines that bring external data in |
 | `results-analyst` | Reads measured results: is the change real, and why |
 | `literature` | Finds and reads publications |
-| `skill-runner` | Runs another author's skill for the coordinator |
 | `runner` | Runs tests, builds and logs, reports only the outcome |
 | `light-implementer` | Writes code from a closed specification and its acceptance test, cheaply |
 | `market-researcher` | Audience, alternatives, the promise the product keeps |
@@ -256,7 +228,7 @@ work wrong even with perfect code, and adds the matching reviewer.
 ## Profiles
 
 The first question of `/claw install`. It picks the extra agents, the guides and
-the work cycle; `/claw change` switches it later.
+the work cycle; `/claw update` switches it later.
 
 | Profile | For |
 |---|---|
@@ -292,14 +264,36 @@ the work cycle; `/claw change` switches it later.
 
 <br>
 
+## Your own rules
+
+`.claude/user-rules.md` is the one file that holds them. It starts empty. Sections:
+`## All` for every agent, `## <agent>` for one; in an agent's section, `model:` and
+`effort:` lines override its defaults.
+
+```text
+## All
+- Commit messages in English, no signature.
+
+## tester
+model: sonnet
+- Run `pytest -q -x`, never the whole matrix.
+```
+
+Claude writes there only when you ask to make something a rule (`/claw rule`), and
+after showing you the line. The framework files are regenerated from it; on conflict,
+your rules win.
+
+<br>
+
 ## Settings
 
 | Setting | Effect |
 |---|---|
 | `language` in Claude Code's settings | The language Claude answers in. Without it, the language of your messages |
 | `CLAW_GATEGUARD=off` | Turns off the optional hook that checks a file's users before its first edit |
-| `accepted` in `.claude/claw.json` | Warnings of `claw doctor` you keep on purpose, each with a reason |
+| `accepted` in `.claude/claw.json` | Warnings of the doctor you keep on purpose, each with a reason |
 
+`.claude/claw.json` records your choices; every framework file is regenerated from it.
 To keep a warning, copy its code from the doctor's output into `accepted`:
 
 ```text
@@ -308,9 +302,13 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 
 ```json
 {
-  "source": "...",
   "version": "2.7.0",
   "profile": "software",
+  "orchestration": "orchestrator-worker",
+  "agents": ["explorer", "architect", "implementer", "tester", "refactorer", "final-reviewer"],
+  "guides": ["core/conventions.md"],
+  "hooks": ["config_protection", "block_no_verify"],
+  "settings_added": { "outputStyle": "Reporting" },
   "accepted": {
     "TOKEN_BUDGET": "large monorepo: CLAUDE.md is long on purpose"
   }
@@ -335,10 +333,10 @@ less. CLAW is built for the long task, where one unchecked guess costs hours.
 Never. Commits, pushes, installs and anything irreversible wait for your ok, on a preview.
 
 **What does it need?**
-Python 3.11 and git. No packages, no service, no account.
+Python 3.11. No packages, no service, no account.
 
 **I changed a rule for my project. Will an update overwrite it?**
-No. Your project sections and your adaptations stay; `/claw update` shows what changes first.
+No. Your rules in `.claude/user-rules.md` stay. A framework file edited by hand is regenerated, and `/claw update` names it first so you can move the edit into a rule.
 
 <br>
 
