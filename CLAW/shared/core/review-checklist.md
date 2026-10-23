@@ -9,6 +9,7 @@ Reference material for whoever reviews.
 A reviewer fills the space it has: if the findings are all about style, the honest answer is “I found nothing substantial”, and it gets written.
 
 - **“I would have done it differently”:** without a concrete problem it is a preference, not a finding.
+- **Suspicion not put to the test:** before writing it, try to disprove it — a guard, an invariant, the callers. Only what survives is reported.
 - **Hypothesis without a caller:** “what if a null arrived here?” counts only if something can pass it. Trace the call before writing it.
 - **Abstraction asked of code that works:** if the second use case does not exist, the abstraction is the defect.
 - **Finding that ignores the context:** a pattern consistent with the rest of the repo, code the task did not touch, a constraint already decided.
