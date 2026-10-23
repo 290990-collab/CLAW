@@ -16,9 +16,9 @@ from tests.test_doctor import VERSION, make_project
 def installed(tmp, name, version=VERSION, declared=None):
     """A project `discover` can find: the marker plus the fixture's files.
 
-    `make_project` builds a valid installation but does not write
-    `claw.json` — it is the file that says "there is an installation
-    here", and without it the report has nothing to start from.
+    `make_project` builds a valid installation, `claw.json` included — the
+    file that says "there is an installation here"; only its version is set
+    here.
     """
     root = Path(tmp) / name
     root.mkdir(parents=True)
@@ -34,16 +34,9 @@ def installed(tmp, name, version=VERSION, declared=None):
                     t[: r.start] + kernel.wrap(r.body, version) + t[r.end + 1 :],
                     encoding="utf-8",
                 )
-    (root / ".claude" / "claw.json").write_text(
-        json.dumps(
-            {
-                "source": "framework",
-                "version": declared or version,
-                "profile": "software",
-            }
-        ),
-        encoding="utf-8",
-    )
+    manifest = json.loads((root / ".claude" / "claw.json").read_text(encoding="utf-8"))
+    manifest["version"] = declared or version
+    (root / ".claude" / "claw.json").write_text(json.dumps(manifest), encoding="utf-8")
     return root
 
 

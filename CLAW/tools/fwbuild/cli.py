@@ -12,7 +12,7 @@ from . import assemble, doctor, lifecycle, profile, report, settings, source
 
 # The source this command runs from: every command that writes works on it.
 FW = Path(__file__).resolve().parents[2]
-PLANNED = ("install", "down", "repair", "uninstall")
+PLANNED = ("install", "update", "uninstall")
 
 
 def _force_utf8_stdout() -> None:
@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="claw.py",
         description="Everyday: doctor. In a project, Claude Code's /claw does the rest.",
-        epilog="Also: install, down, repair, uninstall, report. "
+        epilog="Also: install, update, uninstall, report. "
         "`claw.py <command> --help` for any of them.",
     )
     sub = parser.add_subparsers(dest="command", required=True, metavar="command")
@@ -68,16 +68,24 @@ def main(argv: list[str] | None = None) -> int:
     i.add_argument("--guides", default="", help="extra guides under shared/, comma-separated")
     i.add_argument("--gateguard", action="store_true", help="add the optional hook")
     i.add_argument("--orchestration", default=assemble.DEFAULT_ORCHESTRATION)
-    for name, help_text in (
-        ("down", "bring this source's version into a project"),
-        ("repair", "put back what an installation is missing"),
-        ("uninstall", "remove the framework from a project"),
-    ):
-        p = sub.add_parser(name, description=help_text)
-        p.add_argument("path", type=Path)
-        if name == "down":
-            p.add_argument("--hooks", help="hooks to have afterwards; default: those in use")
-            p.add_argument("--adopt", default="", help="cards taking the source's front matter, or all")
+    u = sub.add_parser(
+        "update",
+        description="bring an installation to this source and to the choices asked for",
+    )
+    u.add_argument("path", type=Path)
+    u.add_argument("--add", default="", help="agents and guides (core/x.md) to add, comma-separated")
+    u.add_argument("--remove", default="", help="agents and guides to remove, comma-separated")
+    u.add_argument("--profile", help="a profile in profiles/")
+    u.add_argument("--orchestration")
+    u.add_argument("--gateguard", choices=("on", "off"))
+    u.add_argument(
+        "--keep-version",
+        action="store_true",
+        help="plan and apply in one call; refused if the source is at another version",
+    )
+    sub.add_parser("uninstall", description="remove the framework from a project").add_argument(
+        "path", type=Path
+    )
     for p in (i, *(sub.choices[n] for n in PLANNED[1:])):
         p.add_argument("--apply", action="store_true", help="run the plan saved by a previous call")
         p.add_argument("-y", "--yes", action="store_true", help="run it without asking")
@@ -239,12 +247,17 @@ def _plan_file(prj: Path, mode: str) -> Path:
 
 
 def _lifecycle(args) -> int:
-    """`install | down | repair | uninstall`: without `--apply` the plan is
-    printed and saved, bound to project, mode and source; with it, that plan
-    runs — never one recomputed — and the doctor closes."""
+    """`install | update | uninstall`: without `--apply` the plan is printed and
+    saved, bound to project, mode and source; with it, that plan runs — checked
+    again against the tree, never one recomputed in its place — and the doctor
+    closes. `update --keep-version` does both in one call, for a change that
+    cannot move the project to another version."""
     prj, mode = args.path, args.command
+    keep_version = getattr(args, "keep_version", False)
     plan = _plan_file(prj, mode)
     try:
+        if keep_version:
+            _same_version(prj)
         if not args.apply:
             ops, params = _plan(args)
             plan.write_text(
@@ -258,7 +271,11 @@ def _lifecycle(args) -> int:
             for o in ops:
                 if o.action == lifecycle.KEEP and o.reason:
                     print(f"{o.action:<11} {o.path} — {o.reason}")
-            ok = _confirm(args.yes)
+            if not any(o.action != lifecycle.KEEP for o in ops):
+                plan.unlink(missing_ok=True)
+                print("nothing to do")
+                return 0
+            ok = True if keep_version else _confirm(args.yes)
             if ok is None:
                 print(f'\nplan saved. To run it: python "<FW>/claw.py" {mode} "{prj}" --apply')
                 return 0
@@ -271,22 +288,20 @@ def _lifecycle(args) -> int:
         ):
             raise ValueError(f"no {mode} plan saved for {prj} from this source: plan first")
         ops, params = [lifecycle.Operation(**d) for d in data["ops"]], data["params"]
+        conflicts: list[str] = []
         if mode == "install":
-            conflicts, to_fill = lifecycle.apply_install(prj, FW, ops, **params)
-            if conflicts:
-                print("settings.json: your value stays on " + ", ".join(conflicts))
-            print("to fill in, then doctor --strict:\n  " + "\n  ".join(to_fill))
-        elif mode == "down":
-            lifecycle.apply_down(prj, FW, ops, params["adopt"])
-        elif mode == "repair":
-            lifecycle.apply_update(prj, FW, ops)
+            conflicts = lifecycle.apply_install(prj, FW, ops, params)
+        elif mode == "update":
+            conflicts = lifecycle.apply_update(prj, FW, ops, **params)
         else:
             lifecycle.apply_uninstall(prj, FW, ops)
         plan.unlink()
     except (ValueError, FileNotFoundError) as err:
         print(err)
         return 1
-    if mode in ("install", "uninstall"):
+    if conflicts:
+        print("settings.json: your value stays on " + ", ".join(conflicts))
+    if mode == "uninstall":
         print(f"{mode}: done")
         return 0
     findings = doctor.check(prj)
@@ -296,18 +311,33 @@ def _lifecycle(args) -> int:
     return 0
 
 
+def _same_version(prj: Path) -> None:
+    """`--keep-version` is for a change that does not move the project: another
+    version means the plan carries a new release's files, and that is read in full."""
+    recorded = (source.read_manifest(prj) or {}).get("version")
+    ours = _source_version()
+    if recorded != ours:
+        raise ValueError(
+            f"--keep-version: the project is at v{recorded}, the source at v{ours}: "
+            "run update without it and read the plan"
+        )
+
+
 def _plan(args) -> tuple[list[lifecycle.Operation], dict]:
     prj = args.path
-    if args.command == "down":
-        params = {
-            "hooks": None if args.hooks is None else _csv(args.hooks),
-            "adopt": _csv(args.adopt),
-        }
-        return lifecycle.plan_down(prj, FW, params["hooks"], params["adopt"]), params
-    if args.command == "repair":
-        return lifecycle.plan_repair(prj, FW), {}
     if args.command == "uninstall":
         return lifecycle.plan_uninstall(prj, FW), {}
+    if args.command == "update":
+        params = {
+            "add": _csv(args.add),
+            "remove": _csv(args.remove),
+            "profile_name": args.profile,
+            "orchestration": args.orchestration,
+            "gateguard": args.gateguard,
+        }
+        ops = lifecycle.plan_update(prj, FW, **params)
+        print(lifecycle.update_summary(prj, FW, **params) + "\n")
+        return ops, params
     names = sorted(p.stem for p in (FW / "profiles").glob("*.toml"))
     if args.profile not in names:
         raise ValueError(f"--profile is one of: {', '.join(names)}")
@@ -321,18 +351,16 @@ def _plan(args) -> tuple[list[lifecycle.Operation], dict]:
         raise ValueError(f"agents that do not coexist: {', '.join(clash)}")
     assemble.orchestration_file(FW, args.orchestration)
     params = {
-        "profile_name": prof.name,
-        "roster": roster,
+        "profile": prof.name,
+        "orchestration": args.orchestration,
+        "agents": roster,
         "guides": profile.guides(FW, prof, roster, _csv(args.guides)),
         "hooks": [h for h in settings.HOOKS if args.gateguard or h not in settings.OPTIONAL_HOOKS],
-        "orchestration": args.orchestration,
     }
+    ops = lifecycle.plan_install(prj, FW, params)
     print(
         f"profile {prof.name} · orchestration {args.orchestration} · hooks "
         f"{', '.join(params['hooks'])}\nagents: {', '.join(roster)}\n"
         f"guides: {', '.join(params['guides'])}\n"
-    )
-    ops = lifecycle.plan_install(
-        prj, lifecycle.targets(FW, roster, params["guides"], params["hooks"])
     )
     return ops, params

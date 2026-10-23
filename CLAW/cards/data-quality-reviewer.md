@@ -51,9 +51,3 @@ You are the data quality reviewer. You look for silent corruption: the kind that
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — this project's data sources and what they really promise, the
-normalisation conventions adopted, which the stable keys are, where the source
-of truth lives and what is derived from it, the dirty cases already met.]

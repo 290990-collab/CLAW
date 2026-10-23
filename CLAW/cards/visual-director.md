@@ -49,9 +49,3 @@ Defaults rejected: axis — what was avoided — what replaces it
 ```
 
 For a review, the list of deviations instead of the direction. Close with the standard report (`ANALYZED`, not `CHANGED`).
-
-## Project context
-
-[TO FILL IN — existing brand or tokens and where they live; the audience; the
-tone the product must have and the one it must avoid; references the user
-likes or rejects.]

@@ -43,10 +43,3 @@ For every run and every source: how many records read, accepted, discarded and *
 ## Migrations
 
 Compatible with data already written · reversible or with a declared way back · applicable while the previous version of the code is still running · tested on a realistic copy, not on sample data.
-
-## In this project
-
-[TO FILL IN — the sources and what they really promise, the acquisition
-contract, the normalisation rules adopted, which the stable keys are, where the
-truth lives and what is derived, the dirty cases already met, how a rebuild is
-run.]

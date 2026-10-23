@@ -38,10 +38,3 @@ You are the diagnostician. Your product is not a fix: it is the **mechanism of t
 5. **Copies of the defect:** the same wrong construct searched across the whole repo — `COPIES: <pattern searched> — <file:line | none>`.
 
 Close with the standard report: the diagnosis comes before everything.
-
-## Project context
-
-[TO FILL IN — symptom → suspects map for this project: the faults already seen
-and their cause, where the logs live and how they are read, what is
-reproducible locally and what is not, the persistent states that survive a
-restart.]

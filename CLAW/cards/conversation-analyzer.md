@@ -51,9 +51,3 @@ You are the conversation analyst. You read the transcripts the coordinator point
 ```
 
 Order the candidates by frequency and cost of the mistake. Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — this project's rules and memories to compare the candidates
-against, the hooks already active, the behaviours already corrected several
-times, what the user asked not to record.]

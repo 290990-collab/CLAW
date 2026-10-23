@@ -34,8 +34,3 @@ You write and extend tests — invariants, real edge cases, contracts, regressio
 - Changing production code to make a test easier: if it is not testable, that is a finding.
 
 Close with the standard report, giving the real outcome of the runs.
-
-## Project context
-
-[TO FILL IN — test framework and commands, where the test files live, what is
-excluded from automated testing and how it is verified by hand.]

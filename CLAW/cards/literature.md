@@ -44,9 +44,3 @@ You do not modify code or configuration. You do not decide the design: you bring
 4. **What I could not verify.**
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — the project's subject and the families of work it touches, where
-the documents already collected are, where the reference index lives, which
-claims have already been made and must stay consistent.]

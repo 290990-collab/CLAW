@@ -33,9 +33,3 @@ Symptom → suspects map: it serves to **narrow down**, not to jump to the hypot
 - **Confusing coincidence and cause:** if the explanation does not cover *all* the symptoms, it is not the cause yet.
 - **Fixing the symptom:** a check that avoids the error while upstream the wrong value keeps being produced.
 - **Trial-and-error fixes:** they cost more than the diagnosis and leave unmotivated changes in the code.
-
-## In this project
-
-[TO FILL IN — the faults already seen and their real cause, where the logs live
-and how they are read, what is reproducible locally and what is not, which
-states persist between runs, which components are already known to be fragile.]

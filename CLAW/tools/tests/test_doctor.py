@@ -21,7 +21,7 @@ def make_project(
     *,
     agents=("explorer",),
     routing=("explorer",),
-    placeholder=False,
+    manifest_agents=None,
     fable=False,
     state=True,
     orchestration=True,
@@ -37,7 +37,14 @@ def make_project(
     (root / ".claude" / "agents").mkdir(parents=True)
     (root / ".claude" / "shared").mkdir(parents=True)
     if manifest:
-        data = {"source": "framework", "version": VERSION, "profile": "software"}
+        data = {
+            "version": VERSION,
+            "profile": "software",
+            "orchestration": "orchestrator-worker",
+            "agents": list(agents if manifest_agents is None else manifest_agents),
+            "guides": list(guides),
+            "hooks": ["config_protection", "block_no_verify"],
+        }
         if accepted is not None:
             data["accepted"] = accepted
         (root / ".claude" / "claw.json").write_text(
@@ -59,19 +66,17 @@ def make_project(
     rows = "\n".join(f"| where | `{n}` | {cell} |" for n in routing)
     if orchestration:
         # The routing table lives in the coordinator's guide, not in CLAUDE.md:
-        # it is content the subagents must not pay for.
+        # it is content the subagents must not pay for. The guide has no marker.
         (root / ".claude" / "shared" / "orchestration.md").write_text(
             assemble.build_document_from_text(
                 "## Delegation\n",
                 VERSION,
                 "| Situation | Agent | Model |\n|---|---|---|\n" + rows + "\n",
-                markers=markers,
+                markers=False,
             ),
             encoding="utf-8",
         )
     project = "## The project\n\nA trial project.\n"
-    if placeholder:
-        project += "\n[TO FILL IN] — module map\n"
     if leak:
         project += "\n## The code cycle\n\nExplorer, then architect.\n"
     (root / "CLAUDE.md").write_text(
@@ -82,9 +87,7 @@ def make_project(
         model = "fable" if fable else "opus"
         fm = AGENT_FM.format(n=n).replace("model: opus", f"model: {model}")
         (root / ".claude" / "agents" / f"{n}.md").write_text(
-            assemble.build_agent(
-                fm, "## Method\n", "## Domain\n", VERSION, markers=markers
-            ),
+            kernel.normalize(fm) + "\n" + kernel.wrap("## Method\n", VERSION),
             encoding="utf-8",
         )
     if state:
@@ -106,15 +109,18 @@ class TestDoctor(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(doctor.check(make_project(d)), [])
 
-    def test_detects_placeholder(self):
+    def test_detects_agent_in_the_manifest_without_file(self):
+        """The roster is what `claw.json` records: a card that went missing is
+        found there, and a card only the routing table names is not a roster
+        member."""
         with tempfile.TemporaryDirectory() as d:
-            found = doctor.check(make_project(d, placeholder=True))
-            self.assertIn("PLACEHOLDER", codes(found))
-
-    def test_detects_agent_in_routing_without_file(self):
+            p = make_project(d, agents=("explorer",), manifest_agents=("explorer", "frontend"))
+            found = [f for f in doctor.check(p) if f.code == "ROSTER_MISSING"]
+            self.assertEqual([f.severity for f in found], ["ERROR"])
+            self.assertIn("frontend", found[0].message)
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d, agents=("explorer",), routing=("explorer", "frontend"))
-            self.assertIn("ROSTER_MISSING", codes(doctor.check(p)))
+            self.assertNotIn("ROSTER_MISSING", codes(doctor.check(p)))
 
     def test_detects_agent_file_not_in_routing(self):
         with tempfile.TemporaryDirectory() as d:
@@ -129,18 +135,6 @@ class TestDoctor(unittest.TestCase):
     def test_detects_fable(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertIn("FABLE", codes(doctor.check(make_project(d, fable=True))))
-
-    def test_skills_are_not_scanned_for_placeholders(self):
-        """A skill that explains the PLACEHOLDER finding necessarily contains
-        that string: scanning it would produce a false positive on every run."""
-        with tempfile.TemporaryDirectory() as d:
-            root = make_project(d)
-            (root / ".claude" / "skills" / "mine").mkdir(parents=True)
-            (root / ".claude" / "skills" / "mine" / "SKILL.md").write_text(
-                "The `PLACEHOLDER` finding flags a leftover `[TO FILL IN]`.\n",
-                encoding="utf-8",
-            )
-            self.assertNotIn("PLACEHOLDER", codes(doctor.check(root)))
 
     def test_detects_missing_orchestration_guide(self):
         with tempfile.TemporaryDirectory() as d:
@@ -162,19 +156,23 @@ class TestDoctor(unittest.TestCase):
             self.assertIn("EXCLUSIVE", codes(doctor.check(p)))
 
     def test_detects_stripped_kernel_markers(self):
-        """Removing the markers is no less serious than rewriting the method
-        inside the region: without markers, drift stops being visible."""
+        """Without the markers in `CLAUDE.md` an update cannot tell the
+        framework's text from the project's and refuses: the installation is
+        stuck, and nothing else says so."""
+        with tempfile.TemporaryDirectory() as d:
+            p = make_project(d)
+            f = p / "CLAUDE.md"
+            f.write_text(strip_markers(f.read_text(encoding="utf-8")), encoding="utf-8")
+            self.assertIn("KERNEL_MISSING", codes(doctor.check(p)))
+
+    def test_a_card_without_its_markers_is_not_flagged(self):
+        """Cards are regenerated whole: there is no project text in them that
+        the marker protects. Only `CLAUDE.md` has a region."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
             f = p / ".claude" / "agents" / "explorer.md"
             f.write_text(strip_markers(f.read_text(encoding="utf-8")), encoding="utf-8")
-            self.assertIn("KERNEL_MISSING", codes(doctor.check(p)))
-
-    def test_installation_without_markers_is_not_flagged(self):
-        """The variant without tracking is a legitimate choice: no marker in
-        any tracked file, no finding."""
-        with tempfile.TemporaryDirectory() as d:
-            self.assertNotIn("KERNEL_MISSING", codes(doctor.check(make_project(d, markers=False))))
+            self.assertNotIn("KERNEL_MISSING", codes(doctor.check(p)))
 
     def test_detects_dangling_shared_pointer_in_an_agent(self):
         """Almost every pointer to a guide lives in the agents: checking them
@@ -187,16 +185,6 @@ class TestDoctor(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertIn("SHARED_MISSING", codes(doctor.check(p)))
-
-    def test_detects_unfilled_state_template(self):
-        """A state template copied and not filled in is indistinguishable from
-        absent state for whoever reads it at session start."""
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            (p / "docs" / "TODO.md").write_text(
-                "- [ ] [TO FILL IN — active task]", encoding="utf-8"
-            )
-            self.assertIn("PLACEHOLDER", codes(doctor.check(p)))
 
     def _rewrap(self, f, version):
         """Rewrites a file's kernel region at another version, leaving the hash
@@ -271,9 +259,10 @@ class TestDoctor(unittest.TestCase):
             found = doctor.check(make_project(d, manifest=False))
             self.assertIn("MANIFEST_MISSING", codes(found))
 
-    def test_detects_manifest_without_the_profile(self):
-        """Without the profile, "regenerate the profile's permissions" cannot be
-        carried out."""
+    def test_detects_manifest_without_the_choices(self):
+        """Without the profile and the lists, an update has nothing to
+        regenerate from: a manifest from before 3.0 must say so, not look
+        healthy."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
             (p / ".claude" / "claw.json").write_text(
@@ -282,19 +271,8 @@ class TestDoctor(unittest.TestCase):
             )
             found = [f for f in doctor.check(p) if f.code == "MANIFEST_MISSING"]
             self.assertEqual([f.severity for f in found], ["WARN"])
-            self.assertIn("profile", found[0].message)
-
-    def test_template_syntax_is_not_a_placeholder(self):
-        """`{{...}}` is the template syntax of half the world: a project quoting
-        it among its own constraints would get an ERROR with no way out."""
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            f = p / "CLAUDE.md"
-            f.write_text(
-                f.read_text(encoding="utf-8") + "\nViews use `{{ user.name }}`.\n",
-                encoding="utf-8",
-            )
-            self.assertNotIn("PLACEHOLDER", codes(doctor.check(p)))
+            for key in ("profile", "orchestration", "agents", "guides", "hooks"):
+                self.assertIn(key, found[0].message)
 
     def test_categorical_confidence_with_a_percentage_is_not_the_old_format(self):
         """The superseded format is confidence **as** a percentage. A
@@ -327,10 +305,10 @@ class TestDoctor(unittest.TestCase):
         An error is a broken installation: it stays broken."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(
-                d, placeholder=True, accepted={"PLACEHOLDER": "I live with it"}
+                d, state=False, accepted={"STATE_MISSING": "I live with it"}
             )
             found = doctor.check(p)
-            self.assertIn("PLACEHOLDER", {f.code for f in found if f.severity == "ERROR"})
+            self.assertIn("STATE_MISSING", {f.code for f in found if f.severity == "ERROR"})
             self.assertIn("ACCEPTED_UNUSED", codes(found))
 
     def test_accepted_without_a_reason_does_not_apply(self):
@@ -388,8 +366,7 @@ class TestDoctor(unittest.TestCase):
         projects, and the hash does not see it."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
-            tracked = [p / "CLAUDE.md", p / ".claude" / "shared" / "orchestration.md"]
-            tracked += list((p / ".claude" / "agents").glob("*.md"))
+            tracked = [p / "CLAUDE.md"] + list((p / ".claude" / "agents").glob("*.md"))
             for f in tracked:
                 self._rewrap(f, "0.3.0")
             self.assertEqual(codes(doctor.check(p)), {"VERSION_MISMATCH"})
@@ -463,36 +440,15 @@ class TestDoctor(unittest.TestCase):
             )
             self.assertEqual(codes(doctor.check(p)), {"PERSONAL_PATH"})
 
-    def test_absolute_source_in_manifest_is_not_a_personal_path(self):
-        """With the source outside the project `source` is absolute by
-        construction: a relative path does not hold, because the depth of the
-        clone is not known."""
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            (p / ".claude" / "claw.json").write_text(
-                json.dumps(
-                    {
-                        "source": "C:" + "\\Users\\" + "jsmith" + "\\framework",
-                        "version": VERSION,
-                        "profile": "software",
-                    }
-                ),
-                encoding="utf-8",
-            )
-            self.assertNotIn("PERSONAL_PATH", codes(doctor.check(p)))
-
     def test_an_uninstall_archive_is_not_checked(self):
-        """The archive keeps the cards as they were, placeholders and pointers
-        included: it is material to consult, not an installation. Scanning it
-        would give errors no change to the project can remove."""
+        """The archive keeps the cards as they were, pointers included: it is
+        material to consult, not an installation. Scanning it would give errors
+        no change to the project can remove."""
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d)
             old = p / doctor.ARCHIVE_DIR / ".claude" / "agents" / "old.md"
             old.parent.mkdir(parents=True)
-            old.write_text(
-                "[TO FILL IN]\nSee `.claude/shared/core/lost.md`.\n",
-                encoding="utf-8",
-            )
+            old.write_text("See `.claude/shared/core/lost.md`.\n", encoding="utf-8")
             self.assertEqual(doctor.check(p), [])
 
 

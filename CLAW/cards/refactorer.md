@@ -30,8 +30,3 @@ You refactor under one absolute constraint: **observable behaviour unchanged**. 
 - Introducing features or changing existing ones.
 
 Close with the standard report, declaring in `ASSUMED`/`UNVERIFIED` **what guarantees that behaviour stayed unchanged** — the suite's outcome before and after.
-
-## Project context
-
-[TO FILL IN — areas without tests, dynamic or string-based couplings the
-compiler does not see, internal behaviours others rely on.]

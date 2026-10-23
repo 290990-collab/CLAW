@@ -1,6 +1,6 @@
 # Coding standards
 
-How code is structured, independently of the language, plus the block for this project's stack. The conventions of form — names, commits, comments — live in `conventions.md`.
+How code is structured, independently of the language. The conventions of form — names, commits, comments — live in `conventions.md`.
 
 ## Functions
 
@@ -44,9 +44,3 @@ How code is structured, independently of the language, plus the block for this p
 - New code imitates the file it lives in: consistency before preferences.
 - Automatic formatting where a tool exists: it is not argued by hand.
 - **The only complexity allowed is the problem's:** a function hard to read on an easy problem is a wrong function.
-
-## In this project
-
-[TO FILL IN — languages and versions, formatting and static analysis tools with
-their commands, stack-specific conventions, patterns adopted and patterns
-explicitly discarded, runtime constraints that limit what can be used.]

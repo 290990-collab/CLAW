@@ -51,8 +51,3 @@ Choice: [A|B] — reason: [short]
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`).
-
-## Project context
-
-[TO FILL IN — untouchable modules, boundaries between layers, past decisions
-not to be reopened, compatibility constraints.]

@@ -36,10 +36,3 @@ For projects whose product is not "software that runs" but **reproducible eviden
 21. **Configuration outside the code**, versioned together with the result it produced.
 22. **Every reported number must be traceable:** which configuration, which run, which file. A number without provenance is not citable.
 23. **Do not relaunch an experiment** to get back a number that already exists in a log or a summary.
-
-## In this project
-
-[TO FILL IN — the current research hypothesis, which sets exist and which
-selects what, the metrics adopted and what they can hide, the baselines
-available, the known circularities, who launches the heavy runs and how, where
-the results are written.]

@@ -42,9 +42,3 @@ No content shifting after loading · images sized and served in the right format
 Rendering is not deduced: it is looked at. Different widths, light and dark theme, long text and absent text, loading and error states, reduced motion, keyboard-only navigation. What was not looked at must be declared.
 
 **Looking is not enough:** first the structured state — tree, computed sizes and styles, component state — then the image that confirms it. A single view proves nothing.
-
-## In this project
-
-[TO FILL IN — interface stack and libraries, where tokens and components live,
-the visual direction already fixed, support constraints, how the environment is
-started to look at the result, design tools connected.]

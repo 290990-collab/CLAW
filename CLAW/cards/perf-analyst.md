@@ -46,8 +46,3 @@ You are the performance analyst. Your product is **the reproducible measurement 
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`).
-
-## Project context
-
-[TO FILL IN — which profiling tools are available in this project, the known
-bottlenecks.]

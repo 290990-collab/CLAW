@@ -103,12 +103,30 @@ class TestGenerate(unittest.TestCase):
         self.assertTrue(set(CHOICES["agents"]) <= names)
 
     def test_cards_carry_no_project_block(self):
-        """The source block is dropped: its placeholder in an installation is a
-        file the doctor would ask to fill in."""
+        """A card is the method and, at the end, the user's rules: a block of
+        the project's own words in it would be a second place for them."""
         for path, text in gen().items():
             if path.startswith(".claude/agents/"):
-                self.assertNotIn(assemble.DOMAIN_HEADING, text, path)
-                self.assertNotIn("[TO FILL IN", text, path)
+                self.assertNotIn("## Project context", text, path)
+                self.assertNotIn("TO FILL IN", text, path)
+
+    def test_claude_md_has_exactly_one_shared_guides_section(self):
+        """The section is generated inside the kernel region; a second one in
+        the project part would list the guides twice at every spawn."""
+        out = gen(claude_md=PROJECT)["CLAUDE.md"]
+        self.assertEqual(len(re.findall(r"^## Shared guides$", out, re.MULTILINE)), 1)
+        self.assertLess(out.index("## Shared guides"), out.index("## The project"))
+
+    def test_profile_cycles_and_orchestration_follow_the_choices(self):
+        """The guide is generated from the choices alone: a cycle or an
+        orchestration module that did not make it in would leave the coordinator
+        without the method the project asked for."""
+        out = gen(profile="web", orchestration="agent-teams")[".claude/shared/orchestration.md"]
+        self.assertIn("The design cycle", out)
+        self.assertIn("## Orchestration: Agent teams", out)
+        plain = gen()[".claude/shared/orchestration.md"]
+        self.assertNotIn("The design cycle", plain)
+        self.assertNotIn("## Orchestration: Agent teams", plain)
 
     def test_guides_cited_by_the_roster_are_added(self):
         """An agent installed with a dead pointer is SHARED_MISSING on a file

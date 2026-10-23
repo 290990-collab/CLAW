@@ -26,8 +26,3 @@ You write code against a closed specification and stop where the specification s
 - **Turn budget:** your turns are capped, and the cap stops you with no report. After about 12 tool calls without the test going green, stop and deliver what you have, the rest under `UNVERIFIED`.
 
 Close with the standard report, filling `CHANGED` with the `file:line` references.
-
-## Project context
-
-[TO FILL IN — the test command for a single module and how long it takes; where
-code and tests live; files never to touch.]

@@ -30,9 +30,3 @@ How to measure and optimise code with a declared performance threshold. Without 
 - **No stale data hidden behind a fast cache:** the read carries its age, and past the threshold it says so.
 - **Every optimisation has a declared price:** readability, memory, complexity.
 - **Logs and measurement artefacts without secrets or private data.**
-
-## In this project
-
-[TO FILL IN — the operations with a threshold and its value, the hot path
-written in segments, the command that measures reproducibly, the optimisations
-already discarded with the reason.]

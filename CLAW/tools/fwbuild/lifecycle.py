@@ -1,30 +1,36 @@
-"""The lifecycle of an installation: what gets written, what gets removed, what gets repaired.
+"""The lifecycle of an installation: install, update, uninstall.
 
-Every mode that writes goes through a plan: one operation per file, computed
-without touching anything, which the user reads before saying yes. Execution
-receives the approved plan and does not compute another: it re-checks that the
-tree is still the one the plan was made on, and if it is not it refuses before
-writing the first byte. A plan approved on a tree that has changed in the
-meantime is an approval given to something else.
+Every file the framework writes comes from `assemble.generate`, which builds
+all of them from the source, the choices in `claw.json` and the user's rules.
+So each mode that writes is the same thing: take the choices, generate, compare
+with the tree, show the plan, and on approval write what the plan names. There
+is one write path, `_write`; modes differ only in how they compute the plan.
 
-The ownership rules are three. A file is deleted only if it is byte-for-byte
-identical to the source, that is if it holds nobody's work. What the project
-adapted — cards, guides, styles — is archived whole, never deleted. From
-`settings.json` only what `settings_added` says the framework added is removed,
-plus the hook entries that would point to a script that is gone.
+A plan is computed without touching anything, one operation per file, which the
+user reads before saying yes. Execution receives the approved plan and does not
+trust it: it recomputes the plan from the tree as it is now and refuses, before
+the first byte, if the two differ. A plan approved on a tree that has changed in
+the meantime is an approval given to something else.
+
+What is never touched: `.claude/user-rules.md`, the parts of `CLAUDE.md` outside
+the kernel and user-rules regions, the state files in `docs/`, cards and guides
+that `claw.json` does not name, and any value of the user in `settings.json`.
+Uninstall removes a file only if it equals what `generate` produces; any other
+framework file is archived whole. From `settings.json` only what
+`settings_added` says the framework added goes, plus the hook entries that
+would point to a script that is gone.
 """
 
 import copy
 import hashlib
 import json
-import re
-import shutil
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import assemble, doctor, kernel, profile, settings, source
+from .rules import OVERRIDE_KEYS, Rules, parse as parse_rules
 
 CREATE = "create"
 OVERWRITE = "overwrite"
@@ -42,6 +48,7 @@ CLAUDE_MD = "CLAUDE.md"
 SETTINGS = ".claude/settings.json"
 MANIFEST = source.MANIFEST.as_posix()
 ORCHESTRATION = f".claude/{doctor.ORCHESTRATION}"
+USER_RULES = ".claude/user-rules.md"
 
 # Instructions of other tools: the installation does not touch them, but
 # whoever approves the plan must know they are there and can contradict
@@ -54,11 +61,7 @@ SHARED_DIRS = ("agents", "output-styles", "hooks", "shared")
 # whole command text: that changes between releases, and the user touches it up.
 HOOK_PATH_RE = settings.HOOK_PATH_RE
 
-# Guides and styles have no kernel region: the text belongs to the framework,
-# the last section to the project. The source marks it with the placeholder,
-# which sits there and only there, and the heading is read from the file: no
-# per-language constant.
-SECTION_RE = re.compile(r"^## .*$", re.MULTILINE)
+HAND_EDIT = "modified by hand: the edit is lost — move it into .claude/user-rules.md"
 
 
 @dataclass(frozen=True)
@@ -75,186 +78,547 @@ class Operation:
     digest: str = ""
 
 
-def targets(
-    framework_root: Path,
-    roster: Sequence[str],
-    guides: Sequence[str],
-    hooks: Sequence[str],
-) -> list[str]:
-    """Every file the installation writes, relative to the project root."""
-    fw = Path(framework_root)
-    out = {CLAUDE_MD, ORCHESTRATION, SETTINGS, MANIFEST}
-    out |= {f".claude/agents/{name}.md" for name in roster}
-    out |= {f".claude/shared/{rel}" for rel in guides}
-    out |= {f".claude/hooks/{name}.py" for name in hooks}
-    out |= {f"docs/{name}" for name in doctor.STATE_FILES}
-    out |= {f".claude/output-styles/{p.name}" for p in _files(fw / source.STYLES_DIR)}
-    return sorted(out)
+@dataclass
+class _Result:
+    """A plan and everything needed to carry it out: nothing else is computed
+    at write time."""
+
+    ops: list[Operation] = field(default_factory=list)
+    files: dict[str, str] = field(default_factory=dict)
+    remove: list[str] = field(default_factory=list)
+    settings: dict | None = None
+    manifest: dict | None = None
+    conflicts: list[str] = field(default_factory=list)
 
 
-def plan_install(project_root: Path, targets: Sequence[str]) -> list[Operation]:
+# --- Choices ----------------------------------------------------------------
+
+
+def installed_choices(manifest: dict) -> dict:
+    """The choices `claw.json` records, in the form `assemble.generate` takes."""
+    gaps = [
+        k
+        for k in ("profile", "orchestration")
+        if not isinstance(manifest.get(k), str) or not manifest[k].strip()
+    ] + [
+        k
+        for k in source.MANIFEST_LISTS
+        if not isinstance(manifest.get(k), list) or not all(isinstance(n, str) for n in manifest[k])
+    ]
+    if gaps:
+        raise ValueError(
+            f"{MANIFEST} without {', '.join(gaps)}: written by a release that did not "
+            "record the choices, so nothing can be regenerated from it"
+        )
+    return {
+        "profile": manifest["profile"],
+        "orchestration": manifest["orchestration"],
+        "agents": list(manifest["agents"]),
+        "guides": list(manifest["guides"]),
+        "hooks": list(manifest["hooks"]),
+    }
+
+
+def _checked(fw: Path, choices: dict) -> dict:
+    """The choices if the source can honour them, with the guides the roster's
+    cards cite added. Anything else is a configuration error, not a field to
+    ignore: passed over in silence, the project would not receive what it asked
+    for and no finding would say so."""
+    if not (fw / "profiles" / f"{choices['profile']}.toml").is_file():
+        names = sorted(p.stem for p in (fw / "profiles").glob("*.toml"))
+        raise ValueError(f"no such profile: {choices['profile']} (one of: {', '.join(names)})")
+    assemble.orchestration_file(fw, choices["orchestration"])
+    gone = [n for n in choices["agents"] if not (fw / source.CARDS_DIR / f"{n}.md").is_file()]
+    if gone:
+        raise ValueError(
+            f"no such agent in the source: {', '.join(gone)} — "
+            f"/claw update --remove {','.join(gone)} if it is no longer wanted"
+        )
+    clash = profile.check_exclusive(choices["agents"])
+    if clash:
+        raise ValueError(f"agents that do not coexist: {', '.join(clash)}")
+    gone = [g for g in choices["guides"] if not (fw / "shared" / g).is_file()]
+    if gone:
+        raise ValueError(
+            f"no such guide in the source: {', '.join(gone)} — "
+            f"/claw update --remove {','.join(gone)} if it is no longer wanted"
+        )
+    unknown = [h for h in choices["hooks"] if h not in settings.HOOKS]
+    if unknown:
+        raise ValueError(f"unknown hooks: {', '.join(unknown)}")
+    guides = list(
+        dict.fromkeys([*choices["guides"], *profile.required_guides(fw, choices["agents"])])
+    )
+    return {**choices, "guides": guides}
+
+
+def _is_guide(name: str) -> bool:
+    return "/" in name or name.endswith(".md")
+
+
+def _after_profile(fw: Path, old: dict, profile_name: str | None) -> tuple[list[str], list[str]]:
+    """The agents and guides once the field changes: the new profile's arrive,
+    the old profile's (and what its roster cited) leave, and what the user added
+    beyond the old profile stays. Without a change of profile, as recorded."""
+    if not profile_name or profile_name == old["profile"]:
+        return list(old["agents"]), list(old["guides"])
+    path = fw / "profiles" / f"{profile_name}.toml"
+    if not path.is_file():
+        names = sorted(p.stem for p in (fw / "profiles").glob("*.toml"))
+        raise ValueError(f"no such profile: {profile_name} (one of: {', '.join(names)})")
+    before = profile.load(fw / "profiles" / f"{old['profile']}.toml")
+    after = profile.load(path)
+    old_roster = profile.roster(before, [], [])
+    new_roster = profile.roster(after, [], [])
+    agents = [n for n in old["agents"] if n not in old_roster or n in new_roster]
+    agents += [n for n in new_roster if n not in agents]
+    left = {*before.shared, *profile.required_guides(fw, old_roster)}
+    guides = [g for g in old["guides"] if g not in left or g in after.shared]
+    guides += [g for g in after.shared if g not in guides]
+    return agents, guides
+
+
+def _next_choices(
+    fw: Path,
+    manifest: dict,
+    add: Sequence[str],
+    remove: Sequence[str],
+    profile_name: str | None,
+    orchestration: str | None,
+    gateguard: str | None,
+) -> dict:
+    """The choices after the requested changes, validated before any plan.
+
+    A name with a `/` or a `.md` is a guide under `shared/`, any other an agent.
+    """
+    old = installed_choices(manifest)
+    add_agents = [n for n in add if not _is_guide(n)]
+    add_guides = [n for n in add if _is_guide(n)]
+    drop_agents = [n for n in remove if not _is_guide(n)]
+    drop_guides = [n for n in remove if _is_guide(n)]
+    if gateguard not in (None, "on", "off"):
+        raise ValueError("--gateguard is on or off")
+    have_agents, have_guides = _after_profile(fw, old, profile_name)
+
+    problems = []
+    for n in add_agents:
+        if n in have_agents:
+            problems.append(f"{n} is already installed")
+        elif not (fw / source.CARDS_DIR / f"{n}.md").is_file():
+            problems.append(f"no such agent: {n}")
+    for g in add_guides:
+        if g in have_guides:
+            problems.append(f"{g} is already installed")
+        elif not (fw / "shared" / g).is_file():
+            problems.append(f"no such guide: shared/{g}")
+    for n in drop_agents:
+        if n in profile.ALWAYS:
+            problems.append(f"{n} is in every installation and cannot be removed")
+        elif n not in have_agents:
+            problems.append(f"{n} is not installed")
+    for g in drop_guides:
+        if g not in have_guides:
+            problems.append(f"{g} is not installed")
+    if problems:
+        raise ValueError("; ".join(problems))
+
+    agents = [n for n in have_agents if n not in drop_agents] + add_agents
+    clash = profile.check_exclusive(agents)
+    if clash:
+        raise ValueError(f"agents that do not coexist: {', '.join(clash)}")
+    cited = set(profile.required_guides(fw, agents))
+    held = sorted(g for g in drop_guides if g in cited)
+    if held:
+        raise ValueError(
+            f"{', '.join(held)}: cited by a card of the roster, it would come back at the "
+            "next update — remove the agent that cites it first"
+        )
+    guides = [g for g in have_guides if g not in drop_guides] + add_guides
+
+    def wanted(hook: str) -> bool:
+        if hook not in settings.OPTIONAL_HOOKS:
+            return True
+        return hook in old["hooks"] if gateguard is None else gateguard == "on"
+
+    return _checked(
+        fw,
+        {
+            "profile": profile_name or old["profile"],
+            "orchestration": orchestration or old["orchestration"],
+            "agents": agents,
+            "guides": guides,
+            "hooks": [h for h in settings.HOOKS if wanted(h)],
+        },
+    )
+
+
+def _managed(fw: Path, choices: dict) -> set[str]:
+    """The project files these choices make the framework's."""
+    guides = dict.fromkeys([*choices["guides"], *profile.required_guides(fw, choices["agents"])])
+    return (
+        {f".claude/agents/{n}.md" for n in choices["agents"]}
+        | {f".claude/shared/{g}" for g in guides}
+        | {f".claude/hooks/{h}.py" for h in choices["hooks"]}
+    )
+
+
+# --- Reading the tree ------------------------------------------------------
+
+
+def _read(path: Path) -> str | None:
+    """The file's text exactly as stored (no newline translation), None if absent."""
+    return path.read_bytes().decode("utf-8") if path.is_file() else None
+
+
+def _rules(prj: Path) -> Rules:
+    text = _read(prj / USER_RULES)
+    return parse_rules(text) if text is not None else Rules()
+
+
+def _rules_text(region: str | None) -> str:
+    """The rules inside a user-rules region body: what follows its title."""
+    if not region or "\n\n" not in region:
+        return ""
+    return region.split("\n\n", 1)[1].strip("\n")
+
+
+def _installed_rules(prj: Path, fw: Path, choices: dict) -> Rules:
+    """The rules the installed files carry now, read back from their regions and
+    from the card values that differ from the source's row.
+
+    Compared with a regeneration from these, a difference is not the rules: it
+    is something done to the files by hand. A region too damaged to read counts
+    as empty, so the damage shows up as a difference.
+    """
+    rows = assemble.agent_rows(fw)
+
+    def region_of(text: str | None) -> str | None:
+        try:
+            return kernel.strip_user_rules(text)[1] if text else None
+        except ValueError:
+            return None
+
+    agents: dict[str, str] = {}
+    overrides: dict[str, dict[str, str]] = {}
+    for name in choices["agents"]:
+        text = _read(prj / ".claude" / "agents" / f"{name}.md")
+        if text is None:
+            continue
+        body = _rules_text(region_of(text))
+        if body:
+            agents[name] = body
+        try:
+            have = assemble.fields(text)
+        except ValueError:
+            continue
+        for key in OVERRIDE_KEYS:
+            if key in have:
+                value = have[key].split(":", 1)[1].strip()
+                if str(rows[name].get(key)) != value:
+                    overrides.setdefault(name, {})[key] = value
+    return Rules(all=_rules_text(region_of(_read(prj / CLAUDE_MD))), agents=agents, overrides=overrides)
+
+
+def _baseline(prj: Path, fw: Path, previous: dict | None, claude: str | None) -> dict[str, str] | None:
+    """What the installed files should be if nobody touched them: a regeneration
+    from the recorded choices and the rules they carry. Only meaningful at the
+    version that wrote them; at another one every file differs by design."""
+    if previous is None or previous.get("version") != _version(fw):
+        return None
+    old = installed_choices(previous)
+    return assemble.generate(fw, old, _installed_rules(prj, fw, old), claude)
+
+
+# --- Computing a plan --------------------------------------------------------
+
+
+def _build(prj: Path, fw: Path, choices: dict, previous: dict | None) -> _Result:
+    """The plan for these choices on this tree, and what carrying it out writes.
+
+    `previous` is the manifest of an installation being updated; `None` is an
+    installation. Same inputs, same plan: execution calls this again.
+    """
+    version = _version(fw)
+    installing = previous is None
+    claude = _read(prj / CLAUDE_MD)
+    if not installing and (claude is None or kernel.parse(claude) is None):
+        raise ValueError(
+            f"{CLAUDE_MD} has no kernel marker: nobody can tell the framework's text from "
+            "the project's, so update refuses — restore the marker, or move the project's "
+            "text aside and install again"
+        )
+    generated = assemble.generate(fw, choices, _rules(prj), claude)
+    baseline = _baseline(prj, fw, previous, claude)
+    out = _Result()
+
+    def by_hand(rel: str) -> bool:
+        return baseline is not None and rel in baseline and (prj / rel).read_bytes() != baseline[rel].encode("utf-8")
+
+    for rel, text in generated.items():
+        path = prj / rel
+        if assemble.is_create_only(rel):
+            if not path.exists():
+                out.ops.append(_op(prj, rel, CREATE))
+                out.files[rel] = text
+            elif installing:
+                out.ops.append(_op(prj, rel, KEEP, "already there: the project's state, untouched"))
+            continue
+        if not path.exists():
+            out.ops.append(_op(prj, rel, CREATE))
+        elif path.read_bytes() == text.encode("utf-8"):
+            continue
+        else:
+            if installing:
+                reason = (
+                    "already there: the kernel region is written, the rest stays as the project part"
+                    if rel == CLAUDE_MD
+                    else "already there: replaced"
+                )
+            elif by_hand(rel):
+                reason = HAND_EDIT
+            elif previous.get("version") != version:
+                reason = f"v{previous.get('version')} → v{version}"
+            else:
+                reason = "regenerated from the choices and the rules"
+            out.ops.append(_op(prj, rel, MERGE if rel == CLAUDE_MD else OVERWRITE, reason))
+        out.files[rel] = text
+
+    if not installing:
+        for rel in sorted(_managed(fw, installed_choices(previous)) - _managed(fw, choices)):
+            if (prj / rel).is_file():
+                reason = "no longer chosen" + ("; modified by hand, the edit is lost" if by_hand(rel) else "")
+                out.ops.append(_op(prj, rel, REMOVE, reason))
+                out.remove.append(rel)
+
+    _settings_and_manifest(prj, fw, choices, previous, out)
+
+    if installing:
+        if (prj / USER_RULES).is_file():
+            out.ops.append(_op(prj, USER_RULES, KEEP, "your rules: applied, never rewritten"))
+        else:
+            out.ops.append(_op(prj, USER_RULES, CREATE, "empty: your rules go here"))
+            out.files[USER_RULES] = ""
+        wanted = set(generated)
+        for area in SHARED_DIRS:
+            for p in _files(prj / ".claude" / area):
+                rel = p.relative_to(prj).as_posix()
+                if rel not in wanted:
+                    out.ops.append(_op(prj, rel, KEEP, "not the framework's: stays as it is"))
+        for rel in FOREIGN_INSTRUCTIONS:
+            if (prj / rel).is_file():
+                out.ops.append(
+                    _op(prj, rel, KEEP, "instructions of another tool: they stay, "
+                        "and they can contradict CLAUDE.md")
+                )
+    return out
+
+
+def _settings_and_manifest(
+    prj: Path, fw: Path, choices: dict, previous: dict | None, out: _Result
+) -> None:
+    """`settings.json`: what the record says the framework added goes, then the
+    framework's slice for these choices is merged. A value of the user's that
+    differs stays and is reported. Then the new `claw.json`."""
+    prof = profile.load(fw / "profiles" / f"{choices['profile']}.toml")
+    current = _current_settings(prj)
+    record = previous.get("settings_added") if previous else None
+    rest = settings.unmerge(current, record)[0] if isinstance(record, dict) else current
+    rest, stale = _drop_framework_hooks(rest, only_stale=True)
+    merged, added, conflicts = settings.merge(
+        rest, settings.framework(prof.settings, choices["hooks"], choices["orchestration"])
+    )
+    exists = (prj / SETTINGS).is_file()
+    if merged != current or not exists:
+        why = []
+        if exists and previous is None:
+            why.append("merged: your entries stay")
+        if previous is not None and previous.get("profile") != choices["profile"]:
+            why.append(f"profile {previous.get('profile')} → {choices['profile']}")
+        if stale:
+            why.append(f"replaced, from an older release or touched up: {', '.join(stale)}")
+        if conflicts:
+            why.append(f"your value stays on: {', '.join(conflicts)}")
+        if not why:
+            why.append("the framework's entries follow the choices")
+        out.ops.append(_op(prj, SETTINGS, MERGE if exists else CREATE, "; ".join(why)))
+        out.settings = merged
+    elif conflicts:
+        out.ops.append(_op(prj, SETTINGS, KEEP, f"your value stays on: {', '.join(conflicts)}"))
+    out.conflicts = conflicts
+
+    accepted = previous.get("accepted") if previous else None
+    data = source.manifest(
+        _version(fw),
+        choices["profile"],
+        choices["orchestration"],
+        choices["agents"],
+        choices["guides"],
+        choices["hooks"],
+        settings_added=added,
+        accepted=accepted if isinstance(accepted, dict) else None,
+    )
+    if previous is None:
+        out.ops.append(_op(prj, MANIFEST, CREATE))
+    elif data != previous:
+        out.ops.append(
+            _op(prj, MANIFEST, MERGE, f"v{previous.get('version')} → v{_version(fw)}"
+                if previous.get("version") != _version(fw) else "the choices")
+        )
+    else:
+        return
+    out.manifest = data
+
+
+def _same_plan(prj: Path, saved: Sequence[Operation], fresh: Sequence[Operation]) -> None:
+    """Refuses, before anything is written, a plan the tree has outgrown.
+
+    A file changed after the plan is named first; then the saved plan must be
+    exactly the one computed now, so a hand-edited plan file cannot ask for a
+    removal or a move the framework would never plan.
+    """
+    active = [op for op in saved if op.action != KEEP]
+    _verify(prj, active)
+    key = lambda ops: {(o.path, o.action, o.digest) for o in ops if o.action != KEEP}  # noqa: E731
+    differ = key(saved) ^ key(fresh)
+    if differ:
+        raise ValueError(
+            "the plan is not the one this tree and these choices give, nothing was written — "
+            "plan again: " + ", ".join(sorted({path for path, _, _ in differ}))
+        )
+
+
+def _write(prj: Path, result: _Result) -> None:
+    """The one place files are written."""
+    for rel, text in result.files.items():
+        path = prj / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(text.encode("utf-8"))
+    for rel in result.remove:
+        (prj / rel).unlink()
+    _prune(prj, result.remove)
+    if result.settings is not None:
+        (prj / SETTINGS).parent.mkdir(parents=True, exist_ok=True)
+        _write_json(prj / SETTINGS, result.settings)
+    if result.manifest is not None:
+        (prj / MANIFEST).parent.mkdir(parents=True, exist_ok=True)
+        _write_json(prj / MANIFEST, result.manifest)
+
+
+# --- Install -----------------------------------------------------------------
+
+
+def plan_install(project_root: Path, framework_root: Path, choices: dict) -> list[Operation]:
     """What the installation would do to this project, file by file.
 
-    `CLAUDE.md`, `settings.json` and the state files already there are merged:
-    they are the project's before they are the framework's. Every other target
-    already present is overwritten, and the plan says so by name. The
-    project's files that sit in the framework's folders stay, and are listed:
-    whoever approves must know they will live side by side.
+    An existing `CLAUDE.md` becomes the project part, `settings.json` is merged,
+    state files already there stay. Every other target already present is
+    overwritten, and the plan says so by name. The project's files that sit in
+    the framework's folders stay, and are listed: whoever approves must know
+    they will live side by side. `.claude/user-rules.md` is created empty, or
+    applied if it is there.
     """
-    prj = Path(project_root)
+    return _install(Path(project_root), Path(framework_root), choices).ops
+
+
+def _install(prj: Path, fw: Path, choices: dict) -> _Result:
     if (prj / MANIFEST).exists():
         raise ValueError(
             f"{MANIFEST} already exists: the project is installed — "
             "/claw update or /claw fix, not a second installation"
         )
-    mergeable = {CLAUDE_MD, SETTINGS} | {f"docs/{n}" for n in doctor.STATE_FILES}
-    ops = []
-    for rel in targets:
-        if not (prj / rel).exists():
-            ops.append(_op(prj, rel, CREATE))
-        elif rel in mergeable:
-            ops.append(_op(prj, rel, MERGE, "already there: merged, the content stays"))
-        else:
-            ops.append(_op(prj, rel, OVERWRITE, "already there: replaced"))
-    wanted = set(targets)
-    for area in SHARED_DIRS:
-        for p in _files(prj / ".claude" / area):
-            rel = p.relative_to(prj).as_posix()
-            if rel not in wanted:
-                ops.append(_op(prj, rel, KEEP, "not the framework's: stays as it is"))
-    for rel in FOREIGN_INSTRUCTIONS:
-        if (prj / rel).is_file():
-            ops.append(
-                _op(prj, rel, KEEP, "instructions of another tool: they stay, "
-                    "and they can contradict CLAUDE.md")
-            )
-    return ops
-
-
-PROJECT_SKELETON = """## The project
-
-[TO FILL IN — one line on what it is · "path → role" map · HARD constraints (breaking them invalidates the work, not just the code) · contracts, with who consumes them]
-
-## Commands
-
-[TO FILL IN — build, test, start · the agent's quick check · heavy operations the user launches, with what they must report]
-
-## Critical surface
-
-[TO FILL IN — what makes the work wrong even with perfect code, and who reviews it. The field's: {surface}]
-
-## Current state
-
-## Shared guides
-
-- `.claude/shared/orchestration.md` — coordinator only, first on any task above one small change: when to delegate and to whom, the work cycle, delegation prompts, state.
-{guides}
-"""
-
-PREEXISTING = """
-## Pre-existing instructions
-
-[TO FILL IN — move what follows into the sections above, in the most compressed form that keeps its meaning, then delete this section]
-
-"""
-
-ROSTER_SKELETON = """## This project's roster
-
-| Situation | Agent | Model |
-|---|---|---|
-{rows}
-
-## Delegation notes for this project
-
-[TO FILL IN — operations the user launches, not the agent · project-specific parallelism limits · when to skip a cycle step]
-"""
+    return _build(prj, fw, _checked(fw, choices), None)
 
 
 def apply_install(
+    project_root: Path, framework_root: Path, ops: Sequence[Operation], choices: dict
+) -> list[str]:
+    """Runs a `plan_install` plan: returns the settings conflicts (your value stays).
+
+    Everything is computed and every digest re-checked before the first byte.
+    """
+    prj, fw = Path(project_root), Path(framework_root)
+    result = _install(prj, fw, choices)
+    _same_plan(prj, ops, result.ops)
+    _write(prj, result)
+    return result.conflicts
+
+
+# --- Update ------------------------------------------------------------------
+
+
+def update_summary(
+    project_root: Path,
+    framework_root: Path,
+    add: Sequence[str] = (),
+    remove: Sequence[str] = (),
+    profile_name: str | None = None,
+    orchestration: str | None = None,
+    gateguard: str | None = None,
+) -> str:
+    """The plan's header: `update v2.7.0 → v3.0.0 · profile a → b · agents +x −y`."""
+    prj, fw = Path(project_root), Path(framework_root)
+    manifest = _manifest(prj)
+    old = installed_choices(manifest)
+    new = _next_choices(fw, manifest, add, remove, profile_name, orchestration, gateguard)
+    parts = [f"update v{manifest.get('version')} → v{_version(fw)}"]
+    for key in ("profile", "orchestration"):
+        if old[key] != new[key]:
+            parts.append(f"{key} {old[key]} → {new[key]}")
+    for key in source.MANIFEST_LISTS:
+        gained = [n for n in new[key] if n not in old[key]]
+        lost = [n for n in old[key] if n not in new[key]]
+        if gained or lost:
+            parts.append(f"{key} " + " ".join([f"+{n}" for n in gained] + [f"−{n}" for n in lost]))
+    return " · ".join(parts)
+
+
+def plan_update(
+    project_root: Path,
+    framework_root: Path,
+    add: Sequence[str] = (),
+    remove: Sequence[str] = (),
+    profile_name: str | None = None,
+    orchestration: str | None = None,
+    gateguard: str | None = None,
+) -> list[Operation]:
+    """What bringing the installation to this source and these choices would do.
+
+    The files are regenerated from the source, the choices in `claw.json` after
+    `add`/`remove`/`profile_name`/`orchestration`/`gateguard`, and the user's
+    rules. At the version that wrote them, a file that differs from what the
+    recorded choices generate has been edited by hand: the plan names it, since
+    the edit is lost. The validation of the requested changes comes first.
+    """
+    prj, fw = Path(project_root), Path(framework_root)
+    return _update(prj, fw, add, remove, profile_name, orchestration, gateguard).ops
+
+
+def _update(prj, fw, add, remove, profile_name, orchestration, gateguard) -> _Result:
+    manifest = _manifest(prj)
+    choices = _next_choices(fw, manifest, add, remove, profile_name, orchestration, gateguard)
+    return _build(prj, fw, choices, manifest)
+
+
+def apply_update(
     project_root: Path,
     framework_root: Path,
     ops: Sequence[Operation],
-    profile_name: str,
-    roster: Sequence[str],
-    guides: Sequence[str],
-    hooks: Sequence[str],
-    orchestration: str,
-) -> tuple[list[str], list[str]]:
-    """Runs a `plan_install` plan: `(settings conflicts, files to fill in)`.
-
-    Everything is computed and every digest re-checked before the first byte.
-    Cards, guides and styles arrive with their placeholders; `CLAUDE.md` and the
-    coordinator's guide with the project skeleton, a pre-existing `CLAUDE.md`
-    appended to be redistributed. State files already there are left for the
-    model to fold into the template. The placeholders are filled next, then
-    `doctor --strict`.
-    """
+    add: Sequence[str] = (),
+    remove: Sequence[str] = (),
+    profile_name: str | None = None,
+    orchestration: str | None = None,
+    gateguard: str | None = None,
+) -> list[str]:
+    """Runs a `plan_update` plan with the same changes: returns the settings
+    conflicts. Nothing is written if the tree is no longer the one planned."""
     prj, fw = Path(project_root), Path(framework_root)
-    prof = profile.load(fw / "profiles" / f"{profile_name}.toml")
-    clash = profile.check_exclusive(list(roster))
-    if clash:
-        raise ValueError(f"agents that do not coexist: {', '.join(clash)}")
-    if {op.path for op in ops if op.action != KEEP} != set(targets(fw, roster, guides, hooks)):
-        raise ValueError("the plan was made for other choices, nothing was written: plan again")
-    _verify(prj, [op for op in ops if op.action != KEEP])
-    version = _version(fw)
+    result = _update(prj, fw, add, remove, profile_name, orchestration, gateguard)
+    _same_plan(prj, ops, result.ops)
+    _write(prj, result)
+    return result.conflicts
 
-    cards = {n: (fw / source.CARDS_DIR / f"{n}.md").read_text(encoding="utf-8") for n in roster}
-    listed = "\n".join(
-        f"- `.claude/shared/{rel}` — {_guide_line((fw / 'shared' / rel).read_text(encoding='utf-8'))}"
-        for rel in guides
-    )
-    sections = PROJECT_SKELETON.format(surface=prof.critical_surface or "-", guides=listed)
-    if (prj / CLAUDE_MD).is_file():
-        sections += PREEXISTING + (prj / CLAUDE_MD).read_text(encoding="utf-8")
-    rows = "\n".join(f"| {_situation(c)} | `{n}` | {_model_cell(c)} |" for n, c in cards.items())
-    texts = {
-        CLAUDE_MD: assemble.build_document(fw / "method", version, sections),
-        ORCHESTRATION: assemble.build_document(
-            fw / "coordinator",
-            version,
-            ROSTER_SKELETON.format(rows=rows),
-            extra=[
-                assemble.orchestration_file(fw, orchestration),
-                *assemble.cycle_files(fw, prof.cycles),
-            ],
-        ),
-    }
-    for name, card in cards.items():
-        texts[f".claude/agents/{name}.md"] = assemble.build_agent(
-            *assemble.split_source(card), version
-        )
-    copies = {f".claude/shared/{rel}": fw / "shared" / rel for rel in guides}
-    copies |= {f".claude/output-styles/{p.name}": p for p in _files(fw / source.STYLES_DIR)}
-    copies |= {f".claude/hooks/{n}.py": _hook_source(fw, n) for n in hooks}
-    copies |= {
-        f"docs/{n}": fw / "templates" / n
-        for n in doctor.STATE_FILES
-        if not (prj / "docs" / n).exists()
-    }
-    merged, added, conflicts = settings.merge(
-        _current_settings(prj),
-        settings.framework(prof.settings, hooks, orchestration),
-    )
-    data = source.manifest(prj, fw, version, prof.name, settings_added=added)
-    data["frontmatter"] = {n: field_record(c) for n, c in cards.items()}
 
-    for rel, original in copies.items():
-        (prj / rel).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(original, prj / rel)
-    for rel, text in texts.items():
-        (prj / rel).parent.mkdir(parents=True, exist_ok=True)
-        (prj / rel).write_text(text, encoding="utf-8")
-    _write_json(prj / SETTINGS, merged)
-    _write_json(prj / MANIFEST, data)
-    to_fill = sorted(
-        rel
-        for rel in [*texts, *copies]
-        if not rel.startswith(".claude/skills/")
-        and rel.endswith(".md")
-        and doctor.PLACEHOLDER_RE.search((prj / rel).read_text(encoding="utf-8"))
-    )
-    return conflicts, to_fill
+# --- Uninstall ---------------------------------------------------------------
 
 
 def render(ops: Sequence[Operation]) -> str:
@@ -275,13 +639,17 @@ def render(ops: Sequence[Operation]) -> str:
 def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
     """What the uninstall would do, file by file, without touching anything.
 
-    The source is needed to know what is identical to the original: without it
-    nothing could be deleted with certainty, and a plan that archives
-    everything is not the one the user believes they are approving. An archive
-    already there is a previous uninstall: writing over it would mix it with
-    this one.
+    A framework file is removed only if it equals what the source generates for
+    the installation's choices and rules, that is if it holds nobody's work;
+    any other is archived whole. The source is needed to know that: without it
+    a plan that archives everything is not the one the user believes they are
+    approving. An archive already there is a previous uninstall: writing over
+    it would mix it with this one.
     """
-    prj, fw = Path(project_root), Path(framework_root)
+    return _uninstall(Path(project_root), Path(framework_root))
+
+
+def _uninstall(prj: Path, fw: Path) -> list[Operation]:
     manifest = _manifest(prj)
     gaps = source.missing(fw)
     if gaps:
@@ -294,43 +662,41 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
             f"{doctor.ARCHIVE_DIR.as_posix()} already exists: it is another uninstall, "
             "move it first"
         )
+    try:
+        rules = _rules(prj)
+    except ValueError:
+        # Unreadable rules: every file that carried one differs, and a file that
+        # differs is archived, never deleted.
+        rules = Rules()
+    claude = _read(prj / CLAUDE_MD)
+    generated = assemble.generate(fw, installed_choices(manifest), rules, claude)
 
     ops = _settings_uninstall_ops(prj, manifest)
-    claude = prj / CLAUDE_MD
-    if claude.is_file():
-        if kernel.parse(claude.read_text(encoding="utf-8")) is None:
+    if claude is not None:
+        if kernel.parse(kernel.strip_user_rules(claude)[0]) is None:
             ops.append(_op(prj, CLAUDE_MD, KEEP, "no markers: no framework region"))
         else:
-            ops.append(_op(prj, CLAUDE_MD, MERGE, "the kernel region goes, the rest stays"))
+            ops.append(_op(prj, CLAUDE_MD, MERGE, "the kernel and user-rules regions go, the rest stays"))
 
-    for p in _files(prj / ".claude" / "hooks"):
-        rel = p.relative_to(prj).as_posix()
-        original = fw / "hooks" / p.relative_to(prj / ".claude" / "hooks")
-        if not original.is_file():
-            ops.append(_op(prj, rel, KEEP, "not from the source: stays"))
-        elif original.read_bytes() == p.read_bytes():
-            ops.append(_op(prj, rel, REMOVE, "identical to the source"))
-        else:
-            ops.append(_op(prj, rel, ARCHIVE, "differs from the source: kept"))
-
-    for area, src_area in (
-        ("agents", source.CARDS_DIR),
-        ("shared", "shared"),
-        ("output-styles", source.STYLES_DIR),
-    ):
+    for area in SHARED_DIRS:
         for p in _files(prj / ".claude" / area):
             rel = p.relative_to(prj).as_posix()
-            original = fw / src_area / p.relative_to(prj / ".claude" / area)
-            if rel == ORCHESTRATION or original.is_file():
-                ops.append(_op(prj, rel, ARCHIVE, "adapted to the project: kept"))
-            else:
+            if rel not in generated:
                 ops.append(_op(prj, rel, KEEP, "not from the source: stays"))
+            elif p.read_bytes() == generated[rel].encode("utf-8"):
+                ops.append(_op(prj, rel, REMOVE, "identical to what the source generates"))
+            elif _archivable(rel):
+                ops.append(_op(prj, rel, ARCHIVE, "differs from what the source generates: kept"))
+            else:
+                ops.append(_op(prj, rel, KEEP, "not the framework's: stays"))
 
+    if (prj / USER_RULES).is_file():
+        ops.append(_op(prj, USER_RULES, KEEP, "your rules"))
     for name in doctor.STATE_FILES:
         if (prj / "docs" / name).is_file():
             ops.append(_op(prj, f"docs/{name}", KEEP, "project state"))
     ops.append(
-        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, /claw finds the source")
+        _op(prj, MANIFEST, ARCHIVE, "last: while it is there, /claw knows the choices")
     )
     return ops
 
@@ -341,23 +707,15 @@ def apply_uninstall(
     """Runs a `plan_uninstall` plan.
 
     All digests are re-checked **before** writing: a file changed after the
-    plan stops everything, not only itself. Every removal is also re-checked
-    against the source: the plan is a saved file, and a "remove" written by hand
-    with the right digest would delete the project's work. Then, in this order:
-    settings, `CLAUDE.md`, moves into the archive with the manifest last,
-    removals, folders left empty.
+    plan stops everything, not only itself. The plan is also recomputed: it is a
+    saved file, and a "remove" written by hand with the right digest would
+    delete the project's work. Then, in this order: settings, `CLAUDE.md`, moves
+    into the archive with the manifest last, removals, folders left empty.
     """
     prj, fw = Path(project_root), Path(framework_root)
-    active = [op for op in ops if op.action != KEEP]
-    _verify(prj, active)
-    unjustified = sorted(
-        op.path for op in active if op.action == REMOVE and not _removable(prj, fw, op.path)
-    )
-    if unjustified:
-        raise ValueError(
-            "removals of files not identical to the source, nothing was written: "
-            + ", ".join(unjustified)
-        )
+    fresh = _uninstall(prj, fw)
+    _same_plan(prj, ops, fresh)
+    active = [op for op in fresh if op.action != KEEP]
     stray = sorted(
         f"{op.action} {op.path}"
         for op in active
@@ -370,8 +728,6 @@ def apply_uninstall(
             + ", ".join(stray)
         )
     archive = prj / doctor.ARCHIVE_DIR
-    if archive.exists():
-        raise ValueError(f"{doctor.ARCHIVE_DIR.as_posix()} appeared after the plan: plan again")
     paths = {op.path for op in active}
 
     if SETTINGS in paths:
@@ -381,9 +737,11 @@ def apply_uninstall(
 
     if CLAUDE_MD in paths:
         claude = prj / CLAUDE_MD
-        text = claude.read_text(encoding="utf-8")
+        text, rules_region = kernel.strip_user_rules(_read(claude))
+        if rules_region is not None and text.endswith("\n\n"):
+            text = text[:-1]  # the blank line `generate` put before the region
         region = kernel.parse(text)
-        claude.write_text(text[: region.start] + text[region.end :].lstrip("\n"), encoding="utf-8")
+        claude.write_bytes((text[: region.start] + text[region.end :].lstrip("\n")).encode("utf-8"))
 
     moved = sorted(
         (op.path for op in active if op.action == ARCHIVE), key=lambda rel: rel == MANIFEST
@@ -398,309 +756,7 @@ def apply_uninstall(
     _prune(prj, moved + removed)
 
 
-def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
-    """Puts back what is missing, at the installed version. Nothing is overwritten.
-
-    A skill or a hook that differs from the source is a local change and
-    stays. At a different version "what is missing" would be measured against
-    the wrong source: `down` first.
-    """
-    prj, fw = Path(project_root), Path(framework_root)
-    manifest = _manifest(prj)
-    version = _version(fw)
-    if manifest.get("version") != version:
-        raise ValueError(
-            f"installation at v{manifest.get('version')}, source at v{version}: "
-            "/claw update first, then /claw fix"
-        )
-    keep = (KEEP, "differs from the source: local change, not overwritten")
-    ops = []
-    current = _current_settings(prj)
-    in_use = _referenced_hooks(current) | _referenced_hooks(manifest.get("settings_added"))
-    for name in settings.HOOKS:
-        if name in in_use:
-            ops += _against_source(prj, f".claude/hooks/{name}.py", _hook_source(fw, name), *keep)
-    for name in doctor.STATE_FILES:
-        if not (prj / "docs" / name).exists():
-            ops.append(_op(prj, f"docs/{name}", CREATE, "missing: from the template, to fill in"))
-    for ref in _cited_guides(prj):
-        rel = f".claude/shared/{ref}"
-        if (prj / rel).exists():
-            continue
-        if (fw / "shared" / ref).is_file():
-            ops.append(_op(prj, rel, CREATE, "cited and missing: from the source, to fill in"))
-        else:
-            ops.append(_op(prj, rel, KEEP, "cited, missing from the source too: to be written"))
-    settings_ops = _settings_update_ops(prj, fw, manifest, ops)
-    if settings_ops:
-        ops += settings_ops
-        ops.append(_op(prj, MANIFEST, MERGE, "settings_added: what is added gets appended"))
-    return ops
-
-
-def plan_down(
-    project_root: Path,
-    framework_root: Path,
-    hooks: Sequence[str] | None = None,
-    adopt: Sequence[str] = (),
-    cited: Path | None = None,
-) -> list[Operation]:
-    """What a new version brings: kernel regions, guides and styles, skills,
-    hooks, settings.
-
-    The kernel regions are reassembled by `apply_down`: here they are listed,
-    and a touched-up region says the change will be lost. A card's front
-    matter follows `_frontmatter_merge`; `adopt` names the cards (or `all`)
-    that take the source's values whatever the record says. Guides and styles
-    take the source text and keep their project block; without a recognisable
-    block they stay as they are, and the plan says so. `hooks` are the hooks to
-    have afterwards; `None` means those the project already uses — a project
-    born without hooks does not get any in silence. `cited` is the source the
-    manifest will name, when `framework_root` is only a copy of it.
-    """
-    prj, fw = Path(project_root), Path(framework_root)
-    manifest = _manifest(prj)
-    version = _version(fw)
-    ops = []
-    for rel in _kernel_files(prj):
-        text = (prj / rel).read_text(encoding="utf-8")
-        region = kernel.parse(text)
-        original = fw / source.CARDS_DIR / Path(rel).name
-        is_agent = rel.startswith(".claude/agents/")
-        if is_agent and not original.is_file():
-            ops.append(_op(prj, rel, KEEP, "card no longer in the source: stays as it is"))
-            continue
-        note = _card_note(manifest, rel, text, original, adopt) if is_agent else ""
-        if region is None:
-            ops.append(_op(prj, rel, KEEP, "no markers: no region to reassemble"))
-        else:
-            ops.append(_op(prj, rel, MERGE, f"v{region.version} → v{version}, rest unchanged{note}"))
-
-    for rel, original in _adapted_files(prj, fw):
-        installed = (prj / rel).read_text(encoding="utf-8")
-        text = original.read_text(encoding="utf-8")
-        merged = with_project_block(text, installed)
-        if merged is None and installed != text:
-            why = "project block not found" if project_heading(text) else "no project block"
-            ops.append(_op(prj, rel, KEEP, f"{why}: differs from the source, update it by hand"))
-        elif merged is not None and merged != installed:
-            ops.append(_op(prj, rel, MERGE, "text from the source, project block unchanged"))
-
-    cards = [Path(r).stem for r in _kernel_files(prj) if r.startswith(".claude/agents/")]
-    for ref in profile.required_guides(fw, cards):
-        rel = f".claude/shared/{ref}"
-        if not (prj / rel).exists() and (fw / "shared" / ref).is_file():
-            ops.append(_op(prj, rel, CREATE, "cited by a card of this version: fill in its "
-                           "block, add its line in CLAUDE.md § Shared guides"))
-
-    overwrite = (OVERWRITE, "differs from the source: updated")
-    if hooks is None:
-        current = _current_settings(prj)
-        in_use = _referenced_hooks(current) | _referenced_hooks(manifest.get("settings_added"))
-        in_use |= {n for n in settings.HOOKS if _hook_after(prj, n, ())}
-        # The closed ones belong to every installation: one born before them
-        # receives them here, or it never would.
-        in_use |= set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS)
-        hooks = [n for n in settings.HOOKS if n in in_use]
-    unknown = [n for n in hooks if n not in settings.HOOKS]
-    if unknown:
-        raise ValueError(f"unknown hooks: {', '.join(unknown)}")
-    for name in hooks:
-        ops += _against_source(prj, f".claude/hooks/{name}.py", _hook_source(fw, name), *overwrite)
-    ops += _settings_update_ops(prj, fw, manifest, ops)
-    ref = source.reference(prj, Path(cited) if cited else fw)
-    moved = manifest.get("source") != ref
-    ops.append(_op(prj, MANIFEST, MERGE, f"version {manifest.get('version')} → {version}"
-                   + (f"; source → {ref}" if moved else "")))
-    return ops
-
-
-def _card_note(manifest: dict, rel: str, text: str, original: Path, adopt: Sequence[str]) -> str:
-    name = Path(rel).stem
-    record = _record(manifest, name)
-    _, taken, kept = _frontmatter_merge(
-        text, original.read_text(encoding="utf-8"), record, "all" in adopt or name in adopt
-    )
-    note = f"; from the source: {', '.join(taken)}" if taken else ""
-    if kept:
-        note += f"; kept (local): {', '.join(kept)}" if record is not None else (
-            f"; kept (no record): {', '.join(kept)} — --adopt {name} takes the source"
-        )
-    return note
-
-
-def apply_down(
-    project_root: Path, framework_root: Path, ops: Sequence[Operation], adopt: Sequence[str] = ()
-) -> None:
-    """Runs a `plan_down` plan, kernel regions included.
-
-    Every new text is computed and every digest re-checked before the first
-    byte is written: a failure leaves the project as it was. The regions take
-    the source's method and keep what surrounds them; cards take their front
-    matter from `_frontmatter_merge`, and every roster row's Model cell takes
-    its card's model and effort. The manifest records the source cards'
-    front matter — the reference of the next `down` — and the source.
-    """
-    prj, fw = Path(project_root), Path(framework_root)
-    _verify(prj, [op for op in ops if op.action != KEEP])
-    manifest = _manifest(prj)
-    version = _version(fw)
-    table = manifest.get("frontmatter")
-    record = dict(table) if isinstance(table, dict) else {}
-    regions = [op.path for op in ops if op.action == MERGE and _is_kernel_file(op.path)]
-    writes: dict[Path, str] = {}
-    # The Model column is the cards' front matter, seen from the roster: every
-    # row follows its card, whatever it said before.
-    cells = {p.stem: _model_cell(p.read_text(encoding="utf-8"))
-             for p in (prj / ".claude" / "agents").glob("*.md")}
-    for rel in regions:
-        if not rel.startswith(".claude/agents/"):
-            continue
-        name = Path(rel).stem
-        text = (prj / rel).read_text(encoding="utf-8")
-        original = (fw / source.CARDS_DIR / f"{name}.md").read_text(encoding="utf-8")
-        fm, _, _ = _frontmatter_merge(
-            text, original, _record(manifest, name), "all" in adopt or name in adopt
-        )
-        _, method, _ = assemble.split_source(original)
-        domain = text[kernel.parse(text).end :].lstrip("\n")
-        writes[prj / rel] = assemble.build_agent(fm, method, domain, version)
-        record[name] = field_record(original)
-        cells[name] = _model_cell(fm)
-    for rel, method_dir in ((CLAUDE_MD, "method"), (ORCHESTRATION, "coordinator")):
-        if rel not in regions:
-            continue
-        text = (prj / rel).read_text(encoding="utf-8")
-        region = kernel.parse(text)
-        sections = text[region.end :].lstrip("\n")
-        extra: list[Path] = []
-        if rel == ORCHESTRATION:
-            sections = _roster_cells(sections, cells)
-            extra = [
-                assemble.installed_orchestration(region.body, fw),
-                *assemble.installed_cycles(region.body, fw),
-            ]
-        writes[prj / rel] = text[: region.start] + assemble.build_document(
-            fw / method_dir, version, sections, extra=extra
-        )
-
-    apply_update(prj, fw, ops)
-    for path, text in writes.items():
-        path.write_text(text, encoding="utf-8")
-    data = _manifest(prj)
-    data["frontmatter"] = {
-        n: r for n, r in record.items() if (prj / ".claude" / "agents" / f"{n}.md").is_file()
-    }
-    data["source"] = source.reference(prj, fw)
-    _write_json(prj / MANIFEST, data)
-
-
-def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operation]) -> None:
-    """Runs a `plan_repair` or `plan_down` plan.
-
-    Files with a kernel region are skipped: the skill's steps rewrite them,
-    keeping the project sections, and by the time this function runs they have
-    already changed. For everything else the digests are re-checked before
-    writing. Then: copies from the source, guides and styles re-merged with
-    their project block, missing entries in `settings.json`, manifest — the
-    source's version and the new delta appended to the record.
-    """
-    prj, fw = Path(project_root), Path(framework_root)
-    active = [op for op in ops if op.action != KEEP and not _is_kernel_file(op.path)]
-    _verify(prj, active)
-    manifest = _manifest(prj)
-    copies = [
-        (op.path, _source_of(fw, op.path))
-        for op in active
-        if op.action in (CREATE, OVERWRITE) and op.path not in (SETTINGS, MANIFEST)
-    ]
-    paths = {op.path for op in active}
-    rewrites = []
-    for op in active:
-        if op.action != MERGE or op.path in (SETTINGS, MANIFEST):
-            continue
-        merged = with_project_block(
-            _source_of(fw, op.path).read_text(encoding="utf-8"),
-            (prj / op.path).read_text(encoding="utf-8"),
-        )
-        if merged is None:
-            raise ValueError(
-                f"{op.path}: the project block is no longer recognisable, "
-                "nothing was written — redo the plan"
-            )
-        rewrites.append((prj / op.path, merged))
-
-    for rel, original in copies:
-        dest = prj / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(original, dest)
-    for dest, merged in rewrites:
-        dest.write_text(merged, encoding="utf-8")
-
-    added: dict = {}
-    if SETTINGS in paths:
-        current, _ = _drop_framework_hooks(_current_settings(prj), only_stale=True)
-        merged, added, _ = settings.merge(
-            current, _framework_settings(prj, fw, manifest, (), current)
-        )
-        _write_json(prj / SETTINGS, merged)
-
-    if MANIFEST in paths:
-        data = dict(manifest)
-        data["version"] = _version(fw)
-        data.pop("skills", None)
-        if added:
-            record = data.get("settings_added")
-            # A replaced entry leaves the record too: uninstall removes what
-            # is equal to it, and the old one is no longer there.
-            record, _ = _drop_framework_hooks(
-                record if isinstance(record, dict) else {}, only_stale=True
-            )
-            data["settings_added"] = settings.merge(record, added)[0]
-        _write_json(prj / MANIFEST, data)
-
-
-def project_heading(text: str) -> str | None:
-    """The heading of the project block of a guide or style in the source: the
-    last `## ` section, if it holds every placeholder of the file. `None`
-    without placeholders, or with one outside the last section: there `down`
-    could not tell what belongs to the project."""
-    heads = list(SECTION_RE.finditer(text))
-    total = len(doctor.PLACEHOLDER_RE.findall(text))
-    if not heads or not total:
-        return None
-    if len(doctor.PLACEHOLDER_RE.findall(text[heads[-1].start() :])) != total:
-        return None
-    return heads[-1].group(0).rstrip()
-
-
-def with_project_block(original: str, installed: str) -> str | None:
-    """The source text up to the project block, then the block as it is in the
-    installation. `None` if the source has no block or the installation no
-    longer has that heading."""
-    heading = project_heading(original)
-    if heading is None:
-        return None
-
-    def start(text: str) -> int | None:
-        found = [m.start() for m in SECTION_RE.finditer(text) if m.group(0).rstrip() == heading]
-        return found[-1] if found else None
-
-    at = start(installed)
-    return None if at is None else original[: start(original)] + installed[at:]
-
-
-def _adapted_files(prj: Path, fw: Path) -> list[tuple[str, Path]]:
-    """Installed guides and styles that come from the source. `orchestration.md`
-    lives in `shared/` but has a kernel region: it belongs to the skill's steps."""
-    out = []
-    for area, src_area in (("shared", "shared"), ("output-styles", source.STYLES_DIR)):
-        for p in _files(prj / ".claude" / area):
-            rel = p.relative_to(prj).as_posix()
-            original = fw / src_area / p.relative_to(prj / ".claude" / area)
-            if rel != ORCHESTRATION and p.suffix == ".md" and original.is_file():
-                out.append((rel, original))
-    return out
+# --- Helpers -----------------------------------------------------------------
 
 
 def _digest(path: Path) -> str:
@@ -715,112 +771,6 @@ def _files(directory: Path) -> list[Path]:
     return sorted(p for p in directory.rglob("*") if p.is_file()) if directory.is_dir() else []
 
 
-def _hook_source(fw: Path, name: str) -> Path:
-    return fw / "hooks" / f"{name}.py"
-
-
-def _kernel_files(prj: Path) -> list[str]:
-    out = [rel for rel in (CLAUDE_MD, ORCHESTRATION) if (prj / rel).is_file()]
-    agents = _files(prj / ".claude" / "agents")
-    return out + [p.relative_to(prj).as_posix() for p in agents if p.suffix == ".md"]
-
-
-ROSTER_ROW_RE = re.compile(r"^(\|[^|\n]*\|\s*)`([a-z-]+)`\s*\|([^|\n]*)\|", re.MULTILINE)
-
-# Defined in `assemble`, which generates with them; the planners here use the same ones.
-_fields = assemble.fields
-_situation = assemble.situation
-_guide_line = assemble.guide_line
-_model_cell = assemble.model_cell
-
-
-def _field_digest(text: str) -> str:
-    """The fingerprint `claw.json` keeps for a front-matter field (goes with the record, P5)."""
-    return hashlib.sha256(kernel.normalize(text).encode("utf-8")).hexdigest()[:8]
-
-
-def field_record(card: str) -> dict[str, str]:
-    """What `claw.json` records of a source card at every sync: key → digest."""
-    return {k: _field_digest(v) for k, v in _fields(card).items()}
-
-
-def _record(manifest: dict, name: str) -> dict | None:
-    table = manifest.get("frontmatter")
-    entry = table.get(name) if isinstance(table, dict) else None
-    return entry if isinstance(entry, dict) else None
-
-
-def _frontmatter_merge(
-    installed: str, original: str, record: dict | None, adopt: bool
-) -> tuple[str, list[str], list[str]]:
-    """`(front matter, taken, kept)` after `down`.
-
-    A key the project still has at the value recorded at the last sync is taken
-    from the source: nobody chose it. A different value is a local choice and
-    stays. Without a record the two cannot be told apart: every difference
-    stays, unless `adopt`.
-    """
-    here, there = _fields(installed), _fields(original)
-    blocks, taken, kept = [], [], []
-    for key in [*there, *(k for k in here if k not in there)]:
-        h, t = here.get(key), there.get(key)
-        if h == t:
-            chosen = h
-        elif adopt or (
-            record is not None and (_field_digest(h) if h else "-") == record.get(key, "-")
-        ):
-            chosen = t
-            taken.append(key)
-        else:
-            chosen = h
-            kept.append(key)
-        if chosen:
-            blocks.append(chosen)
-    return "---\n" + "".join(blocks) + "---\n", taken, kept
-
-
-def _roster_cells(sections: str, cells: dict[str, str]) -> str:
-    """Rewrites every roster row's Model cell to its card's `model effort`."""
-
-    def fix(m: re.Match) -> str:
-        name, cell = m.group(2), m.group(3).strip()
-        if name in cells and cell != cells[name]:
-            return f"{m.group(1)}`{name}` | {cells[name]} |"
-        return m.group(0)
-
-    return ROSTER_ROW_RE.sub(fix, sections)
-
-
-def _is_kernel_file(rel: str) -> bool:
-    return rel in (CLAUDE_MD, ORCHESTRATION) or rel.startswith(".claude/agents/")
-
-
-def _against_source(
-    prj: Path, rel: str, original: Path, action: str, reason: str
-) -> list[Operation]:
-    """A file that must come from the source: missing → create, different → `action`."""
-    p = prj / rel
-    if not p.exists():
-        return [_op(prj, rel, CREATE, "missing: from the source")]
-    if p.read_bytes() != original.read_bytes():
-        return [_op(prj, rel, action, reason)]
-    return []
-
-
-def _source_of(fw: Path, rel: str) -> Path:
-    for prefix, area in (
-        (".claude/hooks/", "hooks"),
-        (".claude/shared/", "shared"),
-        (".claude/output-styles/", source.STYLES_DIR),
-    ):
-        if rel.startswith(prefix):
-            return fw / area / rel[len(prefix) :]
-    name = rel.removeprefix("docs/")
-    if rel.startswith("docs/") and name in doctor.STATE_FILES:
-        return fw / "templates" / name
-    raise ValueError(f"{rel}: no source file to copy it from")
-
-
 def _verify(prj: Path, ops: Sequence[Operation]) -> None:
     changed = sorted({op.path for op in ops if _digest(prj / op.path) != op.digest})
     if changed:
@@ -828,19 +778,6 @@ def _verify(prj: Path, ops: Sequence[Operation]) -> None:
             "changed after the plan, nothing was written — plan again: "
             + ", ".join(changed)
         )
-
-
-def _removable(prj: Path, fw: Path, rel: str) -> bool:
-    """The rule of `plan_uninstall`: only a skill or a hook byte-for-byte
-    identical to the source file at the same path is deleted."""
-    if ".." in Path(rel).parts:
-        return False
-    prefix = ".claude/hooks/"
-    if rel.startswith(prefix):
-        original = fw / "hooks" / rel[len(prefix) :]
-        p = prj / rel
-        return original.is_file() and p.is_file() and original.read_bytes() == p.read_bytes()
-    return False
 
 
 def _archivable(rel: str) -> bool:
@@ -865,7 +802,7 @@ def _manifest(prj: Path) -> dict:
     if data is None:
         raise ValueError(
             f"{MANIFEST} absent or unreadable: without it, nobody knows what the "
-            "installation wrote or from which source"
+            "installation wrote or from which choices"
         )
     return data
 
@@ -893,26 +830,11 @@ def _current_settings(prj: Path) -> dict:
     return _read_json(path) if path.is_file() else {}
 
 
-def _cited_guides(prj: Path) -> list[str]:
-    refs: set[str] = set()
-    for f in doctor._markdown_files(prj):
-        refs |= set(doctor.SHARED_REF_RE.findall(f.read_text(encoding="utf-8")))
-    return sorted(refs)
-
-
 def _hook_name(entry: object) -> str | None:
     command = entry.get("command") if isinstance(entry, dict) else None
     if not isinstance(command, str):
         return None
     return next((n for n in HOOK_PATH_RE.findall(command) if n in settings.HOOKS), None)
-
-
-def _referenced_hooks(data: object) -> set[str]:
-    """The framework hooks a slice of settings names."""
-    if not isinstance(data, dict):
-        return set()
-    text = json.dumps(data.get("hooks", {}))
-    return {n for n in HOOK_PATH_RE.findall(text) if n in settings.HOOKS}
 
 
 def _drop_framework_hooks(data: dict, only_stale: bool = False) -> tuple[dict, list[str]]:
@@ -996,66 +918,3 @@ def _settings_uninstall_ops(prj: Path, manifest: dict) -> list[Operation]:
                 "script blocks every git command and linter-configuration edit")
         )
     return ops
-
-
-def _hook_after(prj: Path, name: str, ops: Sequence[Operation]) -> bool:
-    """Whether the hook's script will be there after the plan."""
-    rel = f".claude/hooks/{name}.py"
-    return (prj / rel).is_file() or any(
-        op.path == rel and op.action in (CREATE, OVERWRITE) for op in ops
-    )
-
-
-def _framework_settings(
-    prj: Path, fw: Path, manifest: dict, ops: Sequence[Operation], current: dict
-) -> dict:
-    """The entries the framework wants in `settings.json`: the profile, those of
-    the installed orchestration, plus one entry for every hook whose script will
-    be there and that no entry launches yet.
-
-    The orchestration is not in the manifest: it is derived from the kernel
-    region of the coordinator's guide. Without the guide nobody knows which one
-    it is, and recomputing without its variables would leave switched off a
-    model the project uses.
-
-    A hook already named is not added again: if the command changed between one
-    release and the next, the new entry would be appended to the old one and
-    the hook would run twice.
-    """
-    name = manifest.get("profile")
-    path = fw / "profiles" / f"{name}.toml"
-    if not isinstance(name, str) or not path.is_file():
-        raise ValueError(
-            f"profile {name!r} missing from the source: the settings.json entries "
-            "cannot be recomputed"
-        )
-    guide = prj / ORCHESTRATION
-    region = kernel.parse(guide.read_text(encoding="utf-8")) if guide.is_file() else None
-    if region is None:
-        raise ValueError(
-            f"{ORCHESTRATION} missing or without a kernel region: the installed "
-            "orchestration cannot be derived and the settings.json entries cannot "
-            "be recomputed — reassemble the guide with assemble.orchestration_file, then retry"
-        )
-    orchestration = assemble.installed_orchestration(region.body, fw).stem
-    referenced = _referenced_hooks(current)
-    names = [n for n in settings.HOOKS if n not in referenced and _hook_after(prj, n, ops)]
-    return settings.framework(profile.load(path).settings, names, orchestration)
-
-
-def _settings_update_ops(
-    prj: Path, fw: Path, manifest: dict, ops: Sequence[Operation]
-) -> list[Operation]:
-    current, stale = _drop_framework_hooks(_current_settings(prj), only_stale=True)
-    _, added, conflicts = settings.merge(
-        current, _framework_settings(prj, fw, manifest, ops, current)
-    )
-    if not added:
-        return []
-    reason = "missing: " + ", ".join(sorted(added))
-    if stale:
-        reason += f"; replaced, from an older release: {', '.join(stale)}"
-    if conflicts:
-        reason += f"; your value stays on: {', '.join(conflicts)}"
-    action = MERGE if (prj / SETTINGS).is_file() else CREATE
-    return [_op(prj, SETTINGS, action, reason)]

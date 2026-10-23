@@ -46,9 +46,3 @@ You are the compliance and licensing reviewer. You detect **technical** violatio
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — which personal data this project processes and on what legal
-basis, the terms of the data sources used, the project's licence and the
-constraints it imposes on dependencies, the compliance decisions already made.]

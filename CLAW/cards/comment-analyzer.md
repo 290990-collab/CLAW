@@ -51,9 +51,3 @@ You are the comment checker. The rule you guard: **a comment exists only for a n
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — this project's convention for comments and code documentation,
-the docstring formats in use, the generated folders not to analyse, where
-technical debt is tracked if not in `TODO`s.]

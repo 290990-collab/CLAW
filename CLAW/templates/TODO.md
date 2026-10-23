@@ -6,11 +6,11 @@ Only the **state**: where we are now. The plan lives in [roadmap.md](roadmap.md)
 
 ## In progress
 
-- [ ] [TO FILL IN — the active task, one only]
+*The active task, one only.*
 
 ## Next
 
-- [ ] [TO FILL IN — the next step, in dependency order]
+*The next step, in dependency order.*
 
 ## Waiting
 
@@ -26,10 +26,9 @@ Only the **state**: where we are now. The plan lives in [roadmap.md](roadmap.md)
 
 | # | question | what it does | what it changes | why | limits |
 |---|---|---|---|---|---|
-| D1 | [TO FILL IN — the choice in a few words] | what would change | the files it touches | what makes it necessary | what makes it risky, or what is missing to decide it |
 
 **Order:** `D1 --> D2` D1 first · `D2 <-- D1` D2 depends on D1 · `D1 || D2` can run in parallel.
 
 ---
 
-Last updated: [TO FILL IN — today's date]
+Last updated: *the date of the last change.*

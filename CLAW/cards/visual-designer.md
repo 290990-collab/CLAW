@@ -40,7 +40,3 @@ You decide how what gets published looks. **You do not generate images:** you pr
 ```
 
 Close with the standard report.
-
-## Project context
-
-[TO FILL IN — colours, typefaces and sizes already in use, where the assets live, the tools available to produce them, the formats this project's channels require.]

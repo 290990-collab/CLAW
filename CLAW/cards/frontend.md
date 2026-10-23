@@ -51,9 +51,3 @@ Domain logic. Changes to data contracts. Introducing a component or animation li
 ```
 
 Close with the standard report, with the missing visual verification spelled out in `UNVERIFIED`.
-
-## Project context
-
-[TO FILL IN — interface stack and versions, where shared tokens and components
-live, how the environment is started to look at the result, the visual
-conventions already fixed, the support constraints (browsers, devices, themes).]

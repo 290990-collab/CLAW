@@ -198,7 +198,7 @@ def _command(name: str) -> str:
 
 def hook_entry(name: str) -> dict:
     """The entry this release writes for a hook: one that differs is from an
-    older release, and `down` replaces it."""
+    older release, and `update` replaces it."""
     return {"type": "command", "command": _command(name), "timeout": _TIMEOUT_SECONDS}
 
 

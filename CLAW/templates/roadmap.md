@@ -8,9 +8,8 @@ The **what** and the **how**: goals, in what order and why in that order. Progre
 
 | # | question | what it does | what it changes | why | done when | limits |
 |---|---|---|---|---|---|---|
-| 1 | [TO FILL IN — the goal in a few words] | what concretely changes | the files it touches | what it unblocks, or which problem it closes | verifiable criterion, decided now and not after the fact | what could make it fail or drag on |
 
-**Order:** [TO FILL IN — `1 --> 2 --> 3`]
+*One row per goal, with a criterion decided now and not after the fact. Below the table, the order: `1 --> 2 --> 3`.*
 
 `A --> B` A then B · `B <-- A` B depends on A · `A || B` can run in parallel.
 

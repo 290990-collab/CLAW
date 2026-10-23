@@ -40,9 +40,3 @@ Cross-cutting rules of form.
 
 - The build must pass after every task.
 - No new warning introduced without flagging it.
-
-## In this project
-
-[TO FILL IN — language of code and comments, "kind of code → folder" map,
-specific naming conventions, where user-visible changes are recorded, which
-folders contain generated artefacts not to be touched.]

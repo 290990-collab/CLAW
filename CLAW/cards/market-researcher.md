@@ -54,7 +54,3 @@ What holds them back: <habit, fear of the switch>
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`).
-
-## Project context
-
-[TO FILL IN — what the product does in one line, who already uses it, the chosen positioning and what decided it, the claims already published that cannot be taken back, the market sources that are reliable in this field.]

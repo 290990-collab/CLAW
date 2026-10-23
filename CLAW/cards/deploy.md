@@ -39,9 +39,3 @@ Interface, domain logic, content. Commits. Changes to cost, availability or publ
 ```
 
 Close with the standard report, with the impacts on availability, security, indexing and cost in `RISK`.
-
-## Project context
-
-[TO FILL IN — where this project is published and by which procedure, the
-production build commands, which environment variables exist and where they are
-defined, which URLs are public contracts, how the rollback works.]

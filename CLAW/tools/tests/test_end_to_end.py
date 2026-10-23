@@ -3,7 +3,7 @@ import json
 import re
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import trial_install
@@ -12,6 +12,13 @@ from fwbuild import assemble, cli, doctor, kernel, lifecycle, profile, settings,
 FRAMEWORK = Path(__file__).resolve().parents[2]
 SURFACE_ONLY = {"compliance-reviewer", "perf-analyst"}
 CONF_PERCENT_RE = re.compile(r"CONF:.*%")
+VERSION = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
+
+
+def wired(root: Path) -> set[str]:
+    """The framework hooks `settings.json` launches."""
+    hooks = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8")).get("hooks", {})
+    return set(settings.HOOK_PATH_RE.findall(json.dumps(hooks)))
 
 
 class TestRealFramework(unittest.TestCase):
@@ -90,12 +97,37 @@ class TestRealFramework(unittest.TestCase):
             deny = set(prof.settings["permissions"]["deny"])
             self.assertEqual(needed - deny, set(), prof.name)
 
-    def test_state_templates_use_one_placeholder_syntax(self):
-        """The doctor recognises one placeholder syntax only: a second one would
-        let a line to be filled survive the installation, with no finding."""
+    def test_nothing_in_the_source_asks_to_be_filled_in(self):
+        """The project's own words live in `CLAUDE.md` and `user-rules.md`, never
+        in a block of a card, a guide, the style or a state template: a leftover
+        `TO FILL IN` is a file every installation would carry with a hole in it,
+        and nothing flags it any more."""
+        checked = [
+            *sorted((FRAMEWORK / source.CARDS_DIR).glob("*.md")),
+            *sorted((FRAMEWORK / "shared").rglob("*.md")),
+            *sorted((FRAMEWORK / source.STYLES_DIR).glob("*.md")),
+            *sorted((FRAMEWORK / "templates").glob("*.md")),
+            *sorted((FRAMEWORK / "method").glob("*.md")),
+            *sorted((FRAMEWORK / "coordinator").glob("*.md")),
+            *sorted((FRAMEWORK / "orchestrations").glob("*.md")),
+            *sorted((FRAMEWORK / "cycles").glob("*.md")),
+        ]
+        self.assertGreater(len(checked), 60)
+        for path in checked:
+            text = path.read_text(encoding="utf-8")
+            rel = path.relative_to(FRAMEWORK).as_posix()
+            self.assertNotIn("TO FILL IN", text, rel)
+            self.assertNotIn("## Project context", text, rel)
+            self.assertNotIn("## In this project", text, rel)
+
+    def test_state_templates_hold_no_placeholder_rows(self):
+        """A template copied into a project is read at session start as state:
+        a bracketed row to complete would be read as a task, an example row as
+        a decision."""
         for name in ("TODO.md", "status.md", "roadmap.md"):
             text = (FRAMEWORK / "templates" / name).read_text(encoding="utf-8")
             self.assertNotIn("{{", text, name)
+            self.assertNotRegex(text, r"\[[^\]\n]*—[^\]\n]*\]", name)
             for line in text.splitlines():
                 self.assertFalse(line.strip().startswith("<"), f"{name}: {line}")
 
@@ -107,12 +139,14 @@ class TestRealFramework(unittest.TestCase):
             self.assertNotIn("on_demand", path.read_text(encoding="utf-8"), path.name)
 
     def test_every_agent_splits_and_assembles(self):
+        """A card the generator cannot split installs nothing; one that still
+        carries a block to fill in would put it in every project."""
         version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
         for p in sorted((FRAMEWORK / source.CARDS_DIR).glob("*.md")):
-            fm, method, domain = assemble.split_source(p.read_text(encoding="utf-8"))
-            built = assemble.build_agent(fm, method, domain, version)
-            self.assertIsNotNone(kernel.parse(built), p.name)
-            self.assertIn("[TO FILL IN", domain, p.name)
+            fm, method = assemble.split_source(p.read_text(encoding="utf-8"))
+            self.assertIsNotNone(kernel.parse(kernel.wrap(method, version)), p.name)
+            self.assertNotIn("TO FILL IN", method, p.name)
+            self.assertNotIn("## Project context", method, p.name)
 
     def test_kernel_assembles_and_parses(self):
         version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
@@ -231,34 +265,6 @@ class TestRealFramework(unittest.TestCase):
         for name in settings.ORCHESTRATION_SETTINGS:
             assemble.orchestration_file(FRAMEWORK, name)
 
-    def test_orchestration_headings_are_recognizable(self):
-        """`installed_orchestration` recognises a module by its first heading
-        inside the region: if that heading appeared in the coordinator's kernel,
-        in a cycle or in another module, `down` would find an orchestration
-        the project does not have, or two, and would rewrite the wrong guide.
-        The opposite direction holds too: a cycle's heading inside a module
-        would make `installed_cycles` find a cycle the profile does not have."""
-        modules = sorted((FRAMEWORK / "orchestrations").glob("*.md"))
-        self.assertGreaterEqual(len(modules), 2)
-        coordinator = assemble.read_method(FRAMEWORK / "coordinator")
-        cycles = assemble.read_method(FRAMEWORK / "cycles")
-        for p in modules:
-            heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
-            self.assertTrue(heading.startswith("## "), p.name)
-            others = "\n".join(
-                q.read_text(encoding="utf-8") for q in modules if q != p
-            )
-            for where, text in (
-                ("coordinator/", coordinator),
-                ("cycles/", cycles),
-                ("other modules", others),
-            ):
-                self.assertNotIn(heading, text, f"{p.name} in {where}")
-        all_modules = assemble.read_method(FRAMEWORK / "orchestrations")
-        for c in sorted((FRAMEWORK / "cycles").glob("*.md")):
-            heading = c.read_text(encoding="utf-8").lstrip().splitlines()[0]
-            self.assertNotIn(heading, all_modules, f"{c.name} in orchestrations/")
-
     def test_every_profile_shared_guide_exists(self):
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
             prof = profile.load(path)
@@ -371,16 +377,6 @@ class TestRealFramework(unittest.TestCase):
         ):
             self.assertIn(path, block, path)
 
-    def test_final_reviewer_asks_for_the_uncovered_critical_surface(self):
-        """The surfaces without a dedicated reviewer (public contract,
-        accessibility) have no agent and must not have one: they end up in the
-        mandate of whoever verifies last. If the placeholder stops asking for
-        them, whoever installs does not write them and the surface
-        disappears."""
-        text = (FRAMEWORK / source.CARDS_DIR / "final-reviewer.md").read_text(encoding="utf-8")
-        _, _, domain = assemble.split_source(text)
-        self.assertIn("critical surface", domain)
-
     def test_the_tidy_skill_pairs_every_conflict_with_the_repo(self):
         """The TODO and memory drift from the repository: no finding sees them, and a
         conflict declared without the line that contradicts it becomes an
@@ -425,35 +421,6 @@ class TestRealFramework(unittest.TestCase):
                 profile.load(path).settings.get("outputStyle"), name, path.name
             )
 
-    def test_an_unfilled_response_style_is_a_finding(self):
-        """The style has no kernel region and is not tracked: the only thing
-        demanding that it be adapted is `_markdown_files` scanning it. Narrowing
-        that list (it excludes skills and archive) would switch the check
-        off without breaking anything, and the project block would stay empty on
-        the installer's disk."""
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d) / "trial"
-            with redirect_stdout(io.StringIO()):
-                trial_install.install(root)
-            rel = ".claude/output-styles/reporting.md"
-            self.assertEqual(doctor.check(root), [])
-            (root / rel).write_text(
-                (FRAMEWORK / source.STYLES_DIR / "reporting.md").read_text(
-                    encoding="utf-8"
-                ),
-                encoding="utf-8",
-            )
-            codes = [(f.code, f.message) for f in doctor.check(root)]
-            self.assertIn(("PLACEHOLDER", f"{rel}: placeholder not filled in"), codes)
-
-    def test_review_checklist_keeps_generic_block_separable(self):
-        text = (FRAMEWORK / "shared" / "core" / "review-checklist.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("## Generic block", text)
-        self.assertIn("## Project block", text)
-        self.assertLess(text.index("## Generic block"), text.index("## Project block"))
-
     def test_report_confidence_is_categorical_not_a_percentage(self):
         """An LLM's self-reported confidence is poorly calibrated: a percentage
         puts fake precision in the position the coordinator reads first. The
@@ -490,76 +457,6 @@ class TestRealFramework(unittest.TestCase):
             rel = p.relative_to(FRAMEWORK).as_posix()
             self.assertNotRegex(text, doctor.PERSONAL_PATH_RE, rel)
             self.assertNotRegex(text, doctor.UNSAFE_CHARS_RE, rel)
-
-    def test_sync_down_preserves_domain_cycles(self):
-        """The `down` procedure reassembles the coordinator's guide from the
-        source: if it does not pass the cycles back, a `web` project loses the
-        design cycle at every update, silently and with no findings."""
-        version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
-        prof = profile.load(FRAMEWORK / "profiles" / "web.toml")
-        installed = assemble.build_document(
-            FRAMEWORK / "coordinator",
-            version,
-            "## This project's roster",
-            extra=assemble.cycle_files(FRAMEWORK, prof.cycles),
-        )
-        region = kernel.parse(installed)
-        rebuilt = assemble.build_document(
-            FRAMEWORK / "coordinator",
-            version,
-            installed[region.end :],
-            extra=assemble.installed_cycles(region.body, FRAMEWORK),
-        )
-        self.assertIn("The design cycle", rebuilt)
-
-    def test_sync_down_preserves_the_orchestration(self):
-        """Like the cycles, the orchestration sits inside the region and no file
-        says which one it is: `down` has to find it again, in the same order,
-        for the reassembled region to verify. A region in which none is
-        recognised is refused: the default in its place would hide a renamed
-        heading."""
-        version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
-        prof = profile.load(FRAMEWORK / "profiles" / "web.toml")
-        teams = assemble.orchestration_file(FRAMEWORK, "agent-teams")
-        installed = assemble.build_document(
-            FRAMEWORK / "coordinator",
-            version,
-            "## This project's roster",
-            extra=[teams, *assemble.cycle_files(FRAMEWORK, prof.cycles)],
-        )
-        region = kernel.parse(installed)
-        rebuilt = assemble.build_document(
-            FRAMEWORK / "coordinator",
-            version,
-            installed[region.end :],
-            extra=[
-                assemble.installed_orchestration(region.body, FRAMEWORK),
-                *assemble.installed_cycles(region.body, FRAMEWORK),
-            ],
-        )
-        self.assertIn("## Orchestration: Agent teams", rebuilt)
-        self.assertIn("The design cycle", rebuilt)
-        self.assertEqual(kernel.parse(rebuilt).body, region.body)
-
-        without = assemble.build_document(
-            FRAMEWORK / "coordinator", version, "## This project's roster"
-        )
-        with self.assertRaises(ValueError):
-            assemble.installed_orchestration(kernel.parse(without).body, FRAMEWORK)
-
-    def test_unfilled_roadmap_is_detectable(self):
-        """A state template with an unfilled skeleton is indistinguishable from
-        absent state for whoever reads it at session start: it must contain a
-        placeholder the doctor recognises."""
-        text = (FRAMEWORK / "templates" / "roadmap.md").read_text(encoding="utf-8")
-        self.assertRegex(text, doctor.PLACEHOLDER_RE)
-
-    def test_status_template_is_deliberately_not_a_placeholder(self):
-        """`status.md` is born empty by construction — you write in it when
-        something closes. Flagging it would make Step 6 impossible to pass on a
-        freshly made installation."""
-        text = (FRAMEWORK / "templates" / "status.md").read_text(encoding="utf-8")
-        self.assertNotRegex(text, doctor.PLACEHOLDER_RE)
 
 
 class TestInstalledBudget(unittest.TestCase):
@@ -668,45 +565,6 @@ class TestInstalledBudget(unittest.TestCase):
             self.assertIn("### `" + code + "`", skill, code)
 
 
-class TestSourceReference(unittest.TestCase):
-    """How `.claude/claw.json` cites the source."""
-
-    def test_source_inside_the_project_is_recorded_relative(self):
-        """The first of the three supported ways is the source inside the
-        project: there an absolute path is the machine of whoever installed it,
-        and it dies at the clone."""
-        self.assertEqual(
-            source.reference(Path("/prj"), Path("/prj/framework")), "framework"
-        )
-
-    def test_source_outside_the_project_stays_absolute(self):
-        """Outside the project a relative path does not hold: the depth of the
-        clone is unknown."""
-        out = Path("/elsewhere/framework").resolve()
-        self.assertEqual(source.reference(Path("/prj"), out), str(out))
-
-    def test_recorded_reference_resolves_back(self):
-        recorded = source.reference(Path("/prj"), Path("/prj/framework"))
-        self.assertEqual(
-            source.dereference(Path("/prj"), recorded),
-            Path("/prj/framework").resolve(),
-        )
-
-    def test_install_records_a_portable_source(self):
-        """The rule lives in the skill, that is, in prose: here it is checked
-        on the artefact written."""
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d) / "trial"
-            with redirect_stdout(io.StringIO()):
-                trial_install.install(root)
-            recorded = json.loads(
-                (root / ".claude" / "claw.json").read_text(encoding="utf-8")
-            )["source"]
-            self.assertEqual(
-                source.dereference(root, recorded).resolve(), FRAMEWORK.resolve()
-            )
-
-
 class TestProfilesAreDistinguishable(unittest.TestCase):
     def test_every_profile_declares_its_critical_surface(self):
         """The field's critical surface is known before knowing the project: it
@@ -785,21 +643,25 @@ class TestCli(unittest.TestCase):
                 self._run(["doctor", "--strict", "--json", str(root)])[0], 1
             )
 
-    def test_install_writes_a_complete_manifest(self):
-        """`claw.json` is the only place saying where the project was born
-        and what it is made of: the proof looks at the written file, not at the
-        prose prescribing it."""
+    def test_install_writes_the_choices_in_the_manifest(self):
+        """`claw.json` is the only place recording what the installation is
+        made of, and an update regenerates from it: the proof looks at the
+        written file, not at the prose prescribing it."""
         with tempfile.TemporaryDirectory() as d:
             root = self._install(d)
             data = json.loads(
                 (root / ".claude" / "claw.json").read_text(encoding="utf-8")
             )
+            chosen = trial_install.choices()
             self.assertEqual(data["profile"], "software")
             self.assertEqual(
                 data["version"],
                 (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip(),
             )
-            self.assertTrue(data["source"])
+            for key in ("orchestration", "agents", "guides", "hooks"):
+                self.assertEqual(data[key], chosen[key], key)
+            self.assertNotIn("source", data)
+            self.assertNotIn("frontmatter", data)
 
     def test_install_plans_then_writes(self):
         """Without `--apply` nothing is written; with it, the saved plan runs."""
@@ -811,10 +673,10 @@ class TestCli(unittest.TestCase):
             self.assertEqual((code, list(root.iterdir())), (0, []))
             code, out = self._run(["install", str(root), "--apply"])
             self.assertEqual(code, 0, out)
-            self.assertIn("CLAUDE.md", out)
-            self.assertEqual({f.code for f in doctor.check(root)}, {"PLACEHOLDER"})
-            wired = lifecycle._referenced_hooks(json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8")))
-            self.assertEqual(wired, set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS))
+            self.assertIn("install: done — doctor OK", out)
+            self.assertEqual(doctor.check(root), [])
+            self.assertEqual(wired(root), set(settings.HOOKS) - set(settings.OPTIONAL_HOOKS))
+            self.assertEqual((root / ".claude" / "user-rules.md").read_bytes(), b"")
 
     def test_install_wires_gateguard_only_on_request(self):
         with tempfile.TemporaryDirectory() as d:
@@ -823,10 +685,9 @@ class TestCli(unittest.TestCase):
             self._run(["install", str(root), "--profile", "software", "--gateguard"])
             code, out = self._run(["install", str(root), "--apply"])
             self.assertEqual(code, 0, out)
-            wired = lifecycle._referenced_hooks(json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8")))
-            self.assertIn("gateguard", wired)
+            self.assertIn("gateguard", wired(root))
 
-    def test_down_plans_then_applies_once(self):
+    def test_update_plans_then_applies_once(self):
         """The plan runs once: a second `--apply` has nothing approved to run."""
         with tempfile.TemporaryDirectory() as d:
             root = self._install(d)
@@ -834,17 +695,27 @@ class TestCli(unittest.TestCase):
             data = json.loads(manifest.read_text(encoding="utf-8"))
             data["version"] = "1.0.0"
             manifest.write_text(json.dumps(data), encoding="utf-8")
-            self.assertEqual(self._run(["down", str(root), "--apply"])[0], 1)
-            code, out = self._run(["down", str(root)])
+            self.assertEqual(self._run(["update", str(root), "--apply"])[0], 1)
+            code, out = self._run(["update", str(root)])
             self.assertEqual(code, 0, out)
             self.assertEqual(json.loads(manifest.read_text(encoding="utf-8"))["version"], "1.0.0")
-            code, out = self._run(["down", str(root), "--apply"])
+            code, out = self._run(["update", str(root), "--apply"])
             self.assertEqual(code, 0, out)
             self.assertEqual(
                 json.loads(manifest.read_text(encoding="utf-8"))["version"],
                 (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip(),
             )
-            self.assertEqual(self._run(["down", str(root), "--apply"])[0], 1)
+            self.assertEqual(self._run(["update", str(root), "--apply"])[0], 1)
+
+    def test_the_removed_commands_are_gone(self):
+        """`down` and `repair` were the two ways to write besides install; one
+        write path means neither exists any more, and a stale skill calling
+        them must fail loudly instead of doing something else."""
+        for command in ("down", "repair"):
+            with self.assertRaises(SystemExit):
+                with redirect_stderr(io.StringIO()):
+                    cli.main([command, "."])
+        self.assertEqual(cli.PLANNED, ("install", "update", "uninstall"))
 
 
 class TestRealInstall(unittest.TestCase):
@@ -879,10 +750,7 @@ class TestRealInstall(unittest.TestCase):
             guide = (root / ".claude" / "shared" / "orchestration.md").read_text(
                 encoding="utf-8"
             )
-            self.assertEqual(
-                assemble.installed_orchestration(kernel.parse(guide).body, FRAMEWORK).stem,
-                "agent-teams",
-            )
+            self.assertIn("## Orchestration: Agent teams", guide)
             self.assertEqual(doctor.check(root), [])
 
             ops = lifecycle.plan_uninstall(root, FRAMEWORK)

@@ -42,10 +42,3 @@ A choice not yet made — which provider, format, source — is kept **behind an
 ## State
 
 Less shared state, fewer ways to be inconsistent. Where it is needed: **one single source of truth**, the other copies avowedly derived and rebuildable. Two points that can diverge will diverge.
-
-## In this project
-
-[TO FILL IN — map of the modules with the responsibility of each, the
-boundaries that must not be crossed, the declared contracts and who consumes
-them, the decisions deliberately deferred and what keeps them open, the
-architectural choices already made that are not reopened without a mandate.]

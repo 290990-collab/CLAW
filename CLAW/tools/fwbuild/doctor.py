@@ -1,16 +1,10 @@
 """The integrity checks of an installation.
 
-Twenty finding codes: eight of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
-SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, EXCLUSIVE, MANIFEST_MISSING,
-HOOKS_MISSING) and thirteen of severity WARN (ROSTER_ORPHAN, ROSTER_MODEL,
-COORDINATOR_LEAK, VERSION_MISMATCH,
-SETTINGS_MISSING, HOOKS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET, REPORT_FORMAT,
-ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). Two come out at both:
+Every code is explained, with what to do about it, in `/claw fix`
+(`skills/claw/actions/fix.md`). Two come out at both severities:
 MANIFEST_MISSING, ERROR if the file is missing and WARN if it is incomplete;
 HOOKS_MISSING, ERROR if a closed hook is wired and its script is gone, WARN if
 it is not wired at all.
-Every code is explained, with what to do about it, in `/claw fix`
-(`skills/claw/actions/fix.md`).
 
 A third severity, NOTE, is not produced here: it is a WARN the project has
 declared it accepts in `claw.json`. It stays printed — an invisible waiver
@@ -24,16 +18,11 @@ from pathlib import Path
 
 from . import assemble, kernel, profile, settings, source
 
-# One marker only, and deliberately not `{{...}}`: that is the template syntax
-# of half the world (Vue, Angular, Jinja, Handlebars), and a project naming it
-# among its own constraints would get an ERROR with no way out.
-PLACEHOLDER_RE = re.compile(r"TO FILL IN")
 # The superseded report format: confidence **as** a percentage, that is `CONF:`
-# followed by a placeholder with `%` (`<0-100%>`) or by a digit. A project
-# installed with that format keeps it until it goes through `/claw
-# update`: no other check sees it, because the kernel hash matches that text. The value must be the percentage: `CONF: HIGH — 80% coverage` is a
-# categorical judgement quoting a number in its reason, and it is legitimate
-# text the pattern must not touch.
+# followed by a placeholder with `%` (`<0-100%>`) or by a digit. The value must
+# be the percentage: `CONF: HIGH — 80% coverage` is a categorical judgement
+# quoting a number in its reason, and it is legitimate text the pattern must
+# not touch.
 CONF_PERCENT_RE = re.compile(r"CONF:\s*(?:<[^>\n]*%|\d[^%\n]*%)")
 ROUTING_AGENT_RE = re.compile(r"^\|[^|]*\|\s*`([a-z-]+)`\s*\|", re.MULTILINE)
 # A roster row with its third cell, the Model one: `model effort` of the card.
@@ -157,15 +146,13 @@ def measure(claude_text: str) -> Measure:
 
 
 def _markdown_files(root: Path) -> list[Path]:
-    """The files adapted to the project, which have to be checked.
+    """The Markdown files of the installation, which have to be checked.
 
-    `.claude/skills/` is excluded: the skills there are the user's own, with
-    no kernel region and no blocks to fill in. The state files in `docs/` are included: they are
-    born from a template with placeholders, and an unfilled template is
-    indistinguishable from absent state for whoever reads it at session start.
+    `.claude/skills/` is excluded: the skills there are the user's own, not
+    the framework's. The state files in `docs/` are included.
 
     The uninstall archive is excluded: it keeps the cards as they were,
-    placeholders and pointers included, and it is material to consult.
+    pointers included, and it is material to consult.
     """
     files = [root / "CLAUDE.md"]
     claude_dir = root / ".claude"
@@ -185,10 +172,8 @@ def _scanned_files(root: Path) -> list[Path]:
 
     Wider than `_markdown_files`: skills and hooks are copied verbatim, but a
     hidden character in a skill is exactly the vehicle being looked for, and a
-    personal path gets there the same way. **Never `claw.json`:** its
-    `source` is absolute by construction when the source sits outside the
-    project, and flagging it would give a warning on every installation made
-    that way.
+    personal path gets there the same way. Not `claw.json`: it holds names,
+    not paths.
     """
     claude_dir = root / ".claude"
     files = _markdown_files(root)
@@ -208,11 +193,10 @@ def check(root: Path) -> list[Finding]:
     agents_dir = root / ".claude" / "agents"
     present = {p.stem for p in agents_dir.glob("*.md")} if agents_dir.is_dir() else set()
 
-    # The files that are born **with** a kernel region. The guides in `shared/`
-    # are not: they are copied and filled in, they contain no generated method.
-    tracked = {"CLAUDE.md", f".claude/{ORCHESTRATION}"} | {
-        f".claude/agents/{name}.md" for name in present
-    }
+    # The files that carry a version marker. `CLAUDE.md` is the one with a
+    # region between the framework's text and the project's; the cards wrap
+    # their method the same way.
+    versioned = {"CLAUDE.md"} | {f".claude/agents/{name}.md" for name in present}
 
     texts = {
         f.relative_to(root).as_posix(): f.read_text(encoding="utf-8")
@@ -222,16 +206,18 @@ def check(root: Path) -> list[Finding]:
     versions: dict[str, str] = {}
     referenced: set[str] = set()
 
-    # The variant without markers is legitimate: no tracking, by choice. But if
-    # even a single tracked file has them, the installation is tracked, and a
-    # file that lost them is indistinguishable from one rewritten by hand.
-    markers = any(kernel.parse(t) for rel, t in texts.items() if rel in tracked)
+    # Without the marker `/claw update` cannot tell the framework's text from
+    # the project's, and refuses.
+    if kernel.parse(claude_text) is None:
+        out.append(
+            Finding(
+                "KERNEL_MISSING",
+                "ERROR",
+                "CLAUDE.md: markers removed — the region can no longer be regenerated",
+            )
+        )
 
     for rel, text in texts.items():
-        if PLACEHOLDER_RE.search(text):
-            out.append(
-                Finding("PLACEHOLDER", "ERROR", f"{rel}: placeholder not filled in")
-            )
         if FABLE_RE.search(text):
             out.append(
                 Finding("FABLE", "WARN", f"{rel}: model fable bills outside the plan on most plans")
@@ -245,15 +231,7 @@ def check(root: Path) -> list[Finding]:
                     "superseded format, realign with /claw update",
                 )
             )
-        if kernel.parse(text) is None and markers and rel in tracked:
-            out.append(
-                Finding(
-                    "KERNEL_MISSING",
-                    "ERROR",
-                    f"{rel}: markers removed — the region can no longer be regenerated",
-                )
-            )
-        if rel in tracked:
+        if rel in versioned:
             region = kernel.parse(text)
             if region is not None:
                 versions[rel] = region.version
@@ -275,12 +253,16 @@ def check(root: Path) -> list[Finding]:
     # or project without delegation), so the roster stays verifiable.
     routed = set(ROUTING_AGENT_RE.findall(texts.get(f".claude/{ORCHESTRATION}", claude_text)))
 
-    for name in sorted(routed - present):
+    manifest = source.read_manifest(root)
+    chosen = manifest.get("agents") if manifest else None
+    for name in sorted(
+        n for n in (chosen if isinstance(chosen, list) else []) if isinstance(n, str) and n not in present
+    ):
         out.append(
             Finding(
                 "ROSTER_MISSING",
                 "ERROR",
-                f"{name}: cited in the routing table, file absent",
+                f"{name}: in claw.json agents, file absent",
             )
         )
     for name in sorted(present - routed):
@@ -363,22 +345,22 @@ def check(root: Path) -> list[Finding]:
         if not (root / "docs" / name).is_file():
             out.append(Finding("STATE_MISSING", "ERROR", f"docs/{name} absent"))
 
-    manifest = source.read_manifest(root)
     if manifest is None:
         out.append(
             Finding(
                 "MANIFEST_MISSING",
                 "ERROR",
                 ".claude/claw.json absent or unreadable: /claw update cannot "
-                "find the source and the fleet report does not see the project",
+                "know the installation's choices and the fleet report does not "
+                "see the project",
             )
         )
     else:
         gaps = [
             k
-            for k in ("source", "version", "profile")
+            for k in ("version", "profile", "orchestration")
             if not isinstance(manifest.get(k), str) or not manifest[k].strip()
-        ]
+        ] + [k for k in source.MANIFEST_LISTS if not isinstance(manifest.get(k), list)]
         if gaps:
             out.append(
                 Finding(

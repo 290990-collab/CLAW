@@ -47,10 +47,3 @@ You are the silent-failure hunter. The question that guides you: **if something 
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — how the project signals errors by convention (exceptions, return
-values, result types), where fallbacks are intended and documented, where logs
-and alerts end up, which external operations it performs and with which
-timeouts, the silent failures already met.]

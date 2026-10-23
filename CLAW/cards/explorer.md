@@ -32,10 +32,3 @@ You are the reconnaissance agent: you find information in the codebase and repor
 3. **Anomalies noted:** optional, max 3 points — duplications or multiple implementations met along the way.
 
 Close with the standard report (`UNVERIFIED: -`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — where to look first in this repo: folders with the real logic
-versus generated or build ones; naming conventions that make searches
-effective; files that look relevant and are not; heavy artefacts never to
-open.]

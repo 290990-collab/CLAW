@@ -1,6 +1,6 @@
 # Review checklist
 
-Reference material for whoever reviews. Two blocks, **separate and not merged**: generic and project-specific.
+Reference material for whoever reviews.
 
 **Severity:** blocks (security, data loss) · warns (defect, serious quality issue) · informs (maintainability) · note (style). Outcome: **approved** with no finding that blocks or warns · **approved with reservations** with warnings only, and it closes only if the user accepts them · **rejected** with a blocking finding. In the reviewer cards HIGH = blocks, MEDIUM = warns, LOW = informs.
 
@@ -71,10 +71,3 @@ Whoever holds the whole picture — the coordinator — discards these with a wr
 - What was not verified is declared as such, with the steps to do it.
 
 ---
-
-## Project block
-
-[TO FILL IN — the entries specific to this project: classes of regression
-already seen, delicate surfaces requiring extra attention, mandatory manual
-checks before saying "done", platform or runtime constraints to re-check at
-every change.]

@@ -40,17 +40,35 @@ class TestMissing(unittest.TestCase):
 
 
 class TestManifest(unittest.TestCase):
-    def test_manifest_carries_source_version_and_profile(self):
-        """Without the profile an installation no longer knows what it is made of and the permissions
-        cannot be regenerated."""
-        with tempfile.TemporaryDirectory() as d:
-            prj = Path(d) / "prj"
-            fw = prj / "framework"
-            fw.mkdir(parents=True)
-            m = source.manifest(prj, fw, "1.2.3", "software")
-            self.assertEqual(
-                m, {"source": "framework", "version": "1.2.3", "profile": "software"}
-            )
+    def test_manifest_carries_the_choices_and_no_source(self):
+        """The choices are everything an update regenerates from; a `source` or
+        a `frontmatter` record would be a second place saying where the files
+        came from."""
+        m = source.manifest(
+            "1.2.3", "software", "orchestrator-worker", ["explorer"], ["core/a.md"], ["config_protection"]
+        )
+        self.assertEqual(
+            m,
+            {
+                "version": "1.2.3",
+                "profile": "software",
+                "orchestration": "orchestrator-worker",
+                "agents": ["explorer"],
+                "guides": ["core/a.md"],
+                "hooks": ["config_protection"],
+            },
+        )
+
+    def test_settings_record_is_written_even_when_empty(self):
+        """An empty record and an absent one say different things: the second
+        means "do not touch"."""
+        m = source.manifest("1", "p", "o", [], [], [], settings_added={})
+        self.assertEqual(m["settings_added"], {})
+        self.assertNotIn("settings_added", source.manifest("1", "p", "o", [], [], []))
+
+    def test_accepted_waivers_are_carried_over(self):
+        m = source.manifest("1", "p", "o", [], [], [], accepted={"SHARED_ORPHAN": "why"})
+        self.assertEqual(m["accepted"], {"SHARED_ORPHAN": "why"})
 
     def test_read_manifest_is_none_when_absent_or_broken(self):
         with tempfile.TemporaryDirectory() as d:

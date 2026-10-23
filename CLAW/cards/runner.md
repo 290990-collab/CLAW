@@ -33,7 +33,3 @@ You are the command runner: you run what you are asked to and report only the pa
 3. **Not settled:** what was asked and not run or not readable, and why.
 
 Close with the standard report (`ANALYZED`, `RISK: n/a, nothing modified`).
-
-## Project context
-
-[TO FILL IN — the project's commands and how long each takes; where the answer sits in their output (the summary line, the first error); commands reserved to the user, never run; working directory or environment variables they need.]

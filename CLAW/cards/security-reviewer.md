@@ -42,9 +42,3 @@ It lives in `.claude/shared/core/security-guide.md`, sections in order of severi
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — the reachable surfaces in this project: where untrusted data
-enters, which data is personal or sensitive, which trust boundaries exist, what
-has already been decided as an accepted risk.]

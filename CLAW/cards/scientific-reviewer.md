@@ -51,10 +51,3 @@ You are the validity reviewer. You verify that the numbers produced mean what th
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — how measurement works in this project: which sets exist and which
-selects what, the metrics and what they can hide, the baselines available, the
-known and already declared circularities, the order of magnitude of the
-measurements' noise.]

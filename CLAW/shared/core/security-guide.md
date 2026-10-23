@@ -42,9 +42,3 @@ How to write code that is reachable by someone who should not use it. Sections i
 
 - **A new package only if necessary,** with the adoption criteria of `coding-standards.md`; no version with known vulnerabilities.
 - **Exact version, never a range, for whatever handles keys or tokens,** with verified integrity.
-
-## In this project
-
-[TO FILL IN — the stack's safe constructs for queries, commands, markup and
-serialisation; where secrets are read from; the authorisation scheme adopted;
-what the audit records and where.]

@@ -45,9 +45,3 @@ Domain logic, interface, data transformations. Commits. Applying destructive cha
 ```
 
 Close with the standard report, with the impacts on availability, data integrity, security and cost in `RISK`.
-
-## Project context
-
-[TO FILL IN — which resources make up this system and where they are defined,
-which environments exist, how migrations are applied, where the secrets live,
-what is already in production and must not be touched without a mandate.]

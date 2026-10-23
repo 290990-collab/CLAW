@@ -38,9 +38,3 @@ Interface. Public consumption APIs. Infrastructure. Commits. Decisions on reconc
 ```
 
 Close with the standard report, with the effects on data quality and on what depends on it downstream in `RISK`.
-
-## Project context
-
-[TO FILL IN — which sources feed this system and what they really promise, the
-adapter's contract, the normalisation rules adopted, which the stable keys are,
-where writing happens and what is derived, the dirty cases already met.]

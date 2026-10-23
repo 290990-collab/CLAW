@@ -51,7 +51,3 @@ Image: <brief for `visual-designer`>
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`).
-
-## Project context
-
-[TO FILL IN — active channels and their audience, the cadence sustainable here, the metrics available and where they are read from, the budget if there is one, calendar constraints, what has already gone out.]

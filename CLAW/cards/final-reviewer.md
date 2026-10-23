@@ -44,10 +44,3 @@ BUILD AND TESTS: <commands run and real summarised output>
 VERDICT: APPROVED | APPROVED WITH RESERVATIONS | REJECTED
 REASON: <reservations or grounds for rejection>
 ```
-
-## Project context
-
-[TO FILL IN — exact build and test commands and how long they take, what is
-not automatically verifiable and must be checked by hand, the classes of
-regression already seen here, and the critical surface when it has no dedicated
-reviewer.]

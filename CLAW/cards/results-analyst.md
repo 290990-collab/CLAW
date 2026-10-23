@@ -55,10 +55,3 @@ The standard on evidence, comparison and reproducibility lives in `.claude/share
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — where this project's results live and in what format, which
-metrics are used and what they can hide, what the order of magnitude of the
-noise is, which comparisons are paired by construction and which are not, which
-artefacts must not be opened without confirmation.]

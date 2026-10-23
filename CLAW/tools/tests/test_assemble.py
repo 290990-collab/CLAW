@@ -4,13 +4,7 @@ from pathlib import Path
 
 from fwbuild import assemble, kernel, source
 
-FRONTMATTER = "---\nname: implementer\nmodel: opus\neffort: high\n---\n"
-
-SOURCE = (
-    "---\nname: implementer\nmodel: opus\n---\n\n"
-    "## Method\n\nDo the thing.\n\n"
-    "## Project context\n\n[TO FILL IN]\n"
-)
+SOURCE = "---\nname: implementer\nmodel: opus\n---\n\n## Method\n\nDo the thing.\n"
 
 
 class TestReadMethod(unittest.TestCase):
@@ -58,78 +52,24 @@ class TestBuildClaudeMd(unittest.TestCase):
             self.assertIn("The project", out)
 
 
-class TestBuildAgent(unittest.TestCase):
-    def test_frontmatter_is_outside_kernel_region(self):
-        out = assemble.build_agent(FRONTMATTER, "## Method\n", "## Domain\n", "1.0.0")
-        region = kernel.parse(out)
-        self.assertNotIn("model: opus", region.body)
-        self.assertTrue(out.startswith("---\n"))
-
-    def test_domain_block_outside_region(self):
-        out = assemble.build_agent(FRONTMATTER, "## Method\n", "## Domain\n", "1.0.0")
-        self.assertNotIn("Domain", kernel.parse(out).body)
-        self.assertIn("## Domain", out)
-
-
 class TestSplitSource(unittest.TestCase):
-    def test_returns_three_parts(self):
-        fm, method, domain = assemble.split_source(SOURCE)
+    def test_returns_front_matter_and_method(self):
+        fm, method = assemble.split_source(SOURCE)
         self.assertIn("name: implementer", fm)
+        self.assertTrue(method.startswith("## Method"))
         self.assertIn("Do the thing", method)
-        self.assertIn("TO FILL IN", domain)
-
-    def test_method_excludes_domain_block(self):
-        _, method, _ = assemble.split_source(SOURCE)
-        self.assertNotIn("TO FILL IN", method)
 
     def test_horizontal_rule_in_body_does_not_break_parsing(self):
         text = SOURCE.replace("Do the thing.", "Do the thing.\n\n---\n\nThen verify.")
-        fm, method, _ = assemble.split_source(text)
+        fm, method = assemble.split_source(text)
         self.assertIn("name: implementer", fm)
         self.assertIn("Then verify", method)
 
-    def test_round_trips_through_build_agent(self):
-        fm, method, domain = assemble.split_source(SOURCE)
-        built = assemble.build_agent(fm, method, domain, "1.0.0")
-        self.assertIsNotNone(kernel.parse(built))
-
-
-class TestInstalledCycles(unittest.TestCase):
-    def test_detects_only_the_cycles_actually_present(self):
-        """`down` reassembles from `coordinator/`: without detecting the
-        cycles already installed it would delete them, and the project does not
-        record its profile."""
-        root = Path(__file__).resolve().parents[2]
-        design = (root / "cycles" / "design.md").read_text(encoding="utf-8")
-        found = assemble.installed_cycles(design, root)
-        self.assertEqual([p.stem for p in found], ["design"])
-        self.assertEqual(assemble.installed_cycles("## Delegation", root), [])
-
-
-class TestInstalledOrchestration(unittest.TestCase):
-    ROOT = Path(__file__).resolve().parents[2]
-
-    def _module(self, name):
-        return (self.ROOT / "orchestrations" / f"{name}.md").read_text(encoding="utf-8")
-
-    def test_detects_the_one_present(self):
-        found = assemble.installed_orchestration(self._module("agent-teams"), self.ROOT)
-        self.assertEqual(found.stem, "agent-teams")
-
-    def test_region_without_a_module_is_an_error(self):
-        """No module recognised usually means a heading renamed in the source:
-        falling back on the default would rewrite the wrong model at `down`,
-        in silence. The choice goes back to whoever reassembles."""
-        with self.assertRaises(ValueError) as e:
-            assemble.installed_orchestration("## Delegation", self.ROOT)
-        self.assertIn("orchestration_file", str(e.exception))
-
-    def test_two_modules_are_an_error(self):
-        """One orchestration per project: with two, picking one would be
-        guessing which one the user wanted."""
-        body = self._module("agent-teams") + self._module("orchestrator-worker")
+    def test_a_card_without_the_method_section_is_an_error(self):
+        """A card with no `## Method` would be installed as a front matter and
+        nothing else: an agent with no instructions."""
         with self.assertRaises(ValueError):
-            assemble.installed_orchestration(body, self.ROOT)
+            assemble.split_source("---\nname: x\n---\n\nprose\n")
 
 
 class TestAgentRows(unittest.TestCase):

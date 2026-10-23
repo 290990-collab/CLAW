@@ -1,7 +1,8 @@
 """Assembly of the installable artefacts.
 
-The generated method lives inside the kernel region; front matter and project
-blocks stay outside, because they are the surface the user adapts.
+The generated method lives inside the kernel region; the front matter and the
+project part of `CLAUDE.md` stay outside, because they are the surface the user
+adapts.
 """
 
 import re
@@ -14,7 +15,6 @@ from .rules import Rules
 from .source import CARDS_DIR, STYLES_DIR
 
 METHOD_HEADING = "## Method"
-DOMAIN_HEADING = "## Project context"
 
 # The two source ceilings, in words. They are real tests — the build fails
 # above the threshold — and they live here because the doctor reads them too:
@@ -86,22 +86,6 @@ def cycle_files(framework_root: Path, names: Sequence[str]) -> list[Path]:
     return out
 
 
-def installed_cycles(region_body: str, framework_root: Path) -> list[Path]:
-    """The domain cycles already present in an installed kernel region.
-
-    A project does not record which profile it was born from: reassembling from
-    `coordinator/` without this would silently delete them at every `down`,
-    and no doctor finding would see it. They are recognised by their first
-    heading.
-    """
-    out = []
-    for p in sorted((framework_root / "cycles").glob("*.md")):
-        heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
-        if heading and heading in region_body:
-            out.append(p)
-    return out
-
-
 def orchestration_file(framework_root: Path, name: str) -> Path:
     """Resolves the chosen orchestration into a file in `orchestrations/`.
 
@@ -116,44 +100,8 @@ def orchestration_file(framework_root: Path, name: str) -> Path:
     return p
 
 
-def installed_orchestration(region_body: str, framework_root: Path) -> Path:
-    """The orchestration already present in an installed kernel region.
-
-    Same reason as `installed_cycles`, same recognition by first heading. The
-    project has exactly one: none recognised usually means a heading renamed in
-    the source, and falling back on the default would silently rewrite the
-    wrong model; two are not a choice to guess.
-    """
-    found = []
-    for p in sorted((framework_root / "orchestrations").glob("*.md")):
-        heading = p.read_text(encoding="utf-8").lstrip().splitlines()[0]
-        if heading and heading in region_body:
-            found.append(p)
-    if not found:
-        raise ValueError(
-            "no orchestration recognised in the region: choose one and pass it "
-            "with assemble.orchestration_file"
-        )
-    if len(found) > 1:
-        names = ", ".join(p.stem for p in found)
-        raise ValueError(f"more than one orchestration in the region: {names}")
-    return found[0]
-
-
-def build_agent(
-    frontmatter: str,
-    method_body: str,
-    domain_block: str,
-    version: str,
-    *,
-    markers: bool = True,
-) -> str:
-    body = kernel.wrap(method_body, version) if markers else kernel.normalize(method_body)
-    return f"{kernel.normalize(frontmatter)}\n{body}\n{kernel.normalize(domain_block)}"
-
-
-def split_source(text: str) -> tuple[str, str, str]:
-    """Splits an agent source into (front matter, method, domain block).
+def split_source(text: str) -> tuple[str, str]:
+    """Splits an agent source into (front matter, method).
 
     The front matter is delimited on the first two '---' at line start, not on
     a global split: a '---' used as a horizontal rule in the body must not
@@ -172,13 +120,7 @@ def split_source(text: str) -> tuple[str, str, str]:
 
     if METHOD_HEADING not in rest:
         raise ValueError(f"missing the {METHOD_HEADING!r} section")
-    if DOMAIN_HEADING not in rest:
-        raise ValueError(f"missing the {DOMAIN_HEADING!r} section")
-    m_at = rest.index(METHOD_HEADING)
-    d_at = rest.index(DOMAIN_HEADING)
-    if d_at < m_at:
-        raise ValueError(f"{DOMAIN_HEADING} precedes {METHOD_HEADING}")
-    return frontmatter, rest[m_at:d_at], rest[d_at:]
+    return frontmatter, rest[rest.index(METHOD_HEADING) :]
 
 
 def agent_rows(framework_root: Path) -> dict[str, dict[str, str | int]]:
@@ -345,9 +287,7 @@ def generate(
     Paths for which `is_create_only` holds are the state templates; the caller
     writes them only where the file is missing.
 
-    The source cards still end in a `## Project context` block: it is read only
-    to split the card and dropped, since a project's own words now live in the
-    user-rules file. The kernel marker still carries the hash.
+    A project's own words never go in a card: they live in the user-rules file.
     """
     fw = Path(framework_root)
     version = (fw / "VERSION").read_text(encoding="utf-8").strip()
@@ -358,7 +298,7 @@ def generate(
     rows = agent_rows(fw)
     cards: dict[str, str] = {}
     for name in roster:
-        fm, method, _domain = split_source((fw / CARDS_DIR / f"{name}.md").read_text(encoding="utf-8"))
+        fm, method = split_source((fw / CARDS_DIR / f"{name}.md").read_text(encoding="utf-8"))
         fm = _effective_card(fm, rows[name], rules.overrides.get(name, {}))
         card = kernel.normalize(fm) + "\n" + kernel.wrap(method, version)
         if name in rules.agents:

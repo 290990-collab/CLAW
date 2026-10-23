@@ -42,7 +42,3 @@ The severity scale and the verdicts are those of `.claude/shared/core/review-che
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read-only`) and the verdict: APPROVED | APPROVED WITH RESERVATIONS | REJECTED.
-
-## Project context
-
-[TO FILL IN — what the product actually does today and where that is verified, the claims already published, the measured numbers and their conditions, this project's legal or contractual constraints, what must not be said.]

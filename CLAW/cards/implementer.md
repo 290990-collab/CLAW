@@ -31,8 +31,3 @@ You write production code on changes, features and fixes already planned or with
 7. **Copies of the defect:** after fixing a bug, search the whole repo for the same wrong construct and close the report with `COPIES: <pattern searched> — <file:line | none>`. Copies outside the task are listed, not fixed.
 
 Close with the standard report, filling `CHANGED` with the `file:line` references.
-
-## Project context
-
-[TO FILL IN — sensitive surfaces, contracts between components, runtime
-constraints, exact build and quick-test commands.]

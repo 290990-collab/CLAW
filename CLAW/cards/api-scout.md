@@ -47,9 +47,3 @@ For each requested symbol:
 ```
 
 Close with the standard report (`RISK: n/a, read only`).
-
-## Project context
-
-[TO FILL IN — this project's external libraries and services, with the versions
-in use and where they are declared; which ones have APIs that change often or
-have been misleading in the past; where the packages are installed.]

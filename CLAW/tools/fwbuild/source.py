@@ -29,66 +29,46 @@ def missing(root: Path) -> list[str]:
     return [r for r in REQUIRED if not (Path(root) / r).exists()]
 
 
-def reference(project_root: Path, framework_root: Path) -> str:
-    """How `.claude/claw.json` must cite the source.
-
-    The first of the three supported ways is the source **inside** the project:
-    there an absolute path is the machine of whoever installed it, and the
-    first clone finds a `source` that does not exist. Relative to the project
-    root, instead, it travels with the repository. Outside the project a
-    relative path does not hold — the depth of the clone is unknown — and the
-    absolute one remains the only writable form.
-
-    It is here and not in the skill: a rule written only in prose gets
-    disregarded.
-    """
-    project_root = Path(project_root).resolve()
-    framework_root = Path(framework_root).resolve()
-    if framework_root == project_root or project_root in framework_root.parents:
-        return framework_root.relative_to(project_root).as_posix() or "."
-    return str(framework_root)
-
-
-def dereference(project_root: Path, recorded: str) -> Path:
-    """The inverse: the `source` read from `claw.json` as a real path.
-
-    A relative path resolves against the project root, not against the working
-    directory: `/claw` runs from `<FW>/tools`,
-    not from `<PRJ>`.
-    """
-    p = Path(recorded)
-    return p if p.is_absolute() else (Path(project_root) / p).resolve()
-
-
 MANIFEST = Path(".claude") / "claw.json"
+
+# What `generate` needs to rebuild an installation, in the order the file shows it.
+MANIFEST_LISTS = ("agents", "guides", "hooks")
 
 
 def manifest(
-    project_root: Path,
-    framework_root: Path,
     version: str,
     profile_name: str,
+    orchestration: str,
+    agents: list[str],
+    guides: list[str],
+    hooks: list[str],
     settings_added: dict | None = None,
+    accepted: dict | None = None,
 ) -> dict:
-    """The contents of `.claude/claw.json`.
+    """The contents of `.claude/claw.json`: the installation's choices.
 
-    `source` and `version` say where the project was born. `profile` says what
-    it is **made of**: without it, `SETTINGS_MISSING` prescribes regenerating
-    the permissions "of the project's profile" that nobody can name any more,
-    and a change of field has no starting point.
+    Everything `assemble.generate` takes besides the user's rules lives here, so
+    an update can rebuild the files from the source without inferring anything
+    from the tree.
 
     `settings_added` is what the installation actually added to
     `settings.json`: the only piece of that file the uninstall may remove. It is
     written only if present — an empty record and an absent one say different
-    things, and the second means "do not touch".
+    things, and the second means "do not touch". `accepted` is the project's:
+    it is carried over, never invented.
     """
     data = {
-        "source": reference(project_root, framework_root),
         "version": version,
         "profile": profile_name,
+        "orchestration": orchestration,
+        "agents": list(agents),
+        "guides": list(guides),
+        "hooks": list(hooks),
     }
     if settings_added is not None:
         data["settings_added"] = settings_added
+    if accepted:
+        data["accepted"] = accepted
     return data
 
 

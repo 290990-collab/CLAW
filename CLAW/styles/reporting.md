@@ -98,8 +98,3 @@ installed, is not guessed: say so.
 - Like this: "No. The only match is the file itself."
 - Not like this: "Great question. I searched the whole repository and, after a
   comprehensive review, I can confirm it is not. I can remove it if you want."
-
-## This project
-
-[TO FILL IN — what to take as known and what to introduce at first mention, from
-question 3 of the questionnaire]

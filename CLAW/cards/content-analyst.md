@@ -46,7 +46,3 @@ You turn publication numbers into **defensible conclusions**. The question is no
 ```
 
 Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read-only`).
-
-## Project context
-
-[TO FILL IN — where the metrics live and in what format, which are available and which are not, the usual variability of each, how often they are read, which comparisons are paired and which are not.]
