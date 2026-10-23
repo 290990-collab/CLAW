@@ -638,6 +638,21 @@ class TestUpdate(unittest.TestCase):
             self.assertIn("agents +frontend", out.getvalue())
             self.assertEqual(doctor.check(root), [])
 
+    def test_keep_version_is_refused_when_it_would_overwrite_a_hand_edit(self):
+        """`--keep-version` applies with no ok: a plan line that destroys the
+        user's edit would go through unseen. It must stop and leave the tree."""
+        with tempfile.TemporaryDirectory() as d:
+            root = install(d)
+            explorer = root / ".claude" / "agents" / "explorer.md"
+            explorer.write_text(text(explorer) + "\nmy own rule\n", encoding="utf-8")
+            before = tree(root)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = cli.main(["update", str(root), "--add", "frontend", "--keep-version"])
+            self.assertEqual(code, 1)
+            self.assertIn("edited by hand", out.getvalue())
+            self.assertEqual(tree(root), before)
+
     def test_a_hand_edited_card_is_named_in_the_plan(self):
         """An edit made to a generated file is lost at the update, by design; the
         plan has to say so, or the user finds out when their change is gone."""

@@ -1,6 +1,6 @@
 # `/claw fix` — diagnose, then put back what is missing
 
-First the diagnosis; then, if files are missing, the repair (last section).
+First the diagnosis; then, if files are missing, the regeneration (last section).
 
 ```bash
 python "<FW>/claw.py" doctor --strict "<PRJ>"
@@ -13,17 +13,11 @@ python "<FW>/claw.py" doctor --strict "<PRJ>"
 
 ## How to read each finding
 
-### `PLACEHOLDER` — ERROR
-
-A `[TO FILL IN — …]` block left unfilled: the agent reading it receives instructions instead of directives. It is the **only** placeholder marker — not `{{…}}`, which is the template syntax of half the world (Vue, Angular, Jinja, Handlebars): a project quoting it among its own constraints would get an error it could not get out of.
-
-**What to do:** fill the placeholder with the project's real directives. If the information is not there, ask the user — do not invent it.
-
 ### `ROSTER_MISSING` — ERROR
 
-An agent is in the routing table of `.claude/shared/orchestration.md` (or of `CLAUDE.md`, if that guide is absent) but the file does not exist in `.claude/agents/`: the coordinator will delegate to something that is not there.
+An agent is in `agents` of `claw.json` (the roster table is generated from it) but its file is not in `.claude/agents/`: the coordinator will delegate to something that is not there.
 
-**What to do:** install the agent (`/claw add <name>`, which takes the current version from the source) or remove the row from the table.
+**What to do:** `update --keep-version` regenerates the card; dropped on purpose → `/claw update --remove <name>`.
 
 ### `SHARED_MISSING` — ERROR
 
@@ -31,13 +25,13 @@ An installed file — `CLAUDE.md`, an agent, a guide — points at a guide that 
 
 Special case: **`orchestration.md` absent** with installed agents. Without it, whoever delegates has neither the delegation rules nor the routing table, and the doctor cannot check the roster.
 
-**What to do:** copy the guide from `<FW>/shared/` and fill in its project block, or remove the pointer. For `orchestration.md`: `assemble.build_document(<FW>/coordinator, <VERSION>, <roster sections>, extra=[assemble.orchestration_file(<FW>, '<name>'), *assemble.cycle_files(<FW>, <profile cycles>)])` — `<name>` is the project's orchestration, `orchestrator-worker` unless the user chose another. Without `extra` the guide lacks the delegation model and the cycles, and the next `update` stops.
+**What to do:** a guide of the roster or cited by one of its cards, and `orchestration.md`: `update --keep-version` regenerates them. A pointer to a guide outside the roster (written in the project part or a rule): `/claw update --add <core/x.md>`, or remove the pointer.
 
 ### `SHARED_ORPHAN` — WARNING
 
 A guide installed in `.claude/shared/` that no file cites: context carried around and never opened, the exact inverse of `SHARED_MISSING`.
 
-**What to do:** cite it from where it is needed — generic guides in `CLAUDE.md § Shared guides`, role guides from the agent that uses them — or remove it.
+**What to do:** in the roster → `/claw update --remove <path>`. One the user wrote: cite it from a rule (`/claw rule`) or delete it.
 
 ### `COORDINATOR_LEAK` — WARNING
 
@@ -45,21 +39,21 @@ A guide installed in `.claude/shared/` that no file cites: context carried aroun
 
 **Why it matters:** `CLAUDE.md` is loaded into **every** context, every subagent's included. An `explorer` on Haiku pays for the code cycle and the four levels of state without being able to use any of it — waste on the most expensive file in the system.
 
-**What to do:** move the section into `.claude/shared/orchestration.md`, leaving at most a one-line pointer. If the content is really needed by whoever executes, rewrite it as an execution obligation in `<FW>/method/`: that is a different thing.
+**What to do:** delete the section: `orchestration.md` is generated and already carries the coordinator's guide. If whoever executes really needs a piece of it, it becomes a one-line rule (`/claw rule`).
 
 ⚠️ The check compares **titles**, not meaning: the same section under a different title does not trigger it. The finding covers only the eight known titles; on content leakage, reading is what counts.
 
 ### `KERNEL_MISSING` — ERROR
 
-The kernel region's markers have disappeared from a file that has one by construction — `CLAUDE.md`, `orchestration.md`, an agent. Without markers the region cannot be regenerated, and a method rewritten by hand becomes indistinguishable from the generated one. It does not trigger if **no** tracked file has markers: that is the installation without tracking, and it is a choice.
+The kernel region's markers have disappeared from `CLAUDE.md`. Without them nobody can tell the framework's text from the project's, and `update` refuses.
 
-**What to do:** reassemble with `/claw update`, after comparing the current content with the source — inside there may be a change worth carrying to the framework's repository.
+**What to do:** put the pair back around the framework's text — `<!-- FRAMEWORK:KERNEL v<any> — generated — edit .claude/user-rules.md instead -->` before it, `<!-- /FRAMEWORK:KERNEL -->` after it (an empty pair on top if the text is gone) — then `update --keep-version`: the region is rewritten, the project part stays. A line of the old region worth keeping goes into `user-rules.md` first.
 
 ### `VERSION_MISMATCH` — WARNING
 
 The kernel regions do not all declare the same version, or the project is on a different version from the source. **No other finding sees it:** an old method is consistent with itself. It is the fork between projects, the defect the framework exists to avoid.
 
-**What to do:** `/claw update` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `/claw add`, which takes the current source: it is closed with the same `/claw update`.
+**What to do:** `/claw update`: it regenerates `CLAUDE.md`, `orchestration.md` and every card together. The plugin older than the project → update the plugin first (`actions/update.md` § 1).
 
 ### `SETTINGS_MISSING` — WARNING
 
@@ -67,25 +61,25 @@ The kernel regions do not all declare the same version, or the project is on a d
 
 ⚠️ **That prohibition covers the `Read` tool, not the shell.** An agent with `Bash` reads a `.env` with `cat` and no configuration prevents it. Where the secret matters, the only mechanical guard is not giving that agent the shell: it is why the reviewers that execute nothing have `Read, Grep, Glob` only.
 
-**What to do:** `claw repair "<PRJ>"`, then `--apply`: it rebuilds the whole file (profile permissions, hooks, orchestration variables, skill overrides, spawn depth) and updates `settings_added`. Serialising `Profile.settings` alone loses the rest.
+**What to do:** `update --keep-version` rebuilds the whole file (profile permissions, hooks, orchestration variables, spawn depth) and updates `settings_added`; across versions, `update` with plan and ok.
 
 ### `HOOKS_MISSING` — ERROR if a wired script is gone, WARNING if not wired
 
 `config_protection` and `block_no_verify` belong to every installation with agents. **Not wired** in `settings.json`: the checks they make are off and nothing else says so — the typical case is an installation born before the hooks. **Wired without its script:** the closed hook blocks every command it has something to say about (`git` for `block_no_verify`, a linter configuration for `config_protection`). `gateguard` is optional: not wired, it is not flagged; wired without its script, it is flagged like the others.
 
-**What to do:** not wired → `/claw update`, which installs them and replaces entries written by an older release. Script gone → the repair below puts it back.
+**What to do:** not wired, or script gone → `update --keep-version` (see *Regeneration*), which wires them and puts the script back.
 
 ### `STATE_MISSING` — ERROR
 
 One of `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md` is missing.
 
-**What to do:** copy the missing template from `<FW>/templates/`. Without level 1, every session restarts by guessing.
+**What to do:** copy the missing template from `<FW>/templates/`. Without level 1, every session restarts by guessing. `update` creates a missing one too.
 
 ### `MANIFEST_MISSING` — ERROR if the file is missing, WARNING if incomplete
 
-`.claude/claw.json` absent, unreadable, or missing one of `source`, `version`, `profile`. It is the file that ties an installation to its source: without it `/claw update` does not know where to update from, and `fwbuild report` does not even count the project — it disappears from the fleet report instead of showing up in it as broken.
+`.claude/claw.json` absent, unreadable, or missing one of `version`, `profile`, `orchestration`, `agents`, `guides`, `hooks`. It holds the installation's choices: without it `/claw update` does not know what to generate, and `report` does not count the project.
 
-**What to do:** rewrite it with `source.manifest(<PRJ>, <FW>, version, profile)`. The profile is the one chosen at Step 3; if nobody remembers it, deduce it from the installed agents and guides, and write it down **before** needing it again.
+**What to do:** rewrite it from what is installed — profile and orchestration as the user remembers them, else deduced from the agents and guides in `.claude/` — with `version` that of the files' kernel marker. Then `update --keep-version` regenerates from it; read the plan if it is refused.
 
 ### `ACCEPTED_UNUSED` — WARNING
 
@@ -103,13 +97,13 @@ A waiver declared in `claw.json` covers no finding: either the finding is gone, 
 
 At the version that wrote the installation, a generated file differs from what the source generates from the current `user-rules.md`. Two causes: the file was edited by hand, or `user-rules.md` changed and nobody regenerated. For `CLAUDE.md` only the two framework regions count.
 
-**What to do:** ask which it is. A hand edit that must stay goes into `user-rules.md` first, because the regeneration overwrites the file. Then `python "<FW>/claw.py" update "<PRJ>" --keep-version`, which shows the plan and names every overwrite.
+**What to do:** ask which it is. A hand edit that must stay goes into `user-rules.md` first, because the regeneration overwrites the file. Then `update` with plan and ok: the plan names every overwrite.
 
 ### `FABLE` — WARNING
 
 `model: fable`: on most plans Fable bills to usage credits, outside the plan's limits.
 
-**What to do:** not intended → the source card's `model:` and `effort:`; intended → accept it in `claw.json`.
+**What to do:** not intended → remove the `model:` line from the agent's section of `user-rules.md` (or the hand edit), then `update --keep-version`; intended → accept it in `claw.json`.
 
 ### `EXCLUSIVE` — ERROR
 
@@ -137,8 +131,6 @@ WARNING and not error: the ZWJ (U+200D) also composes emoji and legitimate scrip
 
 An installed file contains a path inside a user's folder — `C:\Users\<name>`, `/Users/<name>`, `/home/<name>`, doubled JSON backslashes included. The file travels with the repository: on another machine the path does not exist, and it carries the name of whoever wrote it. Template placeholder names (`user`, `username`, `yourname`, `you`, `me`, `example`) do not count. The message gives file and line, not the path.
 
-**`.claude/claw.json` is not scanned:** its `source` is absolute by construction when the source sits outside the project, because a relative path does not hold there — the depth of the clone is not known. Flagging it would give a warning on every installation made that way.
-
 ⚠️ The check compares text: a URL with `/home/` or `/Users/` in its path triggers it.
 
 **What to do:** replace it with a path relative to the project root or with a placeholder (`<PRJ>`, `<FW>`). If the absolute path is really needed, accept it with `PERSONAL_PATH:<file>` and the reason.
@@ -158,7 +150,7 @@ In `.claude/claw.json`:
 
 The key is the code, or `code:fragment` to limit it to one file. The value is the **reason, and it is mandatory**: without one the waiver does not apply and becomes `ACCEPTED_UNUSED`. The accepted finding stays printed as a `NOTE` — visible, not blocking.
 
-**Errors cannot be accepted.** A warning is a judgement, and on a judgement a project may be right against the default; an error is an installation that does not work, and an unfilled placeholder stays unfilled even if somebody writes that it is fine.
+**Errors cannot be accepted.** A warning is a judgement, and on a judgement a project may be right against the default; an error is an installation that does not work, and a missing file stays missing even if somebody writes that it is fine.
 
 Before adding a row here, the question is: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is a change in the framework's repository, not `accepted`.
 
@@ -178,10 +170,6 @@ Report to the user: how many findings by severity, what you corrected, what requ
 
 ---
 
-## Repair — putting back what is missing
+## Regeneration — putting back what is missing
 
-At the installed version, which must be the source's: otherwise the plan refuses, and `/claw update` comes first. It puts back the hooks in use, the state files and the cited guides that are missing, and the missing entries in `settings.json`. **It overwrites nothing:** a file that differs from the source is a local change and stays.
-
-1. `repair "<PRJ>"`, ok, `--apply`.
-2. Guides and state files that are recreated come from the template: fill in the `[TO FILL IN]` blocks as at installation.
-3. Close with `doctor`.
+`python "<FW>/claw.py" update "<PRJ>" --keep-version` regenerates every framework file from `claw.json` and `user-rules.md`, in one call. It applies at once, and refuses when the plugin is at another version or a plan line overwrites a hand edit: then `update` with plan and ok (`actions/update.md`). Close with `doctor --strict`.

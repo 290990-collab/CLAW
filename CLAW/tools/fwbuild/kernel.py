@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 OPEN_RE = re.compile(
     r"<!-- FRAMEWORK:KERNEL v(?P<version>\S+)(?: sha256:[0-9a-f]{8})? "
-    r"— generated, do not edit by hand -->"
+    r"— generated(?:, do not edit by hand| — edit \.claude/user-rules\.md instead) -->"
 )
 CLOSE = "<!-- /FRAMEWORK:KERNEL -->"
 
@@ -30,7 +30,7 @@ def normalize(text: str) -> str:
 
 def wrap(body: str, version: str) -> str:
     body_n = normalize(body)
-    marker = f"<!-- FRAMEWORK:KERNEL v{version} — generated, do not edit by hand -->"
+    marker = f"<!-- FRAMEWORK:KERNEL v{version} — generated — edit .claude/user-rules.md instead -->"
     return f"{marker}\n{body_n}{CLOSE}\n"
 
 

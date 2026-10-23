@@ -275,6 +275,12 @@ def _lifecycle(args) -> int:
                 plan.unlink(missing_ok=True)
                 print("nothing to do")
                 return 0
+            if keep_version and any(o.reason == lifecycle.HAND_EDIT for o in ops):
+                plan.unlink(missing_ok=True)
+                raise ValueError(
+                    "--keep-version: the plan overwrites a file edited by hand (named above); "
+                    "run update without it, read the plan and give the ok"
+                )
             ok = True if keep_version else _confirm(args.yes)
             if ok is None:
                 print(f'\nplan saved. To run it: python "<FW>/claw.py" {mode} "{prj}" --apply')

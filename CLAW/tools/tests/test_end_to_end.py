@@ -360,22 +360,35 @@ class TestRealFramework(unittest.TestCase):
         text = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
             encoding="utf-8"
         )
-        block = text[
-            text.index("### Pre-existing material") : text.index(
-                "### `CLAUDE.md` — project sections"
-            )
-        ]
-        for path in (
-            "CLAUDE.md",
-            "TODO.md",
-            "status.md",
-            "roadmap.md",
-            ".claude/skills/",
-            ".claude/settings.json",
-            ".claude/output-styles/",
-            ".claude/hooks/",
+        for promise in (
+            "an existing `CLAUDE.md` becomes the project part",
+            "Nothing already in `docs/` is touched",
+            "`settings.json` merged over the user's",
+            "Existing instructions",
         ):
-            self.assertIn(path, block, path)
+            self.assertIn(promise, text, promise)
+
+    def test_install_routes_an_uncovered_critical_surface_to_a_rule(self):
+        """No agent is invented for a surface the table lacks: the surface goes
+        in the project part and the reviewer gets a rule, through `/claw rule`.
+        Prose only — a rewrite that drops the route leaves the surface unwatched
+        and no check sees it."""
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "install.md").read_text(
+            encoding="utf-8"
+        )
+        block = text[text.index("**2. Critical surface**") : text.index("**3. Language")]
+        self.assertIn("`## final-reviewer` rule", block)
+        self.assertIn("`/claw rule`", block)
+
+    def test_rule_action_writes_only_on_explicit_request_and_after_a_yes(self):
+        """A rule is paid by every spawn: one taken from a passing remark, or
+        written before the user saw it, is the failure this action exists to
+        prevent. Prose only."""
+        text = (FRAMEWORK / "skills" / "claw" / "actions" / "rule.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("never from a passing remark", text)
+        self.assertIn("wait for the yes", text)
 
     def test_the_tidy_skill_pairs_every_conflict_with_the_repo(self):
         """The TODO and memory drift from the repository: no finding sees them, and a

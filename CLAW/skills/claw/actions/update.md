@@ -1,12 +1,31 @@
-# `/claw update` — bringing the source's version into the project
+# `/claw update` — the plugin's version, and changes to the choices
 
-This action brings the source's version into the project. Every project moves only when someone opens it.
+One command regenerates every framework file from the plugin, the choices in `.claude/claw.json` and `.claude/user-rules.md`. Never touched: `user-rules.md`, `CLAUDE.md` outside the kernel and user-rules regions, `docs/`, cards and guides `claw.json` does not name, the user's values in `settings.json`.
 
-1. **Plan:** `down "<PRJ>" [--hooks a,b] [--adopt a,b|all]`.
-   - **Hooks:** the ones in use are kept. On a project with none, **one question** — does it want them, `gateguard` included? — and a yes becomes `--hooks`.
-   - **Card front matter** (`model`, `effort`, `description`, `maxTurns`, …): a value the project still has as recorded at the last sync follows the source; a different one is a local choice (a `/claw tune`, a hand) and stays — the plan names both. **Without a record** (installations older than the record) every difference stays and is named: ask the user card by card, yes → `--adopt <card>`.
-   - **A guide a new card cites** arrives from the source: fill in its block and add its line in `CLAUDE.md § Shared guides`.
-   - **Guides and style** take the source text and keep the project block; without a recognisable block they are `keep`: updated by hand, comparing with the source.
-2. **After the ok, `--apply`:** regions, cards, roster cells that still say the old model, guides, style, skills, hooks, `settings.json`, manifest (version, source, record) — everything computed before the first write. It closes with the doctor, which must show no findings.
+| Request | Flag |
+|---|---|
+| add / remove agents or guides | `--add a,core/x.md` · `--remove a,core/x.md` (guides by path under `shared/`) |
+| change field | `--profile <P>` |
+| change orchestration | `--orchestration <O>` (`agent-teams` is experimental, interactive sessions only) |
+| gateguard | `--gateguard on\|off` |
+| new plugin version | none |
 
-**Conflicts are presented, they do not resolve themselves:** on a region modified locally the user sees both versions and decides.
+## 1. Version
+
+Compare `version` in `claw.json` with `<FW>/VERSION`. Plugin **older** than the project (or the user wants the newest): the user updates the plugin with `/plugin` (auto-update recommended), restarts Claude Code, then `/claw update`; never update from the older one. Equal or newer → go on.
+
+## 2. Plan
+
+```bash
+python "<FW>/claw.py" update "<PRJ>" [flags]
+```
+
+Validation comes first and fails before any plan: unknown or already installed name, one of the six always-installed agents (`explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`), `deploy` with `infra`, a guide still cited by a roster card (remove that agent first). `CLAUDE.md` without the kernel marker is refused: restore the marker, or move the project's text aside and `install` again.
+
+Show the header (`v2.x → v3.0.0 · profile a → b · agents +x −y`) and every `overwrite`, `remove`, `merge` with its reason. A reason "modified by hand" means a generated file differs from what the recorded choices generate: the edit is lost. Ask whether it must survive; if so it goes into `user-rules.md` first (`/claw rule`), then back here.
+
+## 3. Apply
+
+After the ok: `python "<FW>/claw.py" update "<PRJ>" --apply` (the flags are saved with the plan). A tree changed since the plan stops it before the first byte. It prints the settings values of the user that stayed, and runs the doctor. Close with `doctor --strict`; findings → `/claw fix`.
+
+Removing an agent keeps its section in `user-rules.md`, which then raises `RULES_UNKNOWN`: ask whether to delete the section.

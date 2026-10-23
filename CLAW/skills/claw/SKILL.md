@@ -1,11 +1,11 @@
 ---
 name: claw
 description: >
-  The CLAW framework in a project: install it, bring it to the source's
-  version, check and repair it, add or remove an agent or a guide, change
-  profile or orchestration, tune the
-  agents' model and effort, tidy the TODO and persistent memory, measure whether a rule
-  is followed, uninstall. `/claw <action>`; `/claw` alone lists the actions.
+  The CLAW framework in a project: install it, bring it to the plugin's version,
+  add or remove agents and guides, change profile or orchestration, write the
+  project's own rules, check and repair it, tune the agents' model and effort,
+  tidy the TODO and persistent memory, measure whether a rule is followed,
+  uninstall. `/claw <action>`; `/claw` alone lists the actions.
 ---
 
 # `/claw` — the framework in this project
@@ -15,12 +15,11 @@ description: >
 | Action | What it does | Read |
 |---|---|---|
 | `install` | Sets up the framework in this project | `actions/install.md` |
-| `update` | Brings the source's version into the project | `actions/update.md` |
-| `fix` | Checks the installation; puts back what is missing | `actions/fix.md` |
-| `add <agent\|guide>` · `remove <agent\|guide>` | Activates or deactivates an agent or a guide | `actions/add-remove.md` |
-| `change` | Changes the profile or the orchestration | `actions/change.md` |
+| `update` | Brings the plugin's version in; adds or removes agents and guides; changes profile, orchestration, gateguard | `actions/update.md` |
+| `rule` | Writes a rule of the project's own into `.claude/user-rules.md` | `actions/rule.md` |
+| `fix` | Checks the installation; regenerates what is missing | `actions/fix.md` |
 | `tune` | Tunes each agent's model and effort to this project | `actions/tune.md` |
-| `tidy` | Finds what is stale in the TODO and in persistent memory, and the shortcuts left in the code | `actions/tidy.md` |
+| `tidy` | Finds what is stale in the TODO, persistent memory and user rules, and the shortcuts left in the code | `actions/tidy.md` |
 | `comply <rule>` | Measures how often a rule is followed; spends tokens | `actions/comply.md` |
 | `uninstall` | Removes the framework, archiving what was adapted | `actions/uninstall.md` |
 
@@ -28,7 +27,7 @@ Open only the file of the action asked, from this skill's folder. No action, or 
 
 **For every action:**
 
-- **Only at the user's request:** `install`, `comply`, `tune`, `tidy`, `uninstall`. The others you may run when the situation calls for them — `fix` after a hand edit.
+- **Only at the user's request:** `install`, `rule`, `comply`, `tune`, `tidy`, `uninstall`. The others you may run when the situation calls for them — `fix` after a hand edit.
 - **Commands:** `python "<FW>/claw.py" <command>`, from this skill only: no `claw` launcher on the terminal.
-- **Plan, ok, then write.** `install`, `down`, `repair`, `uninstall` print their plan and save it; after the user's ok the same command with `--apply` runs that plan, never a recomputed one: a file changed in between stops everything before the first byte.
+- **Plan, ok, then write.** `install`, `update`, `uninstall` print their plan and save it; after the user's ok the same command with `--apply` runs that plan, never a recomputed one: a file changed in between stops everything before the first byte.
 - **Close** every action that writes with `python "<FW>/claw.py" doctor --strict "<PRJ>"`.

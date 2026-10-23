@@ -35,7 +35,7 @@ class Profile:
 
     There is no field for agents "to be installed later": an agent the field
     implies belongs in `agents`, where it is visible; one the field does not
-    imply is brought in by the questionnaire as an extra, or by `/claw add`
+    imply is brought in by the questionnaire as an extra, or by `/claw update --add`
     afterwards.
     """
 

@@ -344,8 +344,9 @@ def _build(prj: Path, fw: Path, choices: dict, previous: dict | None) -> _Result
     if not installing and (claude is None or kernel.parse(claude) is None):
         raise ValueError(
             f"{CLAUDE_MD} has no kernel marker: nobody can tell the framework's text from "
-            "the project's, so update refuses — restore the marker, or move the project's "
-            "text aside and install again"
+            "the project's, so update refuses — put the marker pair back around the "
+            "framework's text (an empty pair on top if it is gone), then update again: "
+            "see /claw fix, KERNEL_MISSING"
         )
     generated = assemble.generate(fw, choices, _rules(prj), claude)
     baseline = _baseline(prj, fw, previous, claude)
