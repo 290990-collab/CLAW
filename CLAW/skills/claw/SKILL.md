@@ -6,6 +6,7 @@ description: >
   project's own rules, check and repair it, tune the agents' model and effort,
   tidy the TODO and persistent memory, measure whether a rule is followed,
   uninstall. `/claw <action>`; `/claw` alone lists the actions.
+allowed-tools: Read(${CLAUDE_PLUGIN_ROOT}/**)
 ---
 
 # `/claw` — the framework in this project

@@ -82,6 +82,13 @@ class TestPluginLayout(unittest.TestCase):
             for old in ("claw setup", "claw.py setup", "~/.claude/CLAW"):
                 self.assertNotIn(old, text, f"{old!r} in {path.relative_to(FRAMEWORK)}")
 
+    def test_the_skill_may_read_its_own_folder_unasked(self):
+        """The plugin's folder is outside the project: without the grant every
+        `/claw` asks permission to read its own action file, and `claude -p`
+        refuses it outright (observed on 2.1.309)."""
+        head = (FRAMEWORK / "skills" / "claw" / "SKILL.md").read_text(encoding="utf-8").split("\n---", 1)[0]
+        self.assertIn("\nallowed-tools: Read(${CLAUDE_PLUGIN_ROOT}/**)", head)
+
 
 if __name__ == "__main__":
     unittest.main()
