@@ -12,7 +12,8 @@ Signs that a boundary is missing or in the wrong place:
 - two units always changed together;
 - a unit that knows how another is built internally;
 - an internal change that breaks its users;
-- the same concept represented differently in two places.
+- the same concept represented differently in two places;
+- a shallow unit: its interface almost as wide as its code — a pass-through, a function extracted only to be tested. **Deletion test:** delete it in thought; if its complexity vanishes it was a pass-through, if it reappears across the callers it earns its place.
 
 **What changes together stays together:** you divide by responsibility, never by technical category. Separating by "kind of file" produces units that can neither be understood nor changed on their own.
 
