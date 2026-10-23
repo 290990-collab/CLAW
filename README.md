@@ -50,7 +50,7 @@ Built for long tasks and large repos, where those habits cost the most.
 | "Fix the failing test" | Edits the expected value until it is green | Fixes the cause. If the test itself is wrong, says so and fixes it in a change of its own |
 | "Add a date field" | Writes a date picker by hand | Checks the repo, then the platform, and reuses your input with `type="date"` |
 | "Is it done?" | "Done!" | "Done. Not verified: the migration never ran on a real database" |
-| A long task | One expensive model does everything | Opus plans and checks; the crew reads, runs and writes on cheaper models |
+| A long task | One expensive model does everything | Ask for the crew, or run `/delegate`: Opus plans and checks, the crew reads, runs and writes on cheaper models |
 | "Commit and push it" | Commits and pushes | Shows what will change, then waits for your ok |
 
 <sub>Each answer on the right is a rule in the <code>CLAUDE.md</code> that CLAW installs.</sub>
@@ -98,7 +98,7 @@ It asks five questions, shows every file it will write and waits for your ok.
 
 | Task | Result | Cost |
 |---|---|---|
-| **Build** `tally`, a B2B billing service, from one request | 22,000 lines, half of them tests. 948 tests green in 2 hours. Seven `implementer` agents on Sonnet 5.5 spent 91% of the tokens; Opus, 9% | 85% of one Pro session |
+| **Build** `tally`, a B2B billing service, from one request that asked for the crew | 22,000 lines, half of them tests. 948 tests green in 2 hours. Seven `implementer` agents on Sonnet 5.5 spent 91% of the tokens; Opus, 9% | 85% of one Pro session |
 | **Fix** 16 seeded bugs in `tally`, sent as 16 tickets in one prompt | 16 of 16 fixed, in both runs, checked by hidden tests | $3.89 and $5.95 |
 
 Measured with `claude -p` on Claude Code 2.1.294 to 2.1.301, Opus 5.5 as coordinator, on
