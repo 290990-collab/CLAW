@@ -1,5 +1,7 @@
 # Orchestration — coordinator's guide
 
+**Before the next tool call:** tell the user, in one line, whether you delegate this task — to whom, on which model — or work yourself, and why. The rest of this guide is how to decide.
+
 ## When delegating pays
 
 Nothing obliges a spawn; convenience decides, and it has two parts:
