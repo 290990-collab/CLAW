@@ -6,6 +6,12 @@ MANIFEST_MISSING, ERROR if the file is missing and WARN if it is incomplete;
 HOOKS_MISSING, ERROR if a closed hook is wired and its script is gone, WARN if
 it is not wired at all.
 
+Two codes read `.claude/user-rules.md`: RULES_UNKNOWN, a section or text that
+applies to nobody (or a file that does not parse); GENERATED_DIFF, at the
+version that wrote the installation, a file that differs from a regeneration
+from the current rules. The roster table and the card values are generated,
+so nothing checks them against each other.
+
 A third severity, NOTE, is not produced here: it is a WARN the project has
 declared it accepts in `claw.json`. It stays printed — an invisible waiver
 is a forgotten waiver — but it does not make `--strict` fail.
@@ -16,17 +22,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import assemble, kernel, profile, settings, source
+from . import assemble, kernel, profile, rules, settings, source
 
-# The superseded report format: confidence **as** a percentage, that is `CONF:`
-# followed by a placeholder with `%` (`<0-100%>`) or by a digit. The value must
-# be the percentage: `CONF: HIGH — 80% coverage` is a categorical judgement
-# quoting a number in its reason, and it is legitimate text the pattern must
-# not touch.
-CONF_PERCENT_RE = re.compile(r"CONF:\s*(?:<[^>\n]*%|\d[^%\n]*%)")
 ROUTING_AGENT_RE = re.compile(r"^\|[^|]*\|\s*`([a-z-]+)`\s*\|", re.MULTILINE)
-# A roster row with its third cell, the Model one: `model effort` of the card.
-ROSTER_ROW_RE = re.compile(r"^(\|[^|\n]*\|\s*)`([a-z-]+)`\s*\|([^|\n]*)\|", re.MULTILINE)
 FABLE_RE = re.compile(r"^model:\s*fable\s*$", re.MULTILINE)
 SHARED_REF_RE = re.compile(r"\.claude/shared/([A-Za-z0-9_./-]+\.md)")
 # Characters the model reads and whoever reviews the file does not see:
@@ -222,15 +220,6 @@ def check(root: Path) -> list[Finding]:
             out.append(
                 Finding("FABLE", "WARN", f"{rel}: model fable bills outside the plan on most plans")
             )
-        if CONF_PERCENT_RE.search(text):
-            out.append(
-                Finding(
-                    "REPORT_FORMAT",
-                    "WARN",
-                    f"{rel}: report schema with confidence as a percentage — "
-                    "superseded format, realign with /claw update",
-                )
-            )
         if rel in versioned:
             region = kernel.parse(text)
             if region is not None:
@@ -248,11 +237,6 @@ def check(root: Path) -> list[Finding]:
                     )
                 )
 
-    # The routing table is coordinator content: it lives in its guide. We fall
-    # back to CLAUDE.md only where that guide is absent (partial installation,
-    # or project without delegation), so the roster stays verifiable.
-    routed = set(ROUTING_AGENT_RE.findall(texts.get(f".claude/{ORCHESTRATION}", claude_text)))
-
     manifest = source.read_manifest(root)
     chosen = manifest.get("agents") if manifest else None
     for name in sorted(
@@ -265,31 +249,8 @@ def check(root: Path) -> list[Finding]:
                 f"{name}: in claw.json agents, file absent",
             )
         )
-    for name in sorted(present - routed):
-        out.append(
-            Finding(
-                "ROSTER_ORPHAN",
-                "WARN",
-                f"{name}: file present, absent from the routing table",
-            )
-        )
-    # The coordinator picks the model it passes from this column: a cell behind
-    # its card makes it raise a model the card lowered.
-    table = texts.get(f".claude/{ORCHESTRATION}", claude_text)
-    for m in ROSTER_ROW_RE.finditer(table):
-        name, cell = m.group(2), m.group(3).strip()
-        if name not in present:
-            continue
-        want = _model_cell(texts[f".claude/agents/{name}.md"])
-        if cell != want:
-            out.append(
-                Finding(
-                    "ROSTER_MODEL",
-                    "WARN",
-                    f"{name}: the roster says “{cell}”, the card “{want}” — "
-                    "realign with /claw update",
-                )
-            )
+    out += _rules_findings(root, chosen if isinstance(chosen, list) else sorted(present))
+    out += _generated_diff(root, manifest)
 
     # The versions: first against each other, then against the source. No other
     # check sees them — on an old method the hash matches, because it matches
@@ -501,14 +462,122 @@ def check(root: Path) -> list[Finding]:
     return _apply_accepted(root, out)
 
 
-def _model_cell(card: str) -> str:
-    """A card's `model effort`, from its front matter: what its roster row says."""
-    head = card.split("\n---", 1)[0]
-    return " ".join(
-        m.group(1)
-        for key in ("model", "effort")
-        if (m := re.search(rf"^{key}:\s*(\S+)\s*$", head, re.MULTILINE))
-    )
+def _rules_findings(root: Path, agents: list) -> list[Finding]:
+    """RULES_UNKNOWN: what `.claude/user-rules.md` holds that nothing reads.
+
+    A section for neither `All` nor an agent of the installation, text before
+    the first section, or a file that does not parse: each applies to nobody,
+    and the rule its author believes in is not in force. No file, no finding.
+    """
+    path = root / ".claude" / "user-rules.md"
+    if not path.is_file():
+        return []
+    where = ".claude/user-rules.md"
+    try:
+        parsed = rules.parse(path.read_bytes().decode("utf-8"))
+    except ValueError as e:
+        return [Finding("RULES_UNKNOWN", "WARN", f"{where}: {e} — nothing of it is applied")]
+    known = {rules.ALL, *(a for a in agents if isinstance(a, str))}
+    out = [
+        Finding(
+            "RULES_UNKNOWN",
+            "WARN",
+            f"{where}: section '## {name}' is neither '## {rules.ALL}' nor an agent "
+            "of this installation — it is applied to nobody",
+        )
+        for name in parsed.sections
+        if name not in known
+    ]
+    if parsed.stray:
+        out.append(
+            Finding(
+                "RULES_UNKNOWN",
+                "WARN",
+                f"{where}: text before the first '## ' section is applied to nobody",
+            )
+        )
+    return out
+
+
+def _source_root() -> Path:
+    """The source, deduced like `_source_version`: `fwbuild` lives in its `tools/`."""
+    return Path(__file__).resolve().parents[2]
+
+
+def _generated_diff(root: Path, manifest: dict | None) -> list[Finding]:
+    """GENERATED_DIFF: the installed files against a regeneration from the
+    current `user-rules.md`.
+
+    Only at the version that wrote them: at another one every file differs by
+    design, and VERSION_MISMATCH already says so. For `CLAUDE.md` only the two
+    framework regions count; the project part is the project's. What cannot be
+    compared is left to its own code (ROSTER_MISSING, MANIFEST_MISSING,
+    RULES_UNKNOWN): this check says nothing about it.
+    """
+    fw = _source_root()
+    version = _source_version()
+    # Silent only where the cause has its own code: no source to compare with,
+    # a manifest that is absent or incomplete (MANIFEST_MISSING), rules that do
+    # not parse (RULES_UNKNOWN). Any other failure is a finding.
+    if version is None or source.missing(fw) or manifest is None:
+        return []
+    if str(manifest.get("version", "")).strip() != version:
+        return []
+    if any(not isinstance(manifest.get(k), str) or not manifest[k].strip() for k in ("profile", "orchestration")):
+        return []
+    if any(
+        not isinstance(manifest.get(k), list) or not all(isinstance(n, str) for n in manifest[k])
+        for k in source.MANIFEST_LISTS
+    ):
+        return []
+    rules_path = root / ".claude" / "user-rules.md"
+    current = rules.Rules()
+    if rules_path.is_file():
+        try:
+            current = rules.parse(rules_path.read_bytes().decode("utf-8"))
+        except ValueError:
+            return []
+    from . import lifecycle  # lifecycle imports this module
+
+    try:
+        generated = assemble.generate(
+            fw,
+            lifecycle.installed_choices(manifest),
+            current,
+            (root / "CLAUDE.md").read_bytes().decode("utf-8"),
+        )
+    except (ValueError, KeyError, OSError) as e:
+        cause = f"{type(e).__name__}: {e}"
+        return [Finding("GENERATED_DIFF", "WARN", f"cannot regenerate to compare: {cause}")]
+
+    def regions(text: str) -> tuple[str | None, str | None]:
+        r = kernel.parse(text)
+        try:
+            return (text[r.start : r.end] if r else None), kernel.strip_user_rules(text)[1]
+        except ValueError:
+            return None, None
+
+    out: list[Finding] = []
+    for rel, want in generated.items():
+        if assemble.is_create_only(rel):
+            continue
+        path = root / rel
+        if not path.is_file():
+            continue
+        have = path.read_bytes().decode("utf-8", errors="replace")
+        differs = regions(have) != regions(want) if rel == "CLAUDE.md" else have != want
+        if differs:
+            out.append(
+                Finding(
+                    "GENERATED_DIFF",
+                    "WARN",
+                    f"{rel}: differs from what the source generates — either it was "
+                    "edited by hand (the edit is lost at the next update; move it to "
+                    "user-rules.md), or user-rules.md changed without regenerating "
+                    "(run /claw update --keep-version)",
+                )
+            )
+    return out
 
 
 def _match(finding: Finding, keys: list[str]) -> str | None:

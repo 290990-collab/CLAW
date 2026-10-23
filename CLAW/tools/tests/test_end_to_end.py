@@ -536,22 +536,6 @@ class TestInstalledBudget(unittest.TestCase):
             self.assertEqual(len(found), 1)
             self.assertEqual(found[0].severity, "WARN")
 
-    def test_old_report_format_is_reported_in_an_installed_project(self):
-        """A project installed with the percentage format keeps it: the
-        kernel region's hash matches, because it matches that very text, and
-        the declared version is the one the project was born with. Without this
-        finding no check sees it."""
-        with tempfile.TemporaryDirectory() as d:
-            root = self._installed(d, 0)
-            claude = root / "CLAUDE.md"
-            claude.write_text(
-                claude.read_text(encoding="utf-8").replace(
-                    "CONF: HIGH | MEDIUM | LOW", "CONF: <0-100" + "%>"
-                ),
-                encoding="utf-8",
-            )
-            self.assertIn("REPORT_FORMAT", [f.code for f in doctor.check(root)])
-
     def test_every_code_the_doctor_can_emit_is_documented(self):
         """A finding without an entry in the skill is a code whoever receives
         it does not know what to do with."""

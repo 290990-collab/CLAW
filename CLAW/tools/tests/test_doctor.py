@@ -3,6 +3,7 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fwbuild import assemble, doctor, kernel
 from fwbuild import settings as fw_settings
@@ -96,6 +97,15 @@ def make_project(
     return root
 
 
+def hand_built_fixture(test):
+    """`make_project` is not an installation the source generated, so
+    GENERATED_DIFF would fire on every file of it: tests built on it switch the
+    check off. The ones that exercise it install for real, without this."""
+    patch = mock.patch.object(doctor, "_generated_diff", return_value=[])
+    patch.start()
+    test.addCleanup(patch.stop)
+
+
 def strip_markers(text):
     return re.sub(r"<!-- /?FRAMEWORK:KERNEL[^>]*-->", "", text)
 
@@ -105,6 +115,9 @@ def codes(findings):
 
 
 class TestDoctor(unittest.TestCase):
+    def setUp(self):
+        hand_built_fixture(self)
+
     def test_clean_project_has_no_findings(self):
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(doctor.check(make_project(d)), [])
@@ -121,11 +134,6 @@ class TestDoctor(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p = make_project(d, agents=("explorer",), routing=("explorer", "frontend"))
             self.assertNotIn("ROSTER_MISSING", codes(doctor.check(p)))
-
-    def test_detects_agent_file_not_in_routing(self):
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d, agents=("explorer", "frontend"), routing=("explorer",))
-            self.assertIn("ROSTER_ORPHAN", codes(doctor.check(p)))
 
     def test_detects_missing_state_files(self):
         with tempfile.TemporaryDirectory() as d:
@@ -220,20 +228,6 @@ class TestDoctor(unittest.TestCase):
             self.assertEqual([f.severity for f in found], ["ERROR"])
             self.assertIn("block_no_verify", found[0].message)
 
-    def test_detects_a_roster_model_behind_its_card(self):
-        """The coordinator reads the model to pass from this column: an old
-        `opus` next to a card lowered to sonnet makes it raise the model."""
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            guide = p / ".claude" / "shared" / "orchestration.md"
-            guide.write_text(
-                guide.read_text(encoding="utf-8").replace("| opus high |", "| opus |"),
-                encoding="utf-8",
-            )
-            found = [f for f in doctor.check(p) if f.code == "ROSTER_MODEL"]
-            self.assertEqual(len(found), 1)
-            self.assertIn("explorer", found[0].message)
-
     def test_detects_shared_guide_nobody_cites(self):
         """The inverse of SHARED_MISSING: a guide installed and never cited is
         context paid for and never opened."""
@@ -273,18 +267,6 @@ class TestDoctor(unittest.TestCase):
             self.assertEqual([f.severity for f in found], ["WARN"])
             for key in ("profile", "orchestration", "agents", "guides", "hooks"):
                 self.assertIn(key, found[0].message)
-
-    def test_categorical_confidence_with_a_percentage_is_not_the_old_format(self):
-        """The superseded format is confidence **as** a percentage. A
-        categorical judgement quoting 80% in its reason is legitimate text."""
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            (p / "docs" / "status.md").write_text(
-                "CONF: HIGH — 80% coverage on the module\n", encoding="utf-8"
-            )
-            self.assertNotIn("REPORT_FORMAT", codes(doctor.check(p)))
-            (p / "docs" / "status.md").write_text("CONF: 85%\n", encoding="utf-8")
-            self.assertIn("REPORT_FORMAT", codes(doctor.check(p)))
 
     def test_accepted_warning_becomes_a_note(self):
         """The valve: a warning the project declares it accepts stays printed
@@ -451,6 +433,127 @@ class TestDoctor(unittest.TestCase):
             old.write_text("See `.claude/shared/core/lost.md`.\n", encoding="utf-8")
             self.assertEqual(doctor.check(p), [])
 
+
+class TestRulesUnknown(unittest.TestCase):
+    def setUp(self):
+        hand_built_fixture(self)
+
+    def _found(self, text):
+        with tempfile.TemporaryDirectory() as d:
+            p = make_project(d)
+            if text is not None:
+                (p / ".claude" / "user-rules.md").write_text(text, encoding="utf-8")
+            return [f for f in doctor.check(p) if f.code == "RULES_UNKNOWN"]
+
+    def test_a_section_for_nobody_is_reported_and_named(self):
+        """`## explorr` is a typo: the rule under it reaches no card, and its
+        author believes it is in force."""
+        found = self._found("## All\n\nrule\n\n## explorr\n\nrule\n")
+        self.assertEqual([f.severity for f in found], ["WARN"])
+        self.assertIn("## explorr", found[0].message)
+        self.assertIn("user-rules.md", found[0].message)
+
+    def test_text_before_the_first_section_is_reported(self):
+        """Stray text is parsed and applied to nobody."""
+        found = self._found("a rule with no heading\n\n## All\n\nrule\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("before the first", found[0].message)
+
+    def test_a_file_that_does_not_parse_is_reported_once(self):
+        """A duplicate section or an override under All makes `update` refuse;
+        the doctor must say what and where, not stay silent."""
+        found = self._found("## All\n\na\n\n## All\n\nb\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("## All", found[0].message)
+        found = self._found("## All\n\nmodel: opus\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("under '## All'", found[0].message)
+
+    def test_a_clean_file_and_a_missing_file_are_silent(self):
+        """A known agent's section and `## All` are what the file is for; no
+        file at all is the normal state of a project with no rules."""
+        self.assertEqual(self._found("## All\n\nrule\n\n## explorer\n\nmodel: sonnet\n\nrule\n"), [])
+        self.assertEqual(self._found(None), [])
+
+
+class TestGeneratedDiff(unittest.TestCase):
+    """Against real installs: the check compares with what the source generates."""
+
+    def _install(self, d):
+        from tests.test_lifecycle import install
+
+        return install(d)
+
+    def _diff(self, root):
+        return [f for f in doctor.check(root) if f.code == "GENERATED_DIFF"]
+
+    def test_a_fresh_install_has_no_difference(self):
+        """The regeneration is the installer's own: any finding here would be
+        the check disagreeing with the writer."""
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(self._diff(self._install(d)), [])
+
+    def test_a_hand_edited_card_is_named(self):
+        """An edit in a generated card is lost at the next update; the finding
+        must name the file so it can be moved to user-rules.md."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            card = root / ".claude" / "agents" / "explorer.md"
+            card.write_bytes(card.read_bytes() + b"\nA hand-written rule.\n")
+            found = self._diff(root)
+            self.assertEqual(len(found), 1)
+            self.assertEqual(found[0].severity, "WARN")
+            self.assertIn(".claude/agents/explorer.md", found[0].message)
+            self.assertIn("--keep-version", found[0].message)
+
+    def test_a_user_rules_edit_not_regenerated_is_named(self):
+        """The rule is in user-rules.md but not yet in CLAUDE.md: the project
+        believes it is in force."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            rules_file = root / ".claude" / "user-rules.md"
+            rules_file.write_bytes(rules_file.read_bytes() + b"\n## explorer\n\nNew rule.\n")
+            found = self._diff(root)
+            self.assertEqual([f.message.split(":")[0] for f in found], [".claude/agents/explorer.md"])
+
+    def test_the_project_part_of_claude_md_is_not_compared(self):
+        """Only the two framework regions are the framework's: what the owner
+        wrote in CLAUDE.md changes at will."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            claude = root / "CLAUDE.md"
+            claude.write_bytes(claude.read_bytes() + b"\n## My notes\n\nWritten by the owner.\n")
+            self.assertEqual(self._diff(root), [])
+
+    def test_a_card_in_the_manifest_that_the_source_lacks_is_a_finding(self):
+        """An agent listed in `claw.json.agents` with no source card made the
+        regeneration fail, and the check vanished without a word: the failure
+        must be a finding naming the cause. ROSTER_MISSING is not involved."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            path = root / ".claude" / "claw.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["agents"].append("my-own-agent")
+            path.write_text(json.dumps(data), encoding="utf-8")
+            (root / ".claude" / "agents" / "my-own-agent.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+            found = self._diff(root)
+            self.assertEqual(len(found), 1)
+            self.assertIn("cannot regenerate to compare", found[0].message)
+            self.assertIn("my-own-agent", found[0].message)
+            self.assertNotIn("ROSTER_MISSING", {f.code for f in doctor.check(root)})
+
+    def test_nothing_is_compared_when_the_versions_differ(self):
+        """At another version every file differs by design: VERSION_MISMATCH
+        speaks, GENERATED_DIFF would only repeat it once per file."""
+        with tempfile.TemporaryDirectory() as d:
+            root = self._install(d)
+            path = root / ".claude" / "claw.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["version"] = "0.0.1"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            card = root / ".claude" / "agents" / "explorer.md"
+            card.write_bytes(card.read_bytes() + b"\nedit\n")
+            self.assertEqual(self._diff(root), [])
 
 
 if __name__ == "__main__":

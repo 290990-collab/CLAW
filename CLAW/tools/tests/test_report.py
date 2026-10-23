@@ -10,7 +10,7 @@ from fwbuild import cli, kernel, report
 # Absolute and not relative import: `unittest discover -s tests` loads the
 # modules as top-level, and a `.test_doctor` in there has no parent package.
 # The two runners must give the same number.
-from tests.test_doctor import VERSION, make_project
+from tests.test_doctor import VERSION, hand_built_fixture, make_project
 
 
 def installed(tmp, name, version=VERSION, declared=None):
@@ -77,6 +77,9 @@ class TestDiscovery(unittest.TestCase):
 
 
 class TestSurvey(unittest.TestCase):
+    def setUp(self):
+        hand_built_fixture(self)
+
     def test_the_version_shown_is_the_one_in_the_files(self):
         """`claw.json` says where the project was born from, the kernel
         region says what it contains now. When they diverge the second counts:

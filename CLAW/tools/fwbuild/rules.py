@@ -23,6 +23,7 @@ class Rules:
     agents: dict[str, str] = field(default_factory=dict)
     overrides: dict[str, dict[str, str]] = field(default_factory=dict)
     stray: str = ""
+    sections: tuple[str, ...] = field(default=(), compare=False)
 
 
 def parse(text: str) -> Rules:
@@ -70,4 +71,5 @@ def parse(text: str) -> Rules:
         agents=prose,
         overrides=overrides,
         stray="\n".join(stray).strip("\n") if "".join(stray).strip() else "",
+        sections=tuple(bodies),
     )

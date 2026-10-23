@@ -25,18 +25,6 @@ An agent is in the routing table of `.claude/shared/orchestration.md` (or of `CL
 
 **What to do:** install the agent (`/claw add <name>`, which takes the current version from the source) or remove the row from the table.
 
-### `ROSTER_ORPHAN` — WARNING
-
-The agent's file exists but is not in the table: it costs context in every session and will never be chosen.
-
-**What to do:** add it to the table or deactivate it (`/claw remove <name>`). No exceptions: either the agent is superfluous, or the table is incomplete.
-
-### `ROSTER_MODEL` — WARNING
-
-A row's Model cell differs from its card's `model effort`. The coordinator picks the model it passes at the spawn from this column: an old `opus` next to a card lowered to sonnet makes it raise the model, which rule 2 forbids.
-
-**What to do:** `/claw update` rewrites every cell from its card. A model changed on purpose goes into the card, not into the table.
-
 ### `SHARED_MISSING` — ERROR
 
 An installed file — `CLAUDE.md`, an agent, a guide — points at a guide that was not installed. A broken pointer is worse than an absent one: the agent tries and finds nothing. The finding says **which file** it starts from.
@@ -105,6 +93,18 @@ A waiver declared in `claw.json` covers no finding: either the finding is gone, 
 
 **What to do:** remove it if the finding is gone, write the reason if it is missing, fix the error if it is an error.
 
+### `RULES_UNKNOWN` — WARNING
+
+`.claude/user-rules.md` holds something nobody reads: a `## <name>` section that is neither `## All` nor an agent of `claw.json`, text before the first section, or a file that does not parse (a section twice, `model:`/`effort:` under `## All`). One finding each, naming what and where. The rule its author believes in is not in force.
+
+**What to do:** fix the name (a typo, or an agent that was removed), put the loose text under a section, resolve the duplicate. Do not guess the intent: ask the user, then `update --keep-version` regenerates.
+
+### `GENERATED_DIFF` — WARNING
+
+At the version that wrote the installation, a generated file differs from what the source generates from the current `user-rules.md`. Two causes: the file was edited by hand, or `user-rules.md` changed and nobody regenerated. For `CLAUDE.md` only the two framework regions count.
+
+**What to do:** ask which it is. A hand edit that must stay goes into `user-rules.md` first, because the regeneration overwrites the file. Then `python "<FW>/claw.py" update "<PRJ>" --keep-version`, which shows the plan and names every overwrite.
+
 ### `FABLE` — WARNING
 
 `model: fable`: on most plans Fable bills to usage credits, outside the plan's limits.
@@ -124,12 +124,6 @@ The project sections of `CLAUDE.md` have exceeded the kernel region in words. Th
 The threshold is the kernel itself, the only known quantity: *the project does not write more than the method*. It is a judgement call, not a measure of effectiveness. Below the ceiling the framework sets itself for the method alone the finding stays silent: on a small file the ratio is true and irrelevant.
 
 **What to do:** do not cut at random. Move into `.claude/shared/` what only a few agents need, leaving the pointer; remove what the repository already says by itself (structure that can be derived, commands already in a `Makefile` or `package.json`); keep in `CLAUDE.md` only what an agent cannot deduce — hard constraints, contracts with their consumers, the critical surface. If after the cut the file stays over the threshold because the project is large, it is a warning to accept knowingly.
-
-### `REPORT_FORMAT` — WARNING
-
-The installed report schema still carries confidence as a percentage: previous format, fake precision in the field the coordinator reads first, while a model's self-reported confidence is poorly calibrated. No other finding sees it: the hash matches that very text, and the declared version is the one the project was born with.
-
-**What to do:** `/claw update`. The current format is categorical and carries the falsifier (`REFUTE`) with it, which is what makes a judgement without numbers readable.
 
 ### `UNSAFE_UNICODE` — WARNING
 
