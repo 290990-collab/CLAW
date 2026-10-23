@@ -1,5 +1,4 @@
-"""Entry point: `claw <command>` (the launcher `setup` writes), python claw.py
-<command>, or python -m fwbuild <command>."""
+"""Entry point: python claw.py <command>, or python -m fwbuild <command>."""
 
 import argparse
 import dataclasses
@@ -9,15 +8,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-from . import assemble, doctor, lifecycle, master, profile, report, settings, skills, source, upgrade
+from . import assemble, doctor, lifecycle, profile, report, settings, skills, source
 
 # The source this command runs from: every command that writes works on it.
 FW = Path(__file__).resolve().parents[2]
-SKILLS_HOME = Path.home() / ".claude" / "skills"
-BIN_HOME = Path.home() / ".local" / "bin"
 PLANNED = ("install", "down", "repair", "uninstall")
-# Commands that work like the others but stay out of `--help`.
-MORE = "setup, install, down, repair, uninstall, report, source, skills"
 
 
 def _force_utf8_stdout() -> None:
@@ -34,23 +29,13 @@ def _force_utf8_stdout() -> None:
                 pass
 
 
-def _bases(path: Path | None) -> list[Path]:
-    """The source candidates. It is the impure part, and it is here on purpose.
-
-    A path that was given is the **only** candidate: if it does not hold it is
-    an error, not a fallback onto the next one. Without a path, the source is
-    the one running.
-    """
-    return [FW if path is None else path]
-
-
 def main(argv: list[str] | None = None) -> int:
     _force_utf8_stdout()
     parser = argparse.ArgumentParser(
-        prog="claw",
-        description="Everyday: claw update (the source, from its release) · claw status · "
-        "claw doctor. In a project, Claude Code's /claw does the rest.",
-        epilog=f"Also: {MORE}. `claw <command> --help` for any of them.",
+        prog="claw.py",
+        description="Everyday: doctor. In a project, Claude Code's /claw does the rest.",
+        epilog="Also: install, down, repair, uninstall, report, skills. "
+        "`claw.py <command> --help` for any of them.",
     )
     sub = parser.add_subparsers(dest="command", required=True, metavar="command")
 
@@ -74,9 +59,6 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument(
         "--strict", action="store_true", help="exit 1 if a project diverges or has findings"
     )
-
-    s = sub.add_parser("source")
-    s.add_argument("path", type=Path, nargs="?")
 
     k = sub.add_parser("skills")
     ks = k.add_subparsers(dest="skills_command", required=True)
@@ -111,11 +93,7 @@ def main(argv: list[str] | None = None) -> int:
         if name == "down":
             p.add_argument("--hooks", help="hooks to have afterwards; default: those in use")
             p.add_argument("--adopt", default="", help="cards taking the source's front matter, or all")
-    st = sub.add_parser("status", help="the source against its release; this folder's project, if any")
-    st.add_argument("path", type=Path, nargs="?")
-    u = sub.add_parser("update", help="take the new release into the source: shows it, asks, merges")
-    sp = sub.add_parser("setup", description="the /claw skill and the `claw` launcher, from this source")
-    for p in (i, *(sub.choices[n] for n in PLANNED[1:]), u, sp):
+    for p in (i, *(sub.choices[n] for n in PLANNED[1:])):
         p.add_argument("--apply", action="store_true", help="run the plan saved by a previous call")
         p.add_argument("-y", "--yes", action="store_true", help="run it without asking")
 
@@ -123,34 +101,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command in PLANNED:
         return _lifecycle(args)
-    if args.command == "status":
-        return _status(args.path)
-    if args.command == "setup":
-        return _setup(args.apply or args.yes)
-    if args.command == "update":
-        return _update(args.apply or args.yes)
     if args.command == "skills":
         return _skills(args)
-
-    if args.command == "source":
-        try:
-            root = source.resolve(_bases(args.path))
-        except LookupError as err:
-            print(err)
-            return 1
-        version = (root / "VERSION").read_text(encoding="utf-8").strip()
-        print(f"{root} v{version}")
-        # Without the record, an update by replacement takes the source to be intact and
-        # replaces it with the release: what `/claw share` promoted is lost there.
-        record = upgrade.read_record(root)
-        if record is None:
-            print("no upstream record: intact, updated by replacing it")
-        else:
-            print(
-                f"modified by `/claw share`: base v{upgrade.base_version(root)}, "
-                f"from {record.get('repo') or 'repo not declared'}"
-            )
-        return 0
 
     if args.command == "doctor":
         findings = doctor.check(args.path)
@@ -192,10 +144,10 @@ def _skills(args) -> int:
     framework file. Saying it here avoids believing that an `add` has already
     changed something in the projects that are open.
     """
-    try:
-        root = source.resolve(_bases(args.path))
-    except LookupError as err:
-        print(err)
+    root = FW if args.path is None else args.path
+    gaps = source.missing(root)
+    if gaps:
+        print(f"{root} is not a complete source: missing {', '.join(gaps)}")
         return 1
     try:
         if args.skills_command == "add":
@@ -330,10 +282,6 @@ def _print_survey(s) -> None:
         )
 
 
-def _claw() -> str:
-    return "claw"
-
-
 def _confirm(yes: bool) -> bool | None:
     """The ok on a plan just printed: `--yes` gives it; at a terminal it is
     asked; without one — a skill, a script — there is nobody to ask, and
@@ -380,7 +328,7 @@ def _lifecycle(args) -> int:
                     print(f"{o.action:<11} {o.path} — {o.reason}")
             ok = _confirm(args.yes)
             if ok is None:
-                print(f'\nplan saved. To run it: {_claw()} {mode} "{prj}" --apply')
+                print(f'\nplan saved. To run it: python "<FW>/claw.py" {mode} "{prj}" --apply')
                 return 0
             if not ok:
                 print("nothing written")
@@ -456,112 +404,3 @@ def _plan(args) -> tuple[list[lifecycle.Operation], dict]:
         prj, lifecycle.targets(FW, roster, params["guides"], params["hooks"])
     )
     return ops, params
-
-
-def _status(path: Path | None) -> int:
-    """Where the source stands against its branch, and a project against the source."""
-    version = (FW / "VERSION").read_text(encoding="utf-8").strip()
-    clone = master.is_clone(FW)
-    print(f"source   {FW} v{version}")
-    if not clone:
-        print("         not a git clone: updated by replacing it (/claw update explains how)")
-    elif not master.upstream(FW):
-        print("         git clone with no tracked branch")
-    else:
-        behind = len(master.lines(FW, "rev-list", "HEAD..@{u}"))
-        ahead = len(master.lines(FW, "rev-list", "@{u}..HEAD"))
-        local = len(master.lines(FW, "status", "--porcelain", "--", "."))
-        print(
-            f"         {master.upstream(FW)}: {behind} behind, {ahead} ahead as of the last "
-            f"fetch · {local} uncommitted changes"
-        )
-    if path is None:
-        if source.read_manifest(Path(".")) is None:
-            return 0
-        path = Path(".")
-    data = source.read_manifest(path)
-    if data is None:
-        print(f"project  {path}: not installed")
-        return 1
-    findings = doctor.check(path)
-    counts = " ".join(
-        f"{sum(1 for f in findings if f.severity == s)}{s[0]}"
-        for s in ("ERROR", "WARN", "NOTE")
-        if any(f.severity == s for f in findings)
-    )
-    installed = data.get("version")
-    print(f"project  {path} v{installed} · doctor {counts or 'OK'}")
-    if installed == version:
-        return 0
-    commits = master.since(FW, str(installed)) if clone else None
-    if commits is None:
-        print(f"         v{installed} → v{version}: no commit declares v{installed}")
-    else:
-        print(f"         v{installed} → v{version}, {len(commits)} commits:")
-        for c in commits:
-            print(f"           {c}")
-    print("         to bring it up: /claw update, in Claude Code in that project")
-    return 0
-
-
-def _setup(yes: bool) -> int:
-    """The `/claw` skill in the user's skills and the `claw` launcher on the PATH."""
-    gaps = source.missing(FW)
-    if gaps:
-        print(f"{FW} is not a complete source: missing {', '.join(gaps)}")
-        return 1
-    for action, target in master.skill_plan(FW, SKILLS_HOME) + master.launcher_plan(BIN_HOME):
-        print(f"{action:<11} {target}")
-    print(f"<FW> written as {FW.as_posix()}")
-    if not master.is_clone(FW):
-        print("not a git clone: `claw update` will not work on this source")
-    ok = _confirm(yes)
-    if not ok:
-        print("nothing written" if ok is False else f"to run it: {_claw()} setup --yes")
-        return 0
-    master.install_skills(FW, SKILLS_HOME)
-    master.install_launcher(FW, BIN_HOME, sys.executable)
-    print("setup: done — /claw install, in Claude Code in a project, installs the framework")
-    if not master.on_path(BIN_HOME):
-        print(f"{BIN_HOME} is not on your PATH: add it, then open a new terminal, to type `claw`")
-    return 0
-
-
-def _update(yes: bool) -> int:
-    """The source up to its release: what arrives is shown, then merged, then the
-    `/claw` skill is refreshed. Projects move one at a time, with `/claw update`."""
-    try:
-        if not master.is_clone(FW) or not master.upstream(FW):
-            print("not a git clone with a tracked branch: /claw update explains how to update it")
-            return 1
-        master.git(FW, "fetch", "--quiet")
-        incoming = master.lines(FW, "log", "--oneline", "HEAD..@{u}")
-        local = master.lines(FW, "status", "--porcelain")
-        if local:
-            print(f"{len(local)} uncommitted changes in the source: commit them "
-                  "(they are promotions) or discard them first")
-            return 1
-        if not incoming:
-            print(f"source already up to date: v{_source_version()}")
-            return 0
-        print(f"{len(incoming)} incoming commits:")
-        for c in incoming:
-            print(f"  {c}")
-        ok = _confirm(yes)
-        if not ok:
-            print("nothing merged" if ok is False else f"to run it: {_claw()} update --yes")
-            return 0
-        conflicts = master.merge(FW)
-    except RuntimeError as err:
-        print(err)
-        return 1
-    if conflicts:
-        print("conflicts, the merge is left open: resolve them (in Claude Code, /claw update "
-              "helps), then git commit:")
-        for c in conflicts:
-            print(f"  {c}")
-        return 1
-    master.install_skills(FW, SKILLS_HOME)
-    version = (FW / "VERSION").read_text(encoding="utf-8").strip()
-    print(f"update: done — source at v{version}. Projects: /claw update in each, in Claude Code")
-    return 0

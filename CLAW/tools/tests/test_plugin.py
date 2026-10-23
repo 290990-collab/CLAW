@@ -59,6 +59,29 @@ class TestPluginLayout(unittest.TestCase):
             (FRAMEWORK / "LICENSE").read_bytes(), (REPO / "LICENSE").read_bytes()
         )
 
+    def test_source_is_reached_through_the_plugin_root_only_in_skill_md(self):
+        """The plugin root is substituted in `SKILL.md` text and nowhere else: an
+        action file (opened with Read) that carried `${CLAUDE_PLUGIN_ROOT}` would
+        hand the model a literal, unresolvable path. `claw setup` and the master
+        path are the old way in; a surviving mention sends the user to a command
+        that no longer exists."""
+        skill = FRAMEWORK / "skills" / "claw"
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}", (skill / "SKILL.md").read_text(encoding="utf-8"))
+        for action in sorted((skill / "actions").glob("*.md")):
+            text = action.read_text(encoding="utf-8")
+            self.assertNotIn("${CLAUDE_PLUGIN_ROOT}", text, action.name)
+        for path in sorted(FRAMEWORK.rglob("*")):
+            if (
+                not path.is_file()
+                or path.suffix not in (".md", ".py", ".toml", ".json")
+                or "__pycache__" in path.parts
+                or path == Path(__file__).resolve()
+            ):
+                continue
+            text = path.read_text(encoding="utf-8")
+            for old in ("claw setup", "claw.py setup", "~/.claude/CLAW"):
+                self.assertNotIn(old, text, f"{old!r} in {path.relative_to(FRAMEWORK)}")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 # CLAW — source
 
-A **self-sufficient** folder: a single master on the machine, or copied into
-the project. Everything needed is in here, tooling included.
+A **self-sufficient** folder: the plugin root. Everything needed is in here,
+tooling included.
 
 ```
 VERSION              kernel version (semantics: patch · minor · major)
@@ -50,12 +50,8 @@ flags `COORDINATOR_LEAK` if the boundary gets lost again.
 
 Python 3.11+ and git; nothing else to install.
 
-```bash
-git clone <repo> ~/.claude/CLAW
-python ~/.claude/CLAW/CLAW/claw.py setup    # the /claw skill into ~/.claude/skills/, `claw` into ~/.local/bin/
-```
-
-The clone is the master. From then on every new project is `/claw install`.
+The folder is a Claude Code plugin: `/claw install`, in Claude Code in a project,
+installs the framework.
 The installation asks two languages per project: the chat's, written as
 Claude Code's `language` setting in the project's `.claude/settings.local.json`,
 and the codebase's (comments and identifiers), written in `conventions.md`.
@@ -64,11 +60,9 @@ messages.
 
 ## Commands
 
-Two surfaces, split by who acts. **The terminal** works on the source:
-`claw update` takes a release, `claw status` and `claw doctor` look.
 **Claude Code's `/claw <action>`** works on a project — install, update, fix,
-add, remove, change, share, tune, memory, comply, uninstall — and runs the
-commands below itself.
+add, remove, change, tune, tidy, comply, uninstall — and runs the commands
+below itself, as `python "<FW>/claw.py" <command>`.
 
 Whatever writes prints a plan and asks; `--yes` skips the question, and
 without a terminal (a skill) the plan is saved and `--apply` runs it,
@@ -76,15 +70,12 @@ re-checking every file.
 
 | command | does |
 |---|---|
-| `update` | fetches, lists incoming commits, merges them into the master (a promotion is a local commit, kept), refreshes `/claw` |
-| `status [project]` | source against its branch; the project in this folder, or the one named: version, doctor, commits in between |
 | `doctor [project] [--strict] [--json]` | integrity check |
-| `setup` | the `/claw` skill with this source's path written in, and the `claw` launcher |
 | `install <project> --profile P` | the mechanical part of `/claw install`: files with placeholders, skeleton, settings, manifest |
 | `down <project>` | a new version into a project, kernel regions included; card front matter follows the record |
 | `repair` · `uninstall <project>` | put back what is missing · remove the framework, archiving what was adapted |
 | `report <folders>` | versions and findings across many repositories |
-| `source [path]` · `skills list\|add\|remove` | validate a source · connected skill packages |
+| `skills list\|add\|remove` | connected skill packages |
 
 ## How it is built
 
@@ -98,10 +89,8 @@ every agent, the method lives inside a delimited region:
 ```
 
 It is not locked: you can modify it. The hash stops matching and
-`claw doctor` tells you, so a change to the method becomes **visible**
-instead of buried. From there `/claw share` carries it up into the source —
-and that is the direction whose absence makes the method diverge between
-projects.
+`doctor` tells you, so a change to the method becomes **visible**
+instead of buried.
 
 Agents' front matter stays **outside** the region: changing `model:` is
 configuration, not drift.
@@ -117,10 +106,10 @@ sits **only** in the last section: a test checks it.
 
 - **The method is not customised per project.** You fill in the context (the
   `[TO FILL IN]` blocks), you do not rewrite the method. If a change to the
-  method is right, it is right for everyone: it goes up into the source with
-  `/claw share`.
+  method is right, it is right for everyone: it is made in the framework's
+  repository.
 - **Only the active is installed.** An agent not chosen is not deleted, it is
-  not yet installed: the master stays here and `/claw add` takes it up to
+  not yet installed: it stays in the source and `/claw add` takes it up to
   date.
 - **Non-universal content → `shared/`**, behind a pointer. `CLAUDE.md` is paid
   at every agent spawn: it is the most expensive file in the system.

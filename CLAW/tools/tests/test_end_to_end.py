@@ -403,26 +403,6 @@ class TestRealFramework(unittest.TestCase):
         routed = set(re.findall(r"`(actions/[a-z-]+\.md)`", text))
         self.assertEqual(routed, {f"actions/{p.name}" for p in (base / "actions").glob("*.md")})
 
-    def test_promoting_from_a_stale_project_is_forbidden(self):
-        """Two projects on the same source promote in turn. Whoever promotes
-        from an installation left behind has a region that differs from the
-        source for two reasons: their own change and the one the other has
-        already promoted. Step 1 compares two trees and does not tell them
-        apart, so without the precondition the second one vanishes with no
-        finding.
-
-        Drift covers only what has a kernel region: a new guide in `shared/`
-        has none, and without the line that names it, it stays invisible to the
-        most common case of all, the addition."""
-        text = (FRAMEWORK / "skills" / "claw" / "actions" / "share.md").read_text(
-            encoding="utf-8"
-        )
-        block = text
-        self.assertIn("aligned", block)
-        self.assertIn("`.claude/claw.json`", block)
-        self.assertIn("one thing at a time", block)
-        self.assertIn("does not see new files", block)
-
     def test_state_templates_present(self):
         for name in ("TODO.md", "status.md", "roadmap.md"):
             self.assertTrue((FRAMEWORK / "templates" / name).is_file(), name)

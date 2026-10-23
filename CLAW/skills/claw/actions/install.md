@@ -6,17 +6,9 @@ You are the coordinator: you read a project, ask questions, decide a roster, fil
 
 ---
 
-## Step 0 — Validate the source
+## Step 0 — The source
 
-`<FW>` is the source: `claw.py setup` writes its path into this skill. Where it is still literal (a skill copied by hand), it is `~/.claude/CLAW/CLAW`, the master `claw setup` makes.
-
-```bash
-python "<FW>/claw.py" source "<FW>"
-```
-
-**Exit 1 → stop:** no folders, no files — a wrong source discovered halfway leaves a project worse than a virgin one. Ask the user where the framework is. **Found but incomplete is an error, not a reason to try the next one.**
-
-`<PRJ>` is the project root. Replace both with real paths.
+`<FW>` is the plugin's folder, complete by construction: there is nothing to validate. `<PRJ>` is the project root. Replace both with real paths.
 
 ## Step 1 — Detect the kind of installation
 

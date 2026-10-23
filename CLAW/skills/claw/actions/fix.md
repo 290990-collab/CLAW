@@ -23,7 +23,7 @@ A `[TO FILL IN — …]` block left unfilled: the agent reading it receives inst
 
 An agent is in the routing table of `.claude/shared/orchestration.md` (or of `CLAUDE.md`, if that guide is absent) but the file does not exist in `.claude/agents/`: the coordinator will delegate to something that is not there.
 
-**What to do:** install the agent (`/claw add <name>`, which takes the current version from the master) or remove the row from the table.
+**What to do:** install the agent (`/claw add <name>`, which takes the current version from the source) or remove the row from the table.
 
 ### `ROSTER_ORPHAN` — WARNING
 
@@ -65,7 +65,7 @@ A guide installed in `.claude/shared/` that no file cites: context carried aroun
 
 The kernel region's markers have disappeared from a file that has one by construction — `CLAUDE.md`, `orchestration.md`, an agent. **More serious than drift:** without markers the check disappears, and a method rewritten by hand becomes indistinguishable from the generated one. It does not trigger if **no** tracked file has markers: that is the installation without tracking, and it is a choice.
 
-**What to do:** reassemble with `/claw update`, after comparing the current content with the source — inside there may be a change worth promoting.
+**What to do:** reassemble with `/claw update`, after comparing the current content with the source — inside there may be a change worth carrying to the framework's repository.
 
 ### `KERNEL_DRIFT` — WARNING, and it is not an error
 
@@ -73,9 +73,9 @@ The kernel region was modified by hand. **This is information, not a fault:** th
 
 **Ask the user, one single question:**
 
-> "You modified the method in `<file>`. Is it an improvement that holds for all projects — so I promote it into the source — or is it a derogation specific to this project?"
+> "You modified the method in `<file>`. Is it an improvement that holds for all projects — so it goes into the framework's own repository by hand — or is it a derogation specific to this project?"
 
-- **Improvement** → `/claw share`: it goes up into the source, increments the version, the next project is born with it inside.
+- **Improvement** → tell the user it must be made in the framework's repository: the next update overwrites it here.
 - **Local derogation** → it is noted in the project, so the next person to read the finding knows it is deliberate.
 
 Never "correct" a drift by overwriting it before having asked that question: you would throw away a change someone had a reason to make.
@@ -84,7 +84,7 @@ Never "correct" a drift by overwriting it before having asked that question: you
 
 The kernel regions do not all declare the same version, or the project is on a different version from the source. **No other finding sees it:** on an old method the hash matches, because it matches the old one. It is the fork between projects, the defect the framework exists to avoid.
 
-**What to do:** `/claw update` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `/claw add`, which takes the current master: it is closed with the same `/claw update`.
+**What to do:** `/claw update` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `/claw add`, which takes the current source: it is closed with the same `/claw update`.
 
 ### `SETTINGS_MISSING` — WARNING
 
@@ -185,7 +185,7 @@ The key is the code, or `code:fragment` to limit it to one file. The value is th
 
 **Errors cannot be accepted.** A warning is a judgement, and on a judgement a project may be right against the default; an error is an installation that does not work, and an unfilled placeholder stays unfilled even if somebody writes that it is fine.
 
-Before adding a row here, the question is the drift one: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is `/claw share`, not `accepted`.
+Before adding a row here, the question is the drift one: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is a change in the framework's repository, not `accepted`.
 
 ## Several projects at once
 

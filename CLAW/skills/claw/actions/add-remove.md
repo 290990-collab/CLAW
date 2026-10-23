@@ -1,6 +1,6 @@
 # `/claw add <agent|guide>` · `/claw remove <agent|guide>`
 
-**Activating** copies the agent from the master at its **current version**, fills in its `## Project context` block and adds the row to the routing table in `.claude/shared/orchestration.md` — never in `CLAUDE.md`: routing is coordinator content.
+**Activating** copies the agent from the source at its **current version**, fills in its `## Project context` block and adds the row to the routing table in `.claude/shared/orchestration.md` — never in `CLAUDE.md`: routing is coordinator content.
 
 Mandatory shape of the row, because the doctor reads it:
 
@@ -12,7 +12,7 @@ The name goes in backticks in the **second** column. Anywhere else, that agent s
 
 Activating later is *better* than a dormant file: you always take the latest version, not one frozen at installation day.
 
-**Deactivating** removes the file from `.claude/agents/` and the row from the routing. **The master is not touched.** If the project block held information that cannot be reconstructed, save it first.
+**Deactivating** removes the file from `.claude/agents/` and the row from the routing. **The source is not touched.** If the project block held information that cannot be reconstructed, save it first.
 
 **A guide** is named by its path under `shared/` (`domain/llm-guide.md`). Activating it: copy it into `.claude/shared/`, fill in the project block, add its line in `CLAUDE.md § Shared guides` — without it, it is `SHARED_ORPHAN`. Deactivating it: file and line go. A guide that an installed file still cites is not deactivated: the pointer would stay dead (`SHARED_MISSING`).
 
