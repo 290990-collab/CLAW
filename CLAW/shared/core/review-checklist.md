@@ -18,7 +18,7 @@ Whoever holds the whole picture — the coordinator — discards these with a wr
 
 ---
 
-## Generic block — correctness (valid everywhere)
+## Correctness
 
 ### Scope
 
@@ -70,5 +70,3 @@ Whoever holds the whole picture — the coordinator — discards these with a wr
 
 - Build run, not deduced. Tests run, not deduced. Real output in hand.
 - What was not verified is declared as such, with the steps to do it.
-
----

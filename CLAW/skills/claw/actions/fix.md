@@ -71,7 +71,7 @@ The kernel regions do not all declare the same version, or the project is on a d
 
 ### `STATE_MISSING` — ERROR
 
-One of `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md` is missing.
+One of `docs/TODO.md`, `docs/status.md`, `docs/roadmap.md` is missing — or `CLAUDE.md` itself: the project is not installed, `/claw install`.
 
 **What to do:** copy the missing template from `<FW>/templates/`. Without level 1, every session restarts by guessing. `update` creates a missing one too.
 
@@ -115,7 +115,7 @@ At the version that wrote the installation, a generated file differs from what t
 
 The project sections of `CLAUDE.md` have exceeded the kernel region in words. The ceiling that breaks the build sits on the **source** and constrains only the method; every subagent pays the whole assembled `CLAUDE.md` at **every spawn**, and the part the installation writes has no other threshold and is the only one that grows with the project.
 
-The threshold is the kernel itself, the only known quantity: *the project does not write more than the method*. It is a judgement call, not a measure of effectiveness. Below the ceiling the framework sets itself for the method alone the finding stays silent: on a small file the ratio is true and irrelevant.
+Threshold: the kernel's own size — *the project does not write more than the method*; a judgement, silent while the file is under the method's own ceiling.
 
 **What to do:** do not cut at random. Move into `.claude/shared/` what only a few agents need, leaving the pointer; remove what the repository already says by itself (structure that can be derived, commands already in a `Makefile` or `package.json`); keep in `CLAUDE.md` only what an agent cannot deduce — hard constraints, contracts with their consumers, the critical surface. If after the cut the file stays over the threshold because the project is large, it is a warning to accept knowingly.
 

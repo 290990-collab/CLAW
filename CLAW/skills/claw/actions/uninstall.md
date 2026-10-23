@@ -11,4 +11,4 @@ Each framework file is compared with what the plugin generates from `claw.json` 
 | `.claude/user-rules.md`, `docs/` | stay |
 | `.claude/claw.json` | archived last |
 
-`uninstall "<PRJ>"`, ok, `--apply`: a file changed after the plan stops everything, before the first byte is written.
+`python "<FW>/claw.py" uninstall "<PRJ>"`, ok, `--apply`: a file changed after the plan stops everything, before the first byte is written.

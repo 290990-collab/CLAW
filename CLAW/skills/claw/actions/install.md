@@ -82,11 +82,12 @@ It writes `CLAUDE.md` (kernel region on top; the existing text stays below as th
 
 ## Step 4 — The project part
 
-`CLAUDE.md` has the kernel only unless the project had its own text. Then write, **outside the markers**, from the reconnaissance, in the most compressed form (every spawn pays these words):
+Write, **outside the markers** and below any text the project already had, from the reconnaissance, in the most compressed form (every spawn pays these words):
 
 - `## The project` — one line · path → role · HARD constraints (breaking them invalidates the work, not only the code) · contracts, with their consumers.
 - `## Commands` — build, test, start, the agent's quick check, heavy operations the user launches; from the configuration files, undeclared ones left out.
 - `## Critical surface` — what makes the work wrong with perfect code, and who reviews it; profile and question 2 coincide → one line.
+- `## Current state` — the project's picture in a few lines (level 3 of the state); nothing built yet → one line.
 - Question 4's yes's, as standing approvals.
 
 Show the text, write it after the user's ok (Edit, between the kernel region and the user-rules region). Never ask for or invent what the repo and the user did not say.
