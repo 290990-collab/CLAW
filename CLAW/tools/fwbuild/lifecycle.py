@@ -261,23 +261,6 @@ def apply_install(
     return conflicts, to_fill
 
 
-def _situation(card: str) -> str:
-    """The roster's Situation for a card: its description up to the first colon or full stop."""
-    block = _fields(card).get("description", "description:")
-    text = " ".join(
-        line.strip() for line in block.split(":", 1)[1].splitlines() if line.strip() not in ("", ">")
-    )
-    return re.split(r"(?<=[.:])\s", text)[0].rstrip(".:")
-
-
-def _guide_line(text: str) -> str:
-    """A guide's line in `CLAUDE.md § Shared guides`: the first sentence under its title."""
-    line = next(
-        (s.strip() for s in text.splitlines()[1:] if s.strip() and not s.startswith("#")), ""
-    )
-    return re.split(r"(?<=\.)\s", line)[0]
-
-
 def render(ops: Sequence[Operation]) -> str:
     """The plan to show: first what changes or removes something, by name, then
     the counts. A hundred "create" lines above one "overwrite" hide it."""
@@ -792,30 +775,13 @@ def _kernel_files(prj: Path) -> list[str]:
     return out + [p.relative_to(prj).as_posix() for p in agents if p.suffix == ".md"]
 
 
-FIELD_RE = re.compile(r"[A-Za-z][\w-]*(?=:)")
 ROSTER_ROW_RE = re.compile(r"^(\|[^|\n]*\|\s*)`([a-z-]+)`\s*\|([^|\n]*)\|", re.MULTILINE)
 
-
-def _fields(text: str) -> dict[str, str]:
-    """A card's front matter: top-level key → its normalised lines, continuation
-    lines included."""
-    lines = text.replace("\r\n", "\n").split("\n")
-    if not lines or lines[0].strip() != "---":
-        raise ValueError("card without front matter")
-    out: dict[str, str] = {}
-    key = None
-    for line in lines[1:]:
-        if line.strip() == "---":
-            return {k: kernel.normalize(v) for k, v in out.items()}
-        m = FIELD_RE.match(line)
-        if m:
-            key = m.group(0)
-            out[key] = line + "\n"
-        elif key is not None:
-            out[key] += line + "\n"
-        elif line.strip():
-            raise ValueError(f"front matter line outside any key: {line!r}")
-    raise ValueError("front matter not closed")
+# Defined in `assemble`, which generates with them; the planners here use the same ones.
+_fields = assemble.fields
+_situation = assemble.situation
+_guide_line = assemble.guide_line
+_model_cell = assemble.model_cell
 
 
 def field_record(card: str) -> dict[str, str]:
@@ -856,14 +822,6 @@ def _frontmatter_merge(
         if chosen:
             blocks.append(chosen)
     return "---\n" + "".join(blocks) + "---\n", taken, kept
-
-
-def _model_cell(card: str) -> str:
-    """The roster's Model cell for a card: `model effort`."""
-    f = _fields(card)
-    return " ".join(
-        f[k].split(":", 1)[1].strip() for k in ("model", "effort") if k in f
-    )
 
 
 def _roster_cells(sections: str, cells: dict[str, str]) -> str:

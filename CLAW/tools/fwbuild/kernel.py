@@ -69,3 +69,30 @@ def verify(text: str) -> str:
     if region is None:
         return "MISSING"
     return "OK" if digest(region.body) == region.declared else "DRIFT"
+
+
+
+USER_RULES_OPEN = "<!-- CLAW:USER-RULES -->"
+USER_RULES_CLOSE = "<!-- /CLAW:USER-RULES -->"
+
+
+def wrap_user_rules(body: str) -> str:
+    """The user-rules region: the marker pair around `body`, nothing else."""
+    return f"{USER_RULES_OPEN}\n{normalize(body)}{USER_RULES_CLOSE}\n"
+
+
+def strip_user_rules(text: str) -> tuple[str, str | None]:
+    """`text` without its user-rules region, and the region body (None if absent).
+
+    What was around the region is left as it was, so a file regenerated from
+    this keeps its project part byte for byte.
+    """
+    start = text.find(USER_RULES_OPEN)
+    if start == -1:
+        return text, None
+    close = text.find(USER_RULES_CLOSE, start)
+    if close == -1:
+        raise ValueError("user-rules region opened and never closed")
+    end = close + len(USER_RULES_CLOSE)
+    body = text[start + len(USER_RULES_OPEN) : close]
+    return text[:start] + text[end:].removeprefix("\n"), normalize(body)

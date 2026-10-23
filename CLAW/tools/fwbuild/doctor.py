@@ -63,7 +63,7 @@ PERSONAL_PATH_RE = re.compile(
     r"(?![A-Za-z0-9._-]))"
     r"[A-Za-z][A-Za-z0-9._-]*"
 )
-STATE_FILES = ("TODO.md", "status.md", "roadmap.md")
+STATE_FILES = assemble.STATE_FILES
 ORCHESTRATION = "shared/orchestration.md"
 # Where the uninstall moves what the project had adapted, keeping the relative
 # path.
