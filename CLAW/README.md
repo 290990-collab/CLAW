@@ -86,7 +86,7 @@ every framework file from it, from the plugin and from `.claude/user-rules.md`. 
 `CLAUDE.md` and in every agent, the method lives inside a marked region:
 
 ```html
-<!-- FRAMEWORK:KERNEL v2.7.0 — generated — edit .claude/user-rules.md instead -->
+<!-- FRAMEWORK:KERNEL v3.0.0 — generated — edit .claude/user-rules.md instead -->
 …
 <!-- /FRAMEWORK:KERNEL -->
 ```

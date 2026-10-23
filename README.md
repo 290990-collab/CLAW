@@ -23,7 +23,7 @@ One command gives Claude Code a method to think by and a crew of agents to build
 </tr>
 </table>
 
-[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
+[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [What's inside](#whats-inside) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
 
 </div>
 
@@ -39,11 +39,6 @@ a cheaper model could read.
 Claude Code ships agents, hooks and skills, and no method for using them. CLAW is the
 method: the same rules and the same crew in every project, kept current from one source.
 Built for long tasks and large repos, where those habits cost the most.
-
-> [!NOTE]
-> CLAW does not run on its own. It installs files into your project (`CLAUDE.md`,
-> `.claude/agents/`, `.claude/shared/`, hooks, state files) that Claude Code reads
-> in every session.
 
 <br>
 
@@ -62,19 +57,6 @@ Built for long tasks and large repos, where those habits cost the most.
 
 <br>
 
-## What's inside
-
-| | What it means for you |
-|---|---|
-| **Evidence first** | Claude cites only what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
-| **Small, safe changes** | No unrequested refactoring, tests never weakened to go green. Commits, installs and anything irreversible wait for your ok |
-| **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
-| **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
-| **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
-| **One plugin, many projects** | Update CLAW once, then bring each project up to date. Your own rules stay |
-
-<br>
-
 ## Getting started
 
 ### Prerequisites
@@ -82,7 +64,7 @@ Built for long tasks and large repos, where those habits cost the most.
 | You need | Why |
 |---|---|
 | [Claude Code](https://code.claude.com) | CLAW is a method for it |
-| Python 3.11 or later | The installer and the hooks. Standard library only, nothing to install |
+| Python 3.11 or later | The installer and the hooks. Standard library only: no packages, no service, no account |
 
 ### Install
 
@@ -105,6 +87,11 @@ Then, in each project, open Claude Code in the project folder and run:
 
 It asks five questions, shows every file it will write and waits for your ok.
 
+> [!NOTE]
+> CLAW does not run on its own. It installs files into your project (`CLAUDE.md`,
+> `.claude/agents/`, `.claude/shared/`, hooks, state files) that Claude Code reads
+> in every session.
+
 <br>
 
 ## Proof
@@ -116,6 +103,19 @@ It asks five questions, shows every file it will write and waits for your ok.
 
 Measured with `claude -p` on Claude Code 2.1.294 to 2.1.301, Opus 5.5 as coordinator, on
 a codebase built for the eval and smaller than most production code.
+
+<br>
+
+## What's inside
+
+| | What it means for you |
+|---|---|
+| **Evidence first** | Claude cites only what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
+| **Small, safe changes** | No unrequested refactoring, tests never weakened to go green. Commits, installs and anything irreversible wait for your ok |
+| **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
+| **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
+| **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
+| **One plugin, many projects** | Update CLAW once, then bring each project up to date. Your own rules stay |
 
 <br>
 
@@ -302,7 +302,7 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 
 ```json
 {
-  "version": "2.7.0",
+  "version": "3.0.0",
   "profile": "software",
   "orchestration": "orchestrator-worker",
   "agents": ["explorer", "architect", "implementer", "tester", "refactorer", "final-reviewer"],
@@ -331,9 +331,6 @@ less. CLAW is built for the long task, where one unchecked guess costs hours.
 
 **Will it commit, push or install anything on its own?**
 Never. Commits, pushes, installs and anything irreversible wait for your ok, on a preview.
-
-**What does it need?**
-Python 3.11. No packages, no service, no account.
 
 **I changed a rule for my project. Will an update overwrite it?**
 No. Your rules in `.claude/user-rules.md` stay. A framework file edited by hand is regenerated, and `/claw update` names it first so you can move the edit into a rule.
