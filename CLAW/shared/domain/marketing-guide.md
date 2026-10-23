@@ -1,6 +1,16 @@
 # Guide to marketing a product
 
-For projects that must be found, not only work.
+For projects that must be found, not only work. The agents prepare; the user publishes and spends.
+
+## Where an agent's first draft goes wrong
+
+Check these before delivering: they are the defaults of a language model, and they fail here.
+
+- **Invented material:** an audience quote, a statistic, a market number, a competitor's feature, a "studies show" — with no source and date read in this session. Missing → written as missing, never a plausible stand-in.
+- **The category instead of the person:** "developers", "small businesses", "teams" — rewritten as a person in a situation (§ Positioning).
+- **Copy that sounds generated:** filler the reader has seen a thousand times ("unlock", "seamless", "game-changer"), adjectives in threes, a question to open and a recap to close. Readers who recognise generated copy trust the brand less (Klaviyo, 8,000 consumers, Dec 2025: 31% less, 7% more).
+- **One text for every channel** (§ Channel and cadence).
+- **A result nobody measured:** reach, sign-ups and replies the agent cannot see are a prediction with a waiting line, never an outcome.
 
 ## Positioning
 
@@ -43,6 +53,15 @@ For projects that must be found, not only work.
 - **The announcement weighs as much as the change:** a big novelty gets a release across several channels, a small one a line in the release notes. Announcing everything with the same weight uses up the attention that what matters needs.
 - **Regularity before volume:** a cadence sustainable for months is worth more than one intense week followed by silence.
 - **One piece, one goal:** make known, make try, bring back. A piece chasing all three gets none.
+- **Technical communities** (Show HN, forums, subreddits): the repository or a working demo is the page, with no sign-up wall; the title carries a concrete result; the author's first comment says what it does, how, and what is still rough; replies come within the hour. Practitioners' advice, not measured.
+
+## Found by search and by AI answers
+
+- **AI answers mostly cite what search already ranks:** Google's AI Overviews link mainly to top-10 organic results, ChatGPT's searches overlap Bing's top results (secondary analyses, 2026). Search basics come first: one page per question the audience asks, a title and description that promise the benefit.
+- **Each engine reads different places:** few domains are cited by both ChatGPT and Perplexity, and Perplexity leans on community threads. Being where the audience already discusses the problem counts as much as the own page.
+- **The citable sentence stands alone:** one fact, its number, its source, readable without the paragraph around it. That is what an answer quotes.
+- **Dated and current:** a page shows when it was last updated; a stale number costs more than a missing one.
+- **Measured by asking:** the audience's real questions, put to the engines before and after, with who gets cited. A tool's visibility score is an estimate, not this measurement.
 
 ## Measurement
 
@@ -55,5 +74,5 @@ For projects that must be found, not only work.
 ## What is not done
 
 - **No claim the product does not keep,** not even for a better title: the cost is paid once and is not recovered.
-- **No invented third-party data:** market numbers, quotes and comparisons carry the source with its date, or they stay out.
+- **No bought or seeded proof:** stars, votes, reviews and testimonials are earned. Platforms detect the seeding, and the penalty outlasts the launch.
 - **Nothing nobody has read gets published:** it is irreversible, and the user decides it.
