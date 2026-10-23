@@ -67,10 +67,10 @@ class TestResolve(unittest.TestCase):
 
     def test_error_names_what_is_missing(self):
         with tempfile.TemporaryDirectory() as d:
-            root = make_root(Path(d) / "maimed", drop="agents")
+            root = make_root(Path(d) / "maimed", drop=source.CARDS_DIR)
             with self.assertRaises(LookupError) as e:
                 source.resolve([root])
-            self.assertIn("agents", str(e.exception))
+            self.assertIn(source.CARDS_DIR, str(e.exception))
 
 
 class TestManifest(unittest.TestCase):

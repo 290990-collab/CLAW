@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from . import kernel
+from .source import CARDS_DIR
 
 METHOD_HEADING = "## Method"
 DOMAIN_HEADING = "## Project context"
@@ -23,7 +24,7 @@ COORDINATOR_WORD_BUDGET = 3800
 # The orchestration of whoever does not choose one.
 DEFAULT_ORCHESTRATION = "orchestrator-worker"
 
-# The frontmatter keys generated from `agents/agents.toml`; name and description stay in the card.
+# The frontmatter keys generated from `cards/agents.toml`; name and description stay in the card.
 CARD_KEYS = ("model", "effort", "maxTurns", "tools", "color")
 REQUIRED_CARD_KEYS = ("model", "effort", "tools", "color")
 
@@ -179,12 +180,12 @@ def split_source(text: str) -> tuple[str, str, str]:
 
 
 def agent_rows(framework_root: Path) -> dict[str, dict[str, str | int]]:
-    """The calibration row of each agent, from `agents/agents.toml`.
+    """The calibration row of each agent, from `cards/agents.toml`.
 
     Rows and cards must match one to one: a row without a card, or a card
     without a row, would leave an agent calibrated by nobody.
     """
-    text = (framework_root / "agents" / "agents.toml").read_text(encoding="utf-8")
+    text = (framework_root / CARDS_DIR / "agents.toml").read_text(encoding="utf-8")
     rows = tomllib.loads(text)
     for name, row in rows.items():
         for key, value in row.items():
@@ -195,13 +196,13 @@ def agent_rows(framework_root: Path) -> dict[str, dict[str, str | int]]:
         for key in REQUIRED_CARD_KEYS:
             if key not in row:
                 raise ValueError(f"agents.toml [{name}]: missing {key}")
-    cards = {p.stem for p in (framework_root / "agents").glob("*.md")}
+    cards = {p.stem for p in (framework_root / CARDS_DIR).glob("*.md")}
     for name in rows:
         if name not in cards:
-            raise ValueError(f"agents.toml [{name}]: no agents/{name}.md")
+            raise ValueError(f"agents.toml [{name}]: no cards/{name}.md")
     orphans = sorted(cards - set(rows))
     if orphans:
-        raise ValueError(f"agents/{orphans[0]}.md has no row in agents.toml")
+        raise ValueError(f"cards/{orphans[0]}.md has no row in agents.toml")
     return rows
 
 

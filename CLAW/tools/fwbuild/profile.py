@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .source import CARDS_DIR
+
 ALWAYS = [
     "explorer",
     "architect",
@@ -87,7 +89,7 @@ def required_guides(framework_root: Path, agents: Sequence[str]) -> list[str]:
     """
     out: list[str] = []
     for name in agents:
-        src = framework_root / "agents" / f"{name}.md"
+        src = framework_root / CARDS_DIR / f"{name}.md"
         if not src.is_file():
             continue
         for ref in GUIDE_REF.findall(src.read_text(encoding="utf-8")):

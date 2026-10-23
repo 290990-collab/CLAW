@@ -1,0 +1,11 @@
+{
+  "name": "claw",
+  "owner": { "name": "290990-collab" },
+  "plugins": [
+    {
+      "name": "claw",
+      "source": "./CLAW",
+      "description": "Working method, agent roster and installer for Claude Code projects: a kernel of rules, specialised subagents and state files, installed with /claw."
+    }
+  ]
+}

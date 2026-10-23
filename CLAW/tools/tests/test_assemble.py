@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fwbuild import assemble, kernel
+from fwbuild import assemble, kernel, source
 
 FRONTMATTER = "---\nname: implementer\nmodel: opus\neffort: high\n---\n"
 
@@ -150,10 +150,10 @@ class TestAgentRows(unittest.TestCase):
 
     def _root(self, d, toml, cards=("a", "b")):
         root = Path(d)
-        (root / "agents").mkdir()
-        (root / "agents" / "agents.toml").write_text(toml, encoding="utf-8")
+        (root / source.CARDS_DIR).mkdir()
+        (root / source.CARDS_DIR / "agents.toml").write_text(toml, encoding="utf-8")
         for name in cards:
-            (root / "agents" / f"{name}.md").write_text(SOURCE, encoding="utf-8")
+            (root / source.CARDS_DIR / f"{name}.md").write_text(SOURCE, encoding="utf-8")
         return root
 
     def test_valid_rows_are_returned_with_int_maxturns(self):

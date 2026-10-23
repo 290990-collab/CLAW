@@ -19,13 +19,13 @@ class TestRealFramework(unittest.TestCase):
         self.assertTrue((FRAMEWORK / "VERSION").is_file())
 
     def test_all_twenty_nine_agents_present(self):
-        self.assertEqual(len(list((FRAMEWORK / "agents").glob("*.md"))), 32)
+        self.assertEqual(len(list((FRAMEWORK / source.CARDS_DIR).glob("*.md"))), 32)
 
     def test_cards_match_agents_toml(self):
-        """The calibration lives in `agents/agents.toml`: a value changed in a card
+        """The calibration lives in `cards/agents.toml`: a value changed in a card
         alone is a value the next sync silently undoes."""
         rows = assemble.agent_rows(FRAMEWORK)
-        for path in sorted((FRAMEWORK / "agents").glob("*.md")):
+        for path in sorted((FRAMEWORK / source.CARDS_DIR).glob("*.md")):
             text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
             self.assertEqual(
                 assemble.render_card(text, rows[path.stem]), text,
@@ -33,12 +33,12 @@ class TestRealFramework(unittest.TestCase):
             )
 
     def test_no_agent_declares_fable(self):
-        for p in (FRAMEWORK / "agents").glob("*.md"):
+        for p in (FRAMEWORK / source.CARDS_DIR).glob("*.md"):
             self.assertNotIn("model: fable", p.read_text(encoding="utf-8"), p.name)
 
     def test_effort_policy(self):
         """Never `max`; `xhigh` only on `opus`."""
-        for p in (FRAMEWORK / "agents").glob("*.md"):
+        for p in (FRAMEWORK / source.CARDS_DIR).glob("*.md"):
             text = p.read_text(encoding="utf-8")
             self.assertNotIn("effort: max", text, p.name)
             if "effort: xhigh" in text:
@@ -49,7 +49,7 @@ class TestRealFramework(unittest.TestCase):
         recognise does not fail, it is ignored, which is how it stays wrong
         forever."""
         valid = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"}
-        for path in sorted((FRAMEWORK / "agents").glob("*.md")):
+        for path in sorted((FRAMEWORK / source.CARDS_DIR).glob("*.md")):
             for line in path.read_text(encoding="utf-8").splitlines():
                 if line.startswith("color:"):
                     self.assertIn(line.split(":", 1)[1].strip(), valid, path.name)
@@ -66,13 +66,13 @@ class TestRealFramework(unittest.TestCase):
             "scientific-reviewer",
             "claim-reviewer",
         ):
-            text = (FRAMEWORK / "agents" / f"{name}.md").read_text(encoding="utf-8")
+            text = (FRAMEWORK / source.CARDS_DIR / f"{name}.md").read_text(encoding="utf-8")
             self.assertIn("tools: Read, Grep, Glob\n", text, name)
 
     def test_runner_cannot_edit(self):
         """`runner` runs commands and never changes anything: Bash without
         Write or Edit is the card's configuration of that promise."""
-        text = (FRAMEWORK / "agents" / "runner.md").read_text(encoding="utf-8")
+        text = (FRAMEWORK / source.CARDS_DIR / "runner.md").read_text(encoding="utf-8")
         self.assertIn("tools: Read, Grep, Glob, Bash\n", text)
 
     def test_every_profile_denies_the_same_secrets(self):
@@ -108,7 +108,7 @@ class TestRealFramework(unittest.TestCase):
 
     def test_every_agent_splits_and_assembles(self):
         version = (FRAMEWORK / "VERSION").read_text(encoding="utf-8").strip()
-        for p in sorted((FRAMEWORK / "agents").glob("*.md")):
+        for p in sorted((FRAMEWORK / source.CARDS_DIR).glob("*.md")):
             fm, method, domain = assemble.split_source(p.read_text(encoding="utf-8"))
             built = assemble.build_agent(fm, method, domain, version)
             self.assertEqual(kernel.verify(built), "OK", p.name)
@@ -198,7 +198,7 @@ class TestRealFramework(unittest.TestCase):
             self.assertIn("The project", out, d)
 
     def test_every_profile_resolves_to_existing_agents(self):
-        available = {p.stem for p in (FRAMEWORK / "agents").glob("*.md")}
+        available = {p.stem for p in (FRAMEWORK / source.CARDS_DIR).glob("*.md")}
         for path in (FRAMEWORK / "profiles").glob("*.toml"):
             prof = profile.load(path)
             names = profile.roster(prof, [], [])
@@ -309,7 +309,7 @@ class TestRealFramework(unittest.TestCase):
         a rewrite, with nothing seeing it."""
         for a, b in profile.EXCLUSIVE:
             for one, other in ((a, b), (b, a)):
-                text = (FRAMEWORK / "agents" / f"{one}.md").read_text(encoding="utf-8")
+                text = (FRAMEWORK / source.CARDS_DIR / f"{one}.md").read_text(encoding="utf-8")
                 self.assertIn(f"`{other}`", text, f"{one} does not name {other}")
                 flat = " ".join(text.split())
                 self.assertIn("never both", flat, one)
@@ -330,11 +330,11 @@ class TestRealFramework(unittest.TestCase):
         reviewers = re.findall(r"^\|[^|]*\|\s*`([^`]+)`\s*\|$", block, re.MULTILINE)
         self.assertGreaterEqual(len(reviewers), 3, "reviewer table not read")
         for name in reviewers:
-            self.assertTrue((FRAMEWORK / "agents" / f"{name}.md").is_file(), name)
+            self.assertTrue((FRAMEWORK / source.CARDS_DIR / f"{name}.md").is_file(), name)
 
     def test_coordinator_routes_only_to_agents_that_exist(self):
         """The coordinator's guide names agents in backticks: a rename in
-        `agents/` leaves the sentence that cites the old name standing, and the
+        `cards/` leaves the sentence that cites the old name standing, and the
         coordinator delegates to a file that is not there."""
         text = "".join(
             assemble.read_method(FRAMEWORK / d)
@@ -343,7 +343,7 @@ class TestRealFramework(unittest.TestCase):
         named = set(re.findall(r"`([a-z][a-z-]*)`", text))
         self.assertGreaterEqual(len(named), 10, "agent names not read")
         for name in sorted(named):
-            self.assertTrue((FRAMEWORK / "agents" / f"{name}.md").is_file(), name)
+            self.assertTrue((FRAMEWORK / source.CARDS_DIR / f"{name}.md").is_file(), name)
 
     def test_the_install_skill_protects_material_that_was_already_there(self):
         """Installation is the only step that can delete someone else's work:
@@ -377,7 +377,7 @@ class TestRealFramework(unittest.TestCase):
         mandate of whoever verifies last. If the placeholder stops asking for
         them, whoever installs does not write them and the surface
         disappears."""
-        text = (FRAMEWORK / "agents" / "final-reviewer.md").read_text(encoding="utf-8")
+        text = (FRAMEWORK / source.CARDS_DIR / "final-reviewer.md").read_text(encoding="utf-8")
         _, _, domain = assemble.split_source(text)
         self.assertIn("critical surface", domain)
 
@@ -435,7 +435,7 @@ class TestRealFramework(unittest.TestCase):
 
         `keep-coding-instructions` matters too: without it a custom style
         **drops** the built-in software engineering instructions."""
-        text = (FRAMEWORK / "output-styles" / "reporting.md").read_text(
+        text = (FRAMEWORK / source.STYLES_DIR / "reporting.md").read_text(
             encoding="utf-8"
         )
         name = re.search(r"^name:\s*(.+)$", text, re.MULTILINE).group(1).strip()
@@ -458,7 +458,7 @@ class TestRealFramework(unittest.TestCase):
             rel = ".claude/output-styles/reporting.md"
             self.assertEqual(doctor.check(root), [])
             (root / rel).write_text(
-                (FRAMEWORK / "output-styles" / "reporting.md").read_text(
+                (FRAMEWORK / source.STYLES_DIR / "reporting.md").read_text(
                     encoding="utf-8"
                 ),
                 encoding="utf-8",

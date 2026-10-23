@@ -279,7 +279,7 @@ the work cycle; `/claw change` switches it later.
 
 | Feature | How it works | Example |
 |---|---|---|
-| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW/output-styles/reporting.md) | `minimal change here`, `proof level?` |
+| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW/styles/reporting.md) | `minimal change here`, `proof level?` |
 | **Reference codes** | A reply with three or more findings, decisions or options numbers them | `keep D1, drop O2` |
 | **Aliases** | Sent as the whole message, they rework the last reply | see below |
 

@@ -323,7 +323,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
     )
 
     for name in roster:
-        src = (FRAMEWORK / "agents" / f"{name}.md").read_text(encoding="utf-8")
+        src = (FRAMEWORK / source.CARDS_DIR / f"{name}.md").read_text(encoding="utf-8")
         fm, method, domain = assemble.split_source(src)
         domain = fill(domain, DOMAIN[name])
         (out / ".claude" / "agents" / f"{name}.md").write_text(
@@ -393,7 +393,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
 
     # The reply style: `outputStyle` in the settings names it, this file defines
     # it. The project block is filled in at once, like every placeholder.
-    style = (FRAMEWORK / "output-styles" / "reporting.md").read_text(encoding="utf-8")
+    style = (FRAMEWORK / source.STYLES_DIR / "reporting.md").read_text(encoding="utf-8")
     (out / ".claude" / "output-styles" / "reporting.md").write_text(
         fill(style, PROJECT_STYLE), encoding="utf-8"
     )

@@ -18,7 +18,7 @@ The source gives every agent a model and effort meant for any project. Here each
 
 `<PRJ>` is the project root. It needs `<PRJ>/.claude/claw.json`: if missing, the framework is not installed → say so and stop.
 
-`<FW>/agents/` does not exist → stop: without the source value there is nowhere to start from.
+`<FW>/cards/` does not exist → stop: without the source value there is nowhere to start from.
 
 The roster is the list of files in `<PRJ>/.claude/agents/`. The roster table is in `<PRJ>/.claude/shared/orchestration.md` (section `## This project's roster`, columns `| Situation | Agent | Model |`), or in `CLAUDE.md` if that guide is not there.
 
@@ -45,7 +45,7 @@ For each installed agent, one row:
 |---|---|---|
 | `frontend` | sonnet / medium | sonnet / medium |
 
-- **source**: `model` and `effort` of the agent's row in `<FW>/agents/agents.toml`.
+- **source**: `model` and `effort` of the agent's row in `<FW>/cards/agents.toml`.
 - **current**: the same lines in the project's card.
 
 **Always reason from the source, never from the current value.** A second run must give the same result as the first, not move the values again at every round. If current ≠ source, the difference comes from a previous `/claw tune` or from a hand: it is flagged in the plan, not added up.

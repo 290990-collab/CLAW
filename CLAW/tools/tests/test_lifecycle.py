@@ -439,7 +439,7 @@ class TestDown(unittest.TestCase):
             root = install(d)
             rel = ".claude/agents/implementer.md"
             card = root / rel
-            src = (FRAMEWORK / "agents" / "implementer.md").read_text(encoding="utf-8")
+            src = (FRAMEWORK / source.CARDS_DIR / "implementer.md").read_text(encoding="utf-8")
             model = re.search(r"^model:\s*(\S+)", src, re.MULTILINE).group(1)
             other = "opus" if model != "opus" else "sonnet"
             text = card.read_text(encoding="utf-8")
@@ -481,7 +481,7 @@ class TestDown(unittest.TestCase):
             cases = {}
             for rel, src in (
                 (".claude/shared/core/review-checklist.md", "shared/core/review-checklist.md"),
-                (".claude/output-styles/reporting.md", "output-styles/reporting.md"),
+                (".claude/output-styles/reporting.md", f"{source.STYLES_DIR}/reporting.md"),
             ):
                 text = (FRAMEWORK / src).read_text(encoding="utf-8")
                 heading = lifecycle.project_heading(text)
@@ -529,7 +529,7 @@ class TestDown(unittest.TestCase):
         section. A section added after the block would move it, and that guide
         would stop updating in projects without anything failing."""
         paths = sorted((FRAMEWORK / "shared").rglob("*.md")) + sorted(
-            (FRAMEWORK / "output-styles").glob("*.md")
+            (FRAMEWORK / source.STYLES_DIR).glob("*.md")
         )
         for path in paths:
             text = path.read_text(encoding="utf-8")
@@ -619,9 +619,9 @@ class TestApplyDown(unittest.TestCase):
             claude = root / "CLAUDE.md"
             edit(claude, "## Current state\n", "## Current state\n\nmine\n")
 
-            edit(fw / "agents" / "implementer.md", "effort: medium", "effort: low")
-            edit(fw / "agents" / "tester.md", "effort: medium", "effort: low")
-            edit(fw / "agents" / "explorer.md", "model: haiku\n", "model: haiku\nmemory: project\n")
+            edit(fw / source.CARDS_DIR / "implementer.md", "effort: medium", "effort: low")
+            edit(fw / source.CARDS_DIR / "tester.md", "effort: medium", "effort: low")
+            edit(fw / source.CARDS_DIR / "explorer.md", "model: haiku\n", "model: haiku\nmemory: project\n")
             edit(fw / "method" / "20-evidence.md", "Every action starts", "Each action starts")
             (fw / "VERSION").write_text("9.9.9\n", encoding="utf-8")
 
@@ -645,7 +645,7 @@ class TestApplyDown(unittest.TestCase):
             self.assertEqual(manifest["version"], "9.9.9")
             self.assertEqual(
                 manifest["frontmatter"]["implementer"],
-                lifecycle.field_record((fw / "agents" / "implementer.md").read_text(encoding="utf-8")),
+                lifecycle.field_record((fw / source.CARDS_DIR / "implementer.md").read_text(encoding="utf-8")),
             )
             # The doctor measures the version against its own source, not the copy.
             self.assertLessEqual(

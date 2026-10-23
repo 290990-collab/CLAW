@@ -10,13 +10,19 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
+# The source folders Claude Code would load by themselves as plugin components
+# (`agents/`, `output-styles/`) under another name; the project folders
+# `.claude/agents/` and `.claude/output-styles/` keep theirs.
+CARDS_DIR = "cards"
+STYLES_DIR = "styles"
+
 # What the installation cannot even begin without.
 REQUIRED = (
     "VERSION",
     "method",
     "coordinator",
     "orchestrations",
-    "agents",
+    CARDS_DIR,
     "profiles",
     "templates",
     "skills",

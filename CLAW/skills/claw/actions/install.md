@@ -153,7 +153,7 @@ Regulatory constraints and performance requirements belong to **question 2**: th
 
 ## Step 4 — Plan
 
-**Only the active is installed.** An agent not chosen stays in `<FW>/agents/`, *not yet installed*, and arrives later already up to date with ``/claw add``: every file in `.claude/agents/` puts its name and `description` in the coordinator's context at every session.
+**Only the active is installed.** An agent not chosen stays in `<FW>/cards/`, *not yet installed*, and arrives later already up to date with ``/claw add``: every file in `.claude/agents/` puts its name and `description` in the coordinator's context at every session.
 
 **Six cannot be removed** — `explorer`, `architect`, `implementer`, `tester`, `refactorer`, `final-reviewer`: the code cycle; `--drop` ignores them.
 

@@ -433,7 +433,7 @@ def _plan(args) -> tuple[list[lifecycle.Operation], dict]:
         raise ValueError(f"--profile is one of: {', '.join(names)}")
     prof = profile.load(FW / "profiles" / f"{args.profile}.toml")
     roster = profile.roster(prof, _csv(args.agents), _csv(args.drop))
-    unknown = [n for n in roster if not (FW / "agents" / f"{n}.md").is_file()]
+    unknown = [n for n in roster if not (FW / source.CARDS_DIR / f"{n}.md").is_file()]
     if unknown:
         raise ValueError(f"no such agent: {', '.join(unknown)}")
     clash = profile.check_exclusive(roster)

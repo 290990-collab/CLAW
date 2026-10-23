@@ -89,7 +89,7 @@ def targets(
     out |= {f".claude/hooks/{name}.py" for name in hooks}
     out |= {f"docs/{name}" for name in doctor.STATE_FILES}
     out |= {rel for rel, _ in _skill_files(fw)}
-    out |= {f".claude/output-styles/{p.name}" for p in _files(fw / "output-styles")}
+    out |= {f".claude/output-styles/{p.name}" for p in _files(fw / source.STYLES_DIR)}
     return sorted(out)
 
 
@@ -200,7 +200,7 @@ def apply_install(
     _verify(prj, [op for op in ops if op.action != KEEP])
     version = _version(fw)
 
-    cards = {n: (fw / "agents" / f"{n}.md").read_text(encoding="utf-8") for n in roster}
+    cards = {n: (fw / source.CARDS_DIR / f"{n}.md").read_text(encoding="utf-8") for n in roster}
     listed = "\n".join(
         f"- `.claude/shared/{rel}` — {_guide_line((fw / 'shared' / rel).read_text(encoding='utf-8'))}"
         for rel in guides
@@ -226,7 +226,7 @@ def apply_install(
             *assemble.split_source(card), version
         )
     copies = {f".claude/shared/{rel}": fw / "shared" / rel for rel in guides}
-    copies |= {f".claude/output-styles/{p.name}": p for p in _files(fw / "output-styles")}
+    copies |= {f".claude/output-styles/{p.name}": p for p in _files(fw / source.STYLES_DIR)}
     copies |= {f".claude/hooks/{n}.py": _hook_source(fw, n) for n in hooks}
     copies |= dict(_skill_files(fw))
     copies |= {
@@ -338,10 +338,14 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
             else:
                 ops.append(_op(prj, rel, ARCHIVE, "differs from the source: kept"))
 
-    for area in ("agents", "shared", "output-styles"):
+    for area, src_area in (
+        ("agents", source.CARDS_DIR),
+        ("shared", "shared"),
+        ("output-styles", source.STYLES_DIR),
+    ):
         for p in _files(prj / ".claude" / area):
             rel = p.relative_to(prj).as_posix()
-            original = fw / area / p.relative_to(prj / ".claude" / area)
+            original = fw / src_area / p.relative_to(prj / ".claude" / area)
             if rel == ORCHESTRATION or original.is_file():
                 ops.append(_op(prj, rel, ARCHIVE, "adapted to the project: kept"))
             else:
@@ -488,7 +492,7 @@ def plan_down(
     for rel in _kernel_files(prj):
         text = (prj / rel).read_text(encoding="utf-8")
         region = kernel.parse(text)
-        original = fw / "agents" / Path(rel).name
+        original = fw / source.CARDS_DIR / Path(rel).name
         is_agent = rel.startswith(".claude/agents/")
         if is_agent and not original.is_file():
             ops.append(_op(prj, rel, KEEP, "card no longer in the source: stays as it is"))
@@ -586,7 +590,7 @@ def apply_down(
             continue
         name = Path(rel).stem
         text = (prj / rel).read_text(encoding="utf-8")
-        original = (fw / "agents" / f"{name}.md").read_text(encoding="utf-8")
+        original = (fw / source.CARDS_DIR / f"{name}.md").read_text(encoding="utf-8")
         fm, _, _ = _frontmatter_merge(
             text, original, _record(manifest, name), "all" in adopt or name in adopt
         )
@@ -728,10 +732,10 @@ def _adapted_files(prj: Path, fw: Path) -> list[tuple[str, Path]]:
     """Installed guides and styles that come from the source. `orchestration.md`
     lives in `shared/` but has a kernel region: it belongs to the skill's steps."""
     out = []
-    for area in ("shared", "output-styles"):
+    for area, src_area in (("shared", "shared"), ("output-styles", source.STYLES_DIR)):
         for p in _files(prj / ".claude" / area):
             rel = p.relative_to(prj).as_posix()
-            original = fw / area / p.relative_to(prj / ".claude" / area)
+            original = fw / src_area / p.relative_to(prj / ".claude" / area)
             if rel != ORCHESTRATION and p.suffix == ".md" and original.is_file():
                 out.append((rel, original))
     return out
@@ -895,7 +899,7 @@ def _source_of(fw: Path, rel: str) -> Path:
         (".claude/skills/", "skills"),
         (".claude/hooks/", "hooks"),
         (".claude/shared/", "shared"),
-        (".claude/output-styles/", "output-styles"),
+        (".claude/output-styles/", source.STYLES_DIR),
     ):
         if rel.startswith(prefix):
             if area == "skills":
