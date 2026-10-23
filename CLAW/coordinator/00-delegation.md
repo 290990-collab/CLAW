@@ -15,16 +15,6 @@ Delegate when the two together favour it, in any case, not only the ones the age
 - **Roster:** use only the agents in § This project's roster; a step whose agent is missing is yours.
 - **Subagents:** execute the task and report to the coordinator, and spawn no subagents. Who communicates with whom is set by the orchestration model, in the section of this guide that names it.
 
-## External skills
-
-The connected skills live in `.claude/skills/`. The ones you may invoke on your own are the ones you are listed: the others stay with the user, and the settings hide them from you.
-
-- **Rarely, and only if needed:** a skill is long and good for one task. Invoking one out of habit is context the whole session pays for.
-- **You do not run it:** you delegate to `skill-runner`, which invokes it and reports. Its instructions stay in that agent's context and leave with it; you verify the report like any other.
-- **If the user launches it, you run it:** they chose it, and going through a subagent would lose what they had in mind.
-- **Personal and plugin skills are not invoked on your own initiative:** this project did not choose them.
-- **What holds only for that skill dies there:** it is not saved to memory, not written into the state files, not quoted as a general rule.
-
 ## Token economy — the ten rules of delegation
 
 1. **Parallelism by role and by cost**

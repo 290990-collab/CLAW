@@ -24,7 +24,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import assemble, doctor, kernel, profile, settings, skills, source
+from . import assemble, doctor, kernel, profile, settings, source
 
 CREATE = "create"
 OVERWRITE = "overwrite"
@@ -48,7 +48,7 @@ ORCHESTRATION = f".claude/{doctor.ORCHESTRATION}"
 # CLAUDE.md.
 FOREIGN_INSTRUCTIONS = ("AGENTS.md", ".cursorrules", ".github/copilot-instructions.md")
 # The `.claude/` folders where framework and project files live side by side.
-SHARED_DIRS = ("agents", "skills", "output-styles", "hooks", "shared")
+SHARED_DIRS = ("agents", "output-styles", "hooks", "shared")
 
 # A framework hook entry is recognised by the script it launches, not by the
 # whole command text: that changes between releases, and the user touches it up.
@@ -88,7 +88,6 @@ def targets(
     out |= {f".claude/shared/{rel}" for rel in guides}
     out |= {f".claude/hooks/{name}.py" for name in hooks}
     out |= {f"docs/{name}" for name in doctor.STATE_FILES}
-    out |= {rel for rel, _ in _skill_files(fw)}
     out |= {f".claude/output-styles/{p.name}" for p in _files(fw / source.STYLES_DIR)}
     return sorted(out)
 
@@ -228,7 +227,6 @@ def apply_install(
     copies = {f".claude/shared/{rel}": fw / "shared" / rel for rel in guides}
     copies |= {f".claude/output-styles/{p.name}": p for p in _files(fw / source.STYLES_DIR)}
     copies |= {f".claude/hooks/{n}.py": _hook_source(fw, n) for n in hooks}
-    copies |= dict(_skill_files(fw))
     copies |= {
         f"docs/{n}": fw / "templates" / n
         for n in doctor.STATE_FILES
@@ -236,11 +234,9 @@ def apply_install(
     }
     merged, added, conflicts = settings.merge(
         _current_settings(prj),
-        settings.framework(prof.settings, hooks, orchestration, skills.overrides(fw)),
+        settings.framework(prof.settings, hooks, orchestration),
     )
-    data = source.manifest(
-        prj, fw, version, prof.name, settings_added=added, skills=skills.installed(fw)
-    )
+    data = source.manifest(prj, fw, version, prof.name, settings_added=added)
     data["frontmatter"] = {n: field_record(c) for n, c in cards.items()}
 
     for rel, original in copies.items():
@@ -307,19 +303,15 @@ def plan_uninstall(project_root: Path, framework_root: Path) -> list[Operation]:
         else:
             ops.append(_op(prj, CLAUDE_MD, MERGE, "the kernel region goes, the rest stays"))
 
-    for area in ("skills", "hooks"):
-        for p in _files(prj / ".claude" / area):
-            rel = p.relative_to(prj).as_posix()
-            inside = p.relative_to(prj / ".claude" / area)
-            original = (
-                _skill_source(fw, inside.as_posix()) if area == "skills" else fw / area / inside
-            )
-            if not original.is_file():
-                ops.append(_op(prj, rel, KEEP, "not from the source: stays"))
-            elif original.read_bytes() == p.read_bytes():
-                ops.append(_op(prj, rel, REMOVE, "identical to the source"))
-            else:
-                ops.append(_op(prj, rel, ARCHIVE, "differs from the source: kept"))
+    for p in _files(prj / ".claude" / "hooks"):
+        rel = p.relative_to(prj).as_posix()
+        original = fw / "hooks" / p.relative_to(prj / ".claude" / "hooks")
+        if not original.is_file():
+            ops.append(_op(prj, rel, KEEP, "not from the source: stays"))
+        elif original.read_bytes() == p.read_bytes():
+            ops.append(_op(prj, rel, REMOVE, "identical to the source"))
+        else:
+            ops.append(_op(prj, rel, ARCHIVE, "differs from the source: kept"))
 
     for area, src_area in (
         ("agents", source.CARDS_DIR),
@@ -423,8 +415,6 @@ def plan_repair(project_root: Path, framework_root: Path) -> list[Operation]:
         )
     keep = (KEEP, "differs from the source: local change, not overwritten")
     ops = []
-    for rel, original in _skill_files(fw):
-        ops += _against_source(prj, rel, original, *keep)
     current = _current_settings(prj)
     in_use = _referenced_hooks(current) | _referenced_hooks(manifest.get("settings_added"))
     for name in settings.HOOKS:
@@ -483,9 +473,6 @@ def plan_down(
         note = _card_note(manifest, rel, text, original, adopt) if is_agent else ""
         if region is None:
             ops.append(_op(prj, rel, KEEP, "no markers: no region to reassemble"))
-        elif kernel.verify(text) == "DRIFT":
-            ops.append(_op(prj, rel, MERGE, f"v{region.version} → v{version}, region "
-                           f"edited by hand: the local change is lost{note}"))
         else:
             ops.append(_op(prj, rel, MERGE, f"v{region.version} → v{version}, rest unchanged{note}"))
 
@@ -507,8 +494,6 @@ def plan_down(
                            "block, add its line in CLAUDE.md § Shared guides"))
 
     overwrite = (OVERWRITE, "differs from the source: updated")
-    for rel, original in _skill_files(fw):
-        ops += _against_source(prj, rel, original, *overwrite)
     if hooks is None:
         current = _current_settings(prj)
         in_use = _referenced_hooks(current) | _referenced_hooks(manifest.get("settings_added"))
@@ -663,13 +648,7 @@ def apply_update(project_root: Path, framework_root: Path, ops: Sequence[Operati
     if MANIFEST in paths:
         data = dict(manifest)
         data["version"] = _version(fw)
-        # What the project received from the packages: the only place where the
-        # doctor reads it without having to reach the source.
-        connected = skills.installed(fw)
-        if connected:
-            data["skills"] = connected
-        else:
-            data.pop("skills", None)
+        data.pop("skills", None)
         if added:
             record = data.get("settings_added")
             # A replaced entry leaves the record too: uninstall removes what
@@ -736,35 +715,6 @@ def _files(directory: Path) -> list[Path]:
     return sorted(p for p in directory.rglob("*") if p.is_file()) if directory.is_dir() else []
 
 
-def _skill_files(fw: Path) -> list[tuple[str, Path]]:
-    """The skill files to install: path in the project, original.
-
-    Only those of the connected packages — `/claw` is a user-level skill. They
-    lose the package level, because Claude Code only discovers
-    `.claude/skills/<skill>/`.
-    """
-    base = fw / "skills"
-    out = []
-    for skill, package in skills.installed(fw).items():
-        out += [
-            (f".claude/skills/{p.relative_to(base / package).as_posix()}", p)
-            for p in _files(base / package / skill)
-        ]
-    return out
-
-
-def _skill_source(fw: Path, rest: str) -> Path:
-    """The source file of an installed skill, given `<skill>/...`.
-
-    It is the inverse of the flattening: without it the uninstall does not
-    recognise a package skill as its own and leaves it in the project, and
-    `--repair` does not know where to copy it back from.
-    """
-    base = fw / "skills"
-    package = skills.installed(fw).get(rest.split("/", 1)[0])
-    return base / package / rest if package else base / rest
-
-
 def _hook_source(fw: Path, name: str) -> Path:
     return fw / "hooks" / f"{name}.py"
 
@@ -784,9 +734,14 @@ _guide_line = assemble.guide_line
 _model_cell = assemble.model_cell
 
 
+def _field_digest(text: str) -> str:
+    """The fingerprint `claw.json` keeps for a front-matter field (goes with the record, P5)."""
+    return hashlib.sha256(kernel.normalize(text).encode("utf-8")).hexdigest()[:8]
+
+
 def field_record(card: str) -> dict[str, str]:
     """What `claw.json` records of a source card at every sync: key → digest."""
-    return {k: kernel.digest(v) for k, v in _fields(card).items()}
+    return {k: _field_digest(v) for k, v in _fields(card).items()}
 
 
 def _record(manifest: dict, name: str) -> dict | None:
@@ -812,7 +767,7 @@ def _frontmatter_merge(
         if h == t:
             chosen = h
         elif adopt or (
-            record is not None and (kernel.digest(h) if h else "-") == record.get(key, "-")
+            record is not None and (_field_digest(h) if h else "-") == record.get(key, "-")
         ):
             chosen = t
             taken.append(key)
@@ -854,14 +809,11 @@ def _against_source(
 
 def _source_of(fw: Path, rel: str) -> Path:
     for prefix, area in (
-        (".claude/skills/", "skills"),
         (".claude/hooks/", "hooks"),
         (".claude/shared/", "shared"),
         (".claude/output-styles/", source.STYLES_DIR),
     ):
         if rel.startswith(prefix):
-            if area == "skills":
-                return _skill_source(fw, rel[len(prefix) :])
             return fw / area / rel[len(prefix) :]
     name = rel.removeprefix("docs/")
     if rel.startswith("docs/") and name in doctor.STATE_FILES:
@@ -883,16 +835,11 @@ def _removable(prj: Path, fw: Path, rel: str) -> bool:
     identical to the source file at the same path is deleted."""
     if ".." in Path(rel).parts:
         return False
-    for area in ("skills", "hooks"):
-        prefix = f".claude/{area}/"
-        if rel.startswith(prefix):
-            original = (
-                _skill_source(fw, rel[len(prefix) :])
-                if area == "skills"
-                else fw / area / rel[len(prefix) :]
-            )
-            p = prj / rel
-            return original.is_file() and p.is_file() and original.read_bytes() == p.read_bytes()
+    prefix = ".claude/hooks/"
+    if rel.startswith(prefix):
+        original = fw / "hooks" / rel[len(prefix) :]
+        p = prj / rel
+        return original.is_file() and p.is_file() and original.read_bytes() == p.read_bytes()
     return False
 
 
@@ -1093,12 +1040,7 @@ def _framework_settings(
     orchestration = assemble.installed_orchestration(region.body, fw).stem
     referenced = _referenced_hooks(current)
     names = [n for n in settings.HOOKS if n not in referenced and _hook_after(prj, n, ops)]
-    # `skills.overrides`: the skills connected and outside the pool, invocable
-    # by the user, invisible to the coordinator. Without it the pool does not
-    # exist — the model sees them all.
-    return settings.framework(
-        profile.load(path).settings, names, orchestration, skills.overrides(fw)
-    )
+    return settings.framework(profile.load(path).settings, names, orchestration)
 
 
 def _settings_update_ops(

@@ -62,10 +62,6 @@ class Project:
         column that tells you which project to fix."""
         return sum(1 for f in self.findings if f.severity == "NOTE")
 
-    @property
-    def drifted(self) -> bool:
-        return any(f.code == "KERNEL_DRIFT" for f in self.findings)
-
 
 @dataclass
 class Survey:
@@ -182,7 +178,6 @@ def as_dict(s: Survey) -> dict:
                 "errors": p.errors,
                 "warnings": p.warnings,
                 "notes": p.notes,
-                "drifted": p.drifted,
                 "tokens": None if p.measure is None else p.measure.tokens,
                 "findings": [
                     {"code": f.code, "severity": f.severity, "message": f.message}

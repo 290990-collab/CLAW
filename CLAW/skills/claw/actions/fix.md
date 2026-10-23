@@ -63,26 +63,13 @@ A guide installed in `.claude/shared/` that no file cites: context carried aroun
 
 ### `KERNEL_MISSING` — ERROR
 
-The kernel region's markers have disappeared from a file that has one by construction — `CLAUDE.md`, `orchestration.md`, an agent. **More serious than drift:** without markers the check disappears, and a method rewritten by hand becomes indistinguishable from the generated one. It does not trigger if **no** tracked file has markers: that is the installation without tracking, and it is a choice.
+The kernel region's markers have disappeared from a file that has one by construction — `CLAUDE.md`, `orchestration.md`, an agent. Without markers the region cannot be regenerated, and a method rewritten by hand becomes indistinguishable from the generated one. It does not trigger if **no** tracked file has markers: that is the installation without tracking, and it is a choice.
 
 **What to do:** reassemble with `/claw update`, after comparing the current content with the source — inside there may be a change worth carrying to the framework's repository.
 
-### `KERNEL_DRIFT` — WARNING, and it is not an error
-
-The kernel region was modified by hand. **This is information, not a fault:** the framework does not forbid modifying the method, it makes it visible.
-
-**Ask the user, one single question:**
-
-> "You modified the method in `<file>`. Is it an improvement that holds for all projects — so it goes into the framework's own repository by hand — or is it a derogation specific to this project?"
-
-- **Improvement** → tell the user it must be made in the framework's repository: the next update overwrites it here.
-- **Local derogation** → it is noted in the project, so the next person to read the finding knows it is deliberate.
-
-Never "correct" a drift by overwriting it before having asked that question: you would throw away a change someone had a reason to make.
-
 ### `VERSION_MISMATCH` — WARNING
 
-The kernel regions do not all declare the same version, or the project is on a different version from the source. **No other finding sees it:** on an old method the hash matches, because it matches the old one. It is the fork between projects, the defect the framework exists to avoid.
+The kernel regions do not all declare the same version, or the project is on a different version from the source. **No other finding sees it:** an old method is consistent with itself. It is the fork between projects, the defect the framework exists to avoid.
 
 **What to do:** `/claw update` on **both** versioned documents and on every installed agent. A gap between a single agent and the rest is normal right after an `/claw add`, which takes the current source: it is closed with the same `/claw update`.
 
@@ -99,12 +86,6 @@ The kernel regions do not all declare the same version, or the project is on a d
 `config_protection` and `block_no_verify` belong to every installation with agents. **Not wired** in `settings.json`: the checks they make are off and nothing else says so — the typical case is an installation born before the hooks. **Wired without its script:** the closed hook blocks every command it has something to say about (`git` for `block_no_verify`, a linter configuration for `config_protection`). `gateguard` is optional: not wired, it is not flagged; wired without its script, it is flagged like the others.
 
 **What to do:** not wired → `/claw update`, which installs them and replaces entries written by an older release. Script gone → the repair below puts it back.
-
-### `SKILLS_MISSING` — WARNING
-
-A skill of a connected package, which `claw.json` says the project received, is not in `.claude/skills/`: it exists in the source but is not invocable here. Nobody notices until it is needed.
-
-**What to do:** the repair below puts it back.
 
 ### `STATE_MISSING` — ERROR
 
@@ -170,13 +151,13 @@ An installed file contains a path inside a user's folder — `C:\Users\<name>`, 
 
 ## Declared waivers
 
-A warning can be wrong **for this project**: a deliberate `KERNEL_DRIFT`, a large `CLAUDE.md` because the project is large. Without a valve `--strict` stays red forever and the team learns to ignore it — which is how a check dies.
+A warning can be wrong **for this project**: a large `CLAUDE.md` because the project is large. Without a valve `--strict` stays red forever and the team learns to ignore it — which is how a check dies.
 
 In `.claude/claw.json`:
 
 ```json
 "accepted": {
-  "KERNEL_DRIFT:CLAUDE.md": "deliberate waiver: constraint X applies only here",
+  "PERSONAL_PATH:.claude/settings.json": "deliberate: the path is the same on every machine of the team",
   "TOKEN_BUDGET": "monorepo, the contracts are in CLAUDE.md on purpose"
 }
 ```
@@ -185,7 +166,7 @@ The key is the code, or `code:fragment` to limit it to one file. The value is th
 
 **Errors cannot be accepted.** A warning is a judgement, and on a judgement a project may be right against the default; an error is an installation that does not work, and an unfilled placeholder stays unfilled even if somebody writes that it is fine.
 
-Before adding a row here, the question is the drift one: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is a change in the framework's repository, not `accepted`.
+Before adding a row here, the question is: *a waiver for this project, or a default that is wrong for everyone?* In the second case the road is a change in the framework's repository, not `accepted`.
 
 ## Several projects at once
 
@@ -199,13 +180,13 @@ The reference is the version of the **source** you run from, not the most widesp
 
 ## After the diagnosis
 
-Report to the user: how many findings by severity, what you corrected, what requires a decision from them. `KERNEL_DRIFT` findings are always listed, even when everything else is clean: they are the useful part of the report. Pure notes — waivers already decided — get one line.
+Report to the user: how many findings by severity, what you corrected, what requires a decision from them. Pure notes — waivers already decided — get one line.
 
 ---
 
 ## Repair — putting back what is missing
 
-At the installed version, which must be the source's: otherwise the plan refuses, and `/claw update` comes first. It puts back the skills of connected packages, the hooks in use, the state files and the cited guides that are missing, and the missing entries in `settings.json`. **It overwrites nothing:** a file that differs from the source is a local change and stays.
+At the installed version, which must be the source's: otherwise the plan refuses, and `/claw update` comes first. It puts back the hooks in use, the state files and the cited guides that are missing, and the missing entries in `settings.json`. **It overwrites nothing:** a file that differs from the source is a local change and stays.
 
 1. `repair "<PRJ>"`, ok, `--apply`.
 2. Guides and state files that are recreated come from the template: fill in the `[TO FILL IN]` blocks as at installation.

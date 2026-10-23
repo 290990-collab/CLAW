@@ -121,19 +121,6 @@ class TestSurvey(unittest.TestCase):
             self.assertEqual(s.behind, [])
             self.assertTrue(s.clean, [f for p in s.projects for f in p.findings])
 
-    def test_manual_edits_to_the_method_are_counted(self):
-        """Drift is the entry that makes the report useful: a method modified
-        by hand in one repo is the fork at its first step."""
-        with tempfile.TemporaryDirectory() as d:
-            root = installed(d, "alpha")
-            c = root / "CLAUDE.md"
-            c.write_text(
-                c.read_text(encoding="utf-8").replace("Method", "Changed method"),
-                encoding="utf-8",
-            )
-            self.assertTrue(report.inspect(root).drifted)
-
-
 class TestReportCli(unittest.TestCase):
     def _run(self, argv):
         buf = io.StringIO()

@@ -162,7 +162,6 @@ class TestUninstall(unittest.TestCase):
             gone = sorted(set(before) - set(after) - archived)
             self.assertTrue(gone)
             originals = {
-                ".claude/skills/": FRAMEWORK / "skills",
                 ".claude/hooks/": FRAMEWORK / "hooks",
             }
             for rel in gone:
@@ -390,7 +389,7 @@ class TestRepair(unittest.TestCase):
 class TestDown(unittest.TestCase):
     def test_down_plan_on_an_older_install(self):
         """`down` also brings skills and hooks, not only the kernel regions. A
-        region touched up by hand is lost, and the plan says so first."""
+        region touched up by hand is replaced."""
         with tempfile.TemporaryDirectory() as d:
             root = install(d)
             manifest = read_json(root / source.MANIFEST)
@@ -414,8 +413,6 @@ class TestDown(unittest.TestCase):
             self.assertEqual(tree(root), before)
             got = {op.path: op for op in ops}
             self.assertEqual(got["CLAUDE.md"].action, lifecycle.MERGE)
-            self.assertIn("is lost", got["CLAUDE.md"].reason)
-            self.assertNotIn("is lost", got[".claude/shared/orchestration.md"].reason)
             self.assertEqual(got[".claude/agents/obsolete.md"].action, lifecycle.KEEP)
             self.assertEqual(got[skill].action, lifecycle.OVERWRITE)
             self.assertEqual(got[hook].action, lifecycle.CREATE)

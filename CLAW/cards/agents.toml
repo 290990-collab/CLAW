@@ -28,7 +28,6 @@ runner = { model = "haiku", effort = "medium", maxTurns = 20, tools = "Read, Gre
 scientific-reviewer = { model = "opus", effort = "high", tools = "Read, Grep, Glob", color = "orange" }
 security-reviewer = { model = "opus", effort = "high", tools = "Read, Grep, Glob", color = "red" }
 silent-failure-hunter = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob", color = "red" }
-skill-runner = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash, Skill", color = "purple" }
 tester = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "yellow" }
 visual-designer = { model = "sonnet", effort = "low", tools = "Read, Grep, Glob, Edit, Write", color = "orange" }
 visual-director = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, WebSearch, WebFetch", color = "pink" }

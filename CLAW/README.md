@@ -9,7 +9,7 @@ method/              COMMON kernel → CLAUDE.md, read by everyone at every spaw
 coordinator/         COORDINATOR kernel → shared/orchestration.md, on demand
 orchestrations/      orchestration models: one is appended to the guide, orchestrator-worker by default
 cycles/              domain cycles, appended to the guide if the profile asks
-cards/               32 agents: method + project [TO FILL IN] block; agents.toml holds their model, effort, tools
+cards/               31 agents: method + project [TO FILL IN] block; agents.toml holds their model, effort, tools
 shared/core/         generic guides, loaded on demand
 shared/domain/       domain guides (design, research, data, llm, marketing)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions
@@ -17,8 +17,7 @@ templates/           the state files, generated empty but structured
 styles/              reporting.md: how to answer the user, aliases and rule names — main conversation only
 hooks/               config_protection · block_no_verify (closed) · gateguard (open) → .claude/hooks/
 skills/claw/         the /claw skill: SKILL.md routes, actions/ holds one file per action
-skills/              plus the packages connected with `claw skills add` and pool.toml: local, never published
-tools/fwbuild/       assembly, hashing, checks — pure Python stdlib
+tools/fwbuild/       assembly, checks — pure Python stdlib
 tools/trial_install.py  the proof: installs a fake project, which the doctor checks
 tools/sync_cards.py  writes the cards' front matter from cards/agents.toml
 tools/tests/         the tests
@@ -75,7 +74,6 @@ re-checking every file.
 | `down <project>` | a new version into a project, kernel regions included; card front matter follows the record |
 | `repair` · `uninstall <project>` | put back what is missing · remove the framework, archiving what was adapted |
 | `report <folders>` | versions and findings across many repositories |
-| `skills list\|add\|remove` | connected skill packages |
 
 ## How it is built
 
@@ -83,17 +81,16 @@ re-checking every file.
 every agent, the method lives inside a delimited region:
 
 ```html
-<!-- FRAMEWORK:KERNEL v1.1.1 sha256:a3f9c1e4 — generated, do not edit by hand -->
+<!-- FRAMEWORK:KERNEL v1.1.1 — generated, do not edit by hand -->
 …
 <!-- /FRAMEWORK:KERNEL -->
 ```
 
-It is not locked: you can modify it. The hash stops matching and
-`doctor` tells you, so a change to the method becomes **visible**
-instead of buried.
+It is regenerated at every update: a change to the method belongs in
+the framework's repository, not in the region.
 
 Agents' front matter stays **outside** the region: changing `model:` is
-configuration, not drift.
+configuration, not method.
 
 **Guides and the response style have no region.** The text belongs to the
 framework, the last section — the `[TO FILL IN]` block — to the project.

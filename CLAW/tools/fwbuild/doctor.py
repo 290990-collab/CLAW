@@ -1,9 +1,9 @@
 """The integrity checks of an installation.
 
-Twenty-two finding codes: eight of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
+Twenty finding codes: eight of severity ERROR (PLACEHOLDER, ROSTER_MISSING,
 SHARED_MISSING, STATE_MISSING, KERNEL_MISSING, EXCLUSIVE, MANIFEST_MISSING,
-HOOKS_MISSING) and fifteen of severity WARN (ROSTER_ORPHAN, ROSTER_MODEL,
-KERNEL_DRIFT, COORDINATOR_LEAK, SKILLS_MISSING, VERSION_MISMATCH,
+HOOKS_MISSING) and thirteen of severity WARN (ROSTER_ORPHAN, ROSTER_MODEL,
+COORDINATOR_LEAK, VERSION_MISMATCH,
 SETTINGS_MISSING, HOOKS_MISSING, SHARED_ORPHAN, TOKEN_BUDGET, REPORT_FORMAT,
 ACCEPTED_UNUSED, UNSAFE_UNICODE, PERSONAL_PATH, FABLE). Two come out at both:
 MANIFEST_MISSING, ERROR if the file is missing and WARN if it is incomplete;
@@ -159,8 +159,8 @@ def measure(claude_text: str) -> Measure:
 def _markdown_files(root: Path) -> list[Path]:
     """The files adapted to the project, which have to be checked.
 
-    `.claude/skills/` is excluded: the skills are framework files copied
-    verbatim, with no kernel region and no blocks to fill in. The state files in `docs/` are included: they are
+    `.claude/skills/` is excluded: the skills there are the user's own, with
+    no kernel region and no blocks to fill in. The state files in `docs/` are included: they are
     born from a template with placeholders, and an unfilled template is
     indistinguishable from absent state for whoever reads it at session start.
 
@@ -245,17 +245,12 @@ def check(root: Path) -> list[Finding]:
                     "superseded format, realign with /claw update",
                 )
             )
-        status = kernel.verify(text)
-        if status == "DRIFT":
-            out.append(
-                Finding("KERNEL_DRIFT", "WARN", f"{rel}: kernel region modified")
-            )
-        elif status == "MISSING" and markers and rel in tracked:
+        if kernel.parse(text) is None and markers and rel in tracked:
             out.append(
                 Finding(
                     "KERNEL_MISSING",
                     "ERROR",
-                    f"{rel}: markers removed — the method is no longer verifiable",
+                    f"{rel}: markers removed — the region can no longer be regenerated",
                 )
             )
         if rel in tracked:
@@ -405,23 +400,6 @@ def check(root: Path) -> list[Finding]:
                     f"the markers say v{'/'.join(declared)}",
                 )
             )
-
-    # The skills of the connected packages: the manifest says which ones the
-    # project received, and the check reads from there because the source may
-    # not be reachable from here. A package disconnected at the source and not
-    # yet synced leaves no findings: the entry goes from the manifest.
-    declared = manifest.get("skills") if isinstance(manifest, dict) else None
-    if isinstance(declared, dict):
-        for skill, package in sorted(declared.items()):
-            if not (root / ".claude" / "skills" / str(skill) / "SKILL.md").is_file():
-                out.append(
-                    Finding(
-                        "SKILLS_MISSING",
-                        "WARN",
-                        f".claude/skills/{skill}/ absent: the skill of package "
-                        f"{package} is not invocable in this project",
-                    )
-                )
 
     if present and not (root / ".claude" / "settings.json").is_file():
         out.append(

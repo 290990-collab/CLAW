@@ -1,16 +1,14 @@
-"""Kernel region: normalisation, hash and markers.
+"""Kernel region: normalisation and markers.
 
-The marker delimits the generated method inside a hand-adapted file. The hash
-covers the normalised body only: line endings and trailing whitespace do not
-count as a modification, the text does.
+The marker delimits the generated method inside a hand-adapted file. It carries
+the version and nothing else: the region is regenerated, never compared.
 """
 
-import hashlib
 import re
 from dataclasses import dataclass
 
 OPEN_RE = re.compile(
-    r"<!-- FRAMEWORK:KERNEL v(?P<version>\S+) sha256:(?P<declared>[0-9a-f]{8}) "
+    r"<!-- FRAMEWORK:KERNEL v(?P<version>\S+)(?: sha256:[0-9a-f]{8})? "
     r"— generated, do not edit by hand -->"
 )
 CLOSE = "<!-- /FRAMEWORK:KERNEL -->"
@@ -19,7 +17,6 @@ CLOSE = "<!-- /FRAMEWORK:KERNEL -->"
 @dataclass(frozen=True)
 class KernelRegion:
     version: str
-    declared: str
     body: str
     start: int
     end: int
@@ -31,16 +28,9 @@ def normalize(text: str) -> str:
     return joined + "\n" if joined else "\n"
 
 
-def digest(text: str) -> str:
-    return hashlib.sha256(normalize(text).encode("utf-8")).hexdigest()[:8]
-
-
 def wrap(body: str, version: str) -> str:
     body_n = normalize(body)
-    marker = (
-        f"<!-- FRAMEWORK:KERNEL v{version} sha256:{digest(body_n)} "
-        f"— generated, do not edit by hand -->"
-    )
+    marker = f"<!-- FRAMEWORK:KERNEL v{version} — generated, do not edit by hand -->"
     return f"{marker}\n{body_n}{CLOSE}\n"
 
 
@@ -57,19 +47,10 @@ def parse(text: str) -> KernelRegion | None:
         return None
     return KernelRegion(
         version=m.group("version"),
-        declared=m.group("declared"),
         body=normalize(text[body_start:close_at]),
         start=m.start(),
         end=close_at + len(CLOSE),
     )
-
-
-def verify(text: str) -> str:
-    region = parse(text)
-    if region is None:
-        return "MISSING"
-    return "OK" if digest(region.body) == region.declared else "DRIFT"
-
 
 
 USER_RULES_OPEN = "<!-- CLAW:USER-RULES -->"

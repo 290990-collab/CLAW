@@ -1,8 +1,7 @@
 """Trial installation: simulates /claw install on the `software` profile.
 
 Fake project: `logtail`, a command-line tool that follows and filters log
-files. It serves to demonstrate that a complete installation passes the doctor
-and that drift is detected.
+files. It serves to demonstrate that a complete installation passes the doctor.
 """
 
 import json
@@ -340,7 +339,7 @@ def install(out: Path, orchestration: str = ORCHESTRATION) -> int:
     # Profile and hooks together first, then on top of what the project already
     # has — nothing here, but the step is the same as on a real project: it is
     # the addition the manifest records, so the uninstall removes only that.
-    framework_settings = settings.framework(prof.settings, hooks, orchestration, {})
+    framework_settings = settings.framework(prof.settings, hooks, orchestration)
     merged, added, conflicts = settings.merge({}, framework_settings)
     if conflicts:
         raise SystemExit(f"settings.json conflicts on: {', '.join(conflicts)}")

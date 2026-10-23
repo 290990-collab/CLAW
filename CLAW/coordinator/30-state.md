@@ -6,7 +6,7 @@ The state is written **exclusively by the coordinator**: whoever writes it must 
 |---|---|---|---|---|
 | 1 | `docs/TODO.md` | immediate operational state: in progress, waiting, next step, blocked | at every step | ~120 lines, indicative |
 | 2 | `docs/status.md` | closed decisions, measured results, hypotheses confirmed or refuted, intentional removals | when a task closes | telegraphic entry |
-| 3 | `CLAUDE.md § Current state` | the project's picture (it sits **outside the kernel region**: updating it must not produce drift) | only if the picture changes | ~25 lines |
+| 3 | `CLAUDE.md § Current state` | the project's picture (outside the kernel region) | only if the picture changes | ~25 lines |
 | 4 | persistent memory | facts between sessions: user directives, preferences, structural decisions, mistakes that would repeat | at every discovery or structural change | 1 fact per file |
 
 *Note on `docs/roadmap.md`:* not a level. The levels say where we are, the roadmap where we are going — goals, dependencies, criteria. It is touched when a goal closes or another is added.

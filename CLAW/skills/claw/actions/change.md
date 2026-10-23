@@ -17,7 +17,7 @@ Then update `profile` in `claw.json`; `settings_added` becomes what the `merge` 
 
 One per project, inside the kernel region of the coordinator's guide.
 
-**Precondition:** `version` in `claw.json` equal to `<FW>/VERSION` and no `KERNEL_DRIFT` on `orchestration.md`; otherwise `/claw update` first. Reassembling the guide alone would bring it to the source's version while `CLAUDE.md` stays behind (`VERSION_MISMATCH`), and a local change in the region would vanish silently.
+**Precondition:** `version` in `claw.json` equal to `<FW>/VERSION`; otherwise `/claw update` first. Reassembling the guide alone would bring it to the source's version while `CLAUDE.md` stays behind (`VERSION_MISMATCH`), and a local change in the region would vanish silently.
 
 `old` and `new` are the `settings.ORCHESTRATION_SETTINGS` entries of the two orchestrations, `{}` if they have none.
 

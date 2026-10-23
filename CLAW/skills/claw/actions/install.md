@@ -1,6 +1,6 @@
 # `/claw install` — installing and adapting the framework
 
-You are the coordinator: you read a project, ask questions, decide a roster, fill in content. The tooling does only the mechanical part — assembly, hashing, checks.
+You are the coordinator: you read a project, ask questions, decide a roster, fill in content. The tooling does only the mechanical part — assembly, checks.
 
 **You install nothing** (packages, dependencies, extensions) at any step. If something seems to be missing, you flag it and ask.
 
@@ -153,7 +153,7 @@ Regulatory constraints and performance requirements belong to **question 2**: th
 python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop a,b] [--guides domain/x.md] [--gateguard] [--orchestration <name>]
 ```
 
-`--agents`: the extras from the conditional questions, `skill-runner` when a skill package is connected. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--gateguard`: question 4 said yes. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `claw.json` already there: the project is installed → `/claw update`.
+`--agents`: the extras from the conditional questions. `--guides`: guides the profile does not bring (the ones the chosen cards cite are added by themselves). `--gateguard`: question 4 said yes. Nothing is written: it prints roster, guides and the plan — `overwrite` and `merge` by name, `keep` for project material that stays next to the framework — and saves it. Conflicting agents, an unknown agent, guide or orchestration: an error before any plan. A `claw.json` already there: the project is installed → `/claw update`.
 
 **Show the plan and wait for the ok.**
 
@@ -163,7 +163,7 @@ python "<FW>/claw.py" install "<PRJ>" --profile <PROFILE> [--agents a,b] [--drop
 python "<FW>/claw.py" install "<PRJ>" --apply
 ```
 
-It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, skills (lifecycle and connected packages), `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `claw.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `/claw fix`).
+It runs the approved plan, and only that one: `CLAUDE.md` and `.claude/shared/orchestration.md` with their kernel regions and the project skeleton, the cards, guides, reply style and state templates with their placeholders, hooks, `settings.json` merged over the user's (on a differing value theirs stays, and it prints it), `claw.json` with the record of every card. It ends with the list of files still carrying `[TO FILL IN`: **fill in every one now.** The `accepted` field is not written at installation: it is added by whoever decides to live with a warning (→ `/claw fix`).
 
 | document | kernel | who reads it | cost |
 |---|---|---|---|

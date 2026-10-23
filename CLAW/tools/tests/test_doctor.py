@@ -121,16 +121,6 @@ class TestDoctor(unittest.TestCase):
             p = make_project(d, agents=("explorer", "frontend"), routing=("explorer",))
             self.assertIn("ROSTER_ORPHAN", codes(doctor.check(p)))
 
-    def test_detects_kernel_drift(self):
-        with tempfile.TemporaryDirectory() as d:
-            p = make_project(d)
-            f = p / "CLAUDE.md"
-            f.write_text(
-                f.read_text(encoding="utf-8").replace("## Method", "## Other"),
-                encoding="utf-8",
-            )
-            self.assertIn("KERNEL_DRIFT", codes(doctor.check(p)))
-
     def test_detects_missing_state_files(self):
         with tempfile.TemporaryDirectory() as d:
             found = doctor.check(make_project(d, state=False))
@@ -151,21 +141,6 @@ class TestDoctor(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertNotIn("PLACEHOLDER", codes(doctor.check(root)))
-
-    def test_detects_a_declared_package_skill_that_is_not_there(self):
-        """The skills of the packages are in the manifest because in the
-        project they arrive flattened and where they come from is no longer
-        visible. Without this check, a package the sync did not bring is a pool
-        naming an absent skill, and no finding says so."""
-        with tempfile.TemporaryDirectory() as d:
-            root = make_project(d)
-            path = root / ".claude" / "claw.json"
-            data = json.loads(path.read_text(encoding="utf-8"))
-            data["skills"] = {"alfa": "someone-skills"}
-            path.write_text(json.dumps(data), encoding="utf-8")
-            found = [f for f in doctor.check(root) if f.code == "SKILLS_MISSING"]
-            self.assertEqual(len(found), 1)
-            self.assertIn("someone-skills", found[0].message)
 
     def test_detects_missing_orchestration_guide(self):
         with tempfile.TemporaryDirectory() as d:
@@ -375,14 +350,15 @@ class TestDoctor(unittest.TestCase):
             self.assertEqual(codes(doctor.check(p)), {"ACCEPTED_UNUSED"})
 
     def test_accepted_can_be_scoped_to_one_file(self):
+        """`CODE:fragment` covers the finding whose message names that file and
+        no other: a waiver for one file must not silence the same code elsewhere."""
         with tempfile.TemporaryDirectory() as d:
-            p = make_project(d, accepted={"KERNEL_DRIFT:CLAUDE.md": "local waiver"})
-            f = p / "CLAUDE.md"
-            f.write_text(
-                f.read_text(encoding="utf-8").replace("## Method", "## Other"),
-                encoding="utf-8",
+            p = make_project(d, accepted={"PERSONAL_PATH:.claude/settings.json": "local waiver"})
+            home = "C:" + "\\Users\\"
+            (p / ".claude" / "settings.json").write_text(
+                json.dumps({"env": {"PRJ": home + "jsmith"}}), encoding="utf-8"
             )
-            found = [f for f in doctor.check(p) if f.code == "KERNEL_DRIFT"]
+            found = [f for f in doctor.check(p) if f.code == "PERSONAL_PATH"]
             self.assertEqual([f.severity for f in found], ["NOTE"])
 
     def test_detects_version_skew_between_documents(self):

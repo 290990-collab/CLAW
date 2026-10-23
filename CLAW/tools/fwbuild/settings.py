@@ -66,17 +66,16 @@ ORCHESTRATION_SETTINGS = {
 
 
 def framework(
-    profile_settings: dict, hook_names: Sequence[str], orchestration: str, overrides: dict
+    profile_settings: dict, hook_names: Sequence[str], orchestration: str
 ) -> dict:
     """The entries the framework wants in `settings.json`: base, profile, hooks,
-    orchestration, skill overrides. A conflict among them is a defect of the
+    orchestration. A conflict among them is a defect of the
     source: `ValueError`."""
     out = copy.deepcopy(BASE)
     for part in (
         profile_settings,
         hooks(hook_names),
         ORCHESTRATION_SETTINGS.get(orchestration, {}),
-        overrides,
     ):
         out, _, conflicts = merge(out, part)
         if conflicts:
