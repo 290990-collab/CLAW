@@ -1,6 +1,9 @@
 {
   "name": "claw",
-  "owner": { "name": "290990-collab" },
+  "owner": {
+    "name": "290990-collab"
+  },
+  "description": "CLAW: a working method and a crew of subagents for Claude Code.",
   "plugins": [
     {
       "name": "claw",

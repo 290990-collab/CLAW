@@ -1,7 +1,11 @@
 {
   "name": "claw",
-  "version": "2.7.0",
+  "version": "3.0.0",
   "description": "Working method, agent roster and installer for Claude Code projects: a kernel of rules, specialised subagents and state files, installed with /claw.",
-  "author": { "name": "290990-collab" },
-  "license": "MIT"
+  "author": {
+    "name": "290990-collab"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/290990-collab/CLAW",
+  "repository": "https://github.com/290990-collab/CLAW"
 }
