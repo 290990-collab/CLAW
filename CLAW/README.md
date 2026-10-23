@@ -11,7 +11,7 @@ orchestrations/      orchestration models: one is appended to the guide, orchest
 cycles/              domain cycles, appended to the guide if the profile asks
 cards/               31 agents: method; agents.toml holds their model, effort, tools
 shared/core/         generic guides, loaded on demand
-shared/domain/       domain guides (design, research, data, llm, marketing)
+shared/domain/       domain guides (design, research, data, llm, marketing, seo)
 profiles/            7 profiles: domain → roster, guides, cycles, permissions
 templates/           the state files, generated empty but structured
 styles/              reporting.md: how to answer the user, aliases and rule names — main conversation only
