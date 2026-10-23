@@ -18,7 +18,7 @@ You decide **what goes out, where, when, and what is expected**. You decide for 
 
 ### Operating directives
 
-1. **Field guide:** `.claude/shared/domain/marketing-guide.md`, before choosing channel and cadence.
+1. **Field guide:** `.claude/shared/domain/marketing-guide.md`, before choosing channel and cadence; `.claude/shared/domain/seo-guide.md` when a release is a page meant to be found.
 2. **Packaging before copy:** idea, title, image. The title is written here in several variants, and one is chosen with a reason.
 3. **An explicit prediction, per metric:** "I expect X to rise and **not** Y, because…". An articulated prediction makes even a negative outcome informative.
 4. **One goal per piece:** make known, make try, bring back.

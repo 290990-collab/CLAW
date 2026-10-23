@@ -15,6 +15,7 @@ shared = [
   "core/security-guide.md",
   "domain/marketing-guide.md",
   "domain/marketing-voice.md",
+  "domain/seo-guide.md",
 ]
 
 [settings]

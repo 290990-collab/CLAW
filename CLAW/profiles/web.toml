@@ -15,6 +15,7 @@ shared = [
   "core/review-checklist.md",
   "core/security-guide.md",
   "domain/design-guide.md",
+  "domain/seo-guide.md",
 ]
 
 [settings]

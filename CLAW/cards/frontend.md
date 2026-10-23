@@ -34,6 +34,7 @@ The item-by-item detail on accessibility, motion and performance lives in `.clau
 - **Reduced-motion preference always respected:** no animation shifts the layout, steals focus or blocks interaction.
 - **No content shifting after loading.**
 - **User input, generated markup and secrets in the client** follow `.claude/shared/core/security-guide.md`.
+- **Pages meant to be found** follow `.claude/shared/domain/seo-guide.md` § Technical.
 - **Real rendering:** visual verification must be done, or declared in `UNVERIFIED` with the instructions for doing it. The screenshots you take are listed by path in the report: `visual-director` judges them against the direction.
 
 ### What you do NOT do

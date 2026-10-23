@@ -55,14 +55,6 @@ Check these before delivering: they are the defaults of a language model, and th
 - **One piece, one goal:** make known, make try, bring back. A piece chasing all three gets none.
 - **Technical communities** (Show HN, forums, subreddits): the repository or a working demo is the page, with no sign-up wall; the title carries a concrete result; the author's first comment says what it does, how, and what is still rough; replies come within the hour. Practitioners' advice, not measured.
 
-## Found by search and by AI answers
-
-- **AI answers mostly cite what search already ranks:** Google's AI Overviews link mainly to top-10 organic results, ChatGPT's searches overlap Bing's top results (secondary analyses, 2026). Search basics come first: one page per question the audience asks, a title and description that promise the benefit.
-- **Each engine reads different places:** few domains are cited by both ChatGPT and Perplexity, and Perplexity leans on community threads. Being where the audience already discusses the problem counts as much as the own page.
-- **The citable sentence stands alone:** one fact, its number, its source, readable without the paragraph around it. That is what an answer quotes.
-- **Dated and current:** a page shows when it was last updated; a stale number costs more than a missing one.
-- **Measured by asking:** the audience's real questions, put to the engines before and after, with who gets cited. A tool's visibility score is an estimate, not this measurement.
-
 ## Measurement
 
 - **The metric is chosen before publishing,** together with the prediction: afterwards, the one that went well gets chosen.
