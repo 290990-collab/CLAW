@@ -19,7 +19,7 @@ Without this skill you choose task by task whether delegating pays (`.claude/sha
 - `.claude/claw.json` or `.claude/shared/orchestration.md` missing → the framework is not installed here: say so and stop.
 - Read `orchestration.md` if it is not already in context: the roster is at its end.
 - **Scope:** `/delegate <task>` → that task; `/delegate` alone → the task in progress, or the next request. It ends when the task closes or the user says stop. It is not a setting for the session.
-- **Invoked on your own:** only when § When delegating pays favours delegating the whole task, and say it in your first message with the reason. A change of ≤2 files and a few dozen lines is never a reason.
+- **Invoked on your own:** only when § When delegating pays favours delegating the whole task, and say it, with the reason, before opening the first project file. A change of ≤2 files and a few dozen lines is never a reason.
 
 ## 1. Plan
 
