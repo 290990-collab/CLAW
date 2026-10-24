@@ -74,6 +74,13 @@ kernel answers in the language of the user's messages.
   when that orchestration is chosen. The user's own values stay, and every entry
   CLAW adds is recorded in `claw.json` so `uninstall` removes exactly those.
 
+## Privacy
+
+CLAW collects no data. It has no telemetry, no account and no server: nothing
+the user or the project holds is read for CLAW's sake, stored outside the
+project, or sent anywhere. Everything it writes stays in the project's files,
+listed above, where the user can read and delete it.
+
 ## Commands
 
 **Claude Code's `/claw <action>`** works on a project — install, update (also
