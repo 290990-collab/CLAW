@@ -1,11 +1,15 @@
 {
   "name": "claw",
+  "displayName": "CLAW",
   "version": "3.0.0",
-  "description": "Working method, agent roster and installer for Claude Code projects: a kernel of rules, specialised subagents and state files, installed with /claw.",
+  "description": "Makes Claude Code check before it claims, ask before it guesses, and call in a crew of cheaper subagents when the job gets big: a working method, specialised agents and project state, installed with /claw.",
   "author": {
     "name": "290990-collab"
   },
   "license": "MIT",
+  "keywords": ["claude-code", "subagents", "workflow", "orchestration", "code-review", "testing", "anti-hallucination", "cost"],
   "homepage": "https://github.com/290990-collab/CLAW",
-  "repository": "https://github.com/290990-collab/CLAW"
+  "repository": "https://github.com/290990-collab/CLAW",
+  "documentationUrl": "https://github.com/290990-collab/CLAW/blob/main/CLAW/README.md",
+  "supportUrl": "https://github.com/290990-collab/CLAW/issues"
 }
