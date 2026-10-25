@@ -19,11 +19,11 @@ One command gives Claude Code a method to think by and a crew of agents to build
 <tr>
 <td align="center" width="33%"><h3>91%</h3>of a long build's tokens spent by the crew, not Opus<br><sub><a href="#proof">7 agents on Sonnet 5.5</a></sub></td>
 <td align="center" width="33%"><h3>31 agents</h3>a project installs only the ones it needs<br><sub><a href="#agents">the full roster</a></sub></td>
-<td align="center" width="33%"><h3>1 method</h3>the same rules in every project, kept current from one source<br><sub><a href="#everyday-use">update in one command</a></sub></td>
+<td align="center" width="33%"><h3>35 rules</h3>each with a name you can call in a message<br><sub><a href="#the-rules">real green, proof level, fail loudly…</a></sub></td>
 </tr>
 </table>
 
-[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [What's inside](#whats-inside) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
+[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [What's inside](#whats-inside) · [The rules](#the-rules) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
 
 </div>
 
@@ -47,7 +47,7 @@ Built for long tasks and large repos, where consistency pays the most.
 
 | You say | Claude Code decides case by case | With CLAW, it is a rule |
 |---|---|---|
-| "Add an export" | Picks a sensible format and builds it | Asks first when the answer changes the work: CSV or JSON, and for whom? |
+| "Add an export" | Picks a sensible format and builds it | Takes the format the repo points to and says which before building. Asks first only when a wrong guess would waste the work |
 | "Fix this bug" | Fixes it, and may tidy the code around it | Fixes the bug only. Anything else it noticed goes in the report, not in the diff |
 | "Fix the failing test" | Fixes it, and settles a test-versus-code disagreement on its own | Fixes the cause. If the test itself is wrong, says so and fixes it in a change of its own |
 | "Is it done?" | Reports what it did | Reports what it did and how far each part is proven: "Done. Not verified: the migration never ran on a real database" |
@@ -111,12 +111,34 @@ a codebase built for the eval and smaller than most production code.
 
 | | What it means for you |
 |---|---|
-| **Evidence first** | Claude cites what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
+| **Evidence first** | Claude cites what it read or ran, says what it did not check, finds the cause before fixing, and asks only when a wrong guess would cost you |
 | **Small, safe changes** | No unrequested refactoring; a failing test gets its cause fixed, not its assertion loosened. Commits, installs and anything irreversible wait for your ok |
 | **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
 | **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
 | **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
 | **One plugin, many projects** | Update CLAW once, then bring each project up to date. Your own rules stay |
+
+<br>
+
+## The rules
+
+Each rule has a name. Write it in a message, `real green here`, and Claude applies it
+to the work at hand. A selection of the 35, all in [`reporting.md`](CLAW/styles/reporting.md):
+
+| Rule | What Claude does |
+|---|---|
+| `proof level` | Says how far each claim is proven, from 1, "I said so", to 5, "reproduced on the real system". A check that decided nothing is called inconclusive, never green |
+| `verified sources` | Cites no API, version, number or file it has not read or run in this session |
+| `real green` | Never makes a check pass by weakening it: no deleted test, no loosened assertion, no `noqa`. A wrong check is fixed in a change of its own |
+| `useful test` | Writes a test only if it knows which defect would make it fail |
+| `rigorous debugging` | Fixes nothing until one cause explains every symptom, and undoes whatever a refuted hypothesis motivated |
+| `minimal change` | Makes the smallest complete change, fixing the cause once, where it lives |
+| `existing pattern` | Before new code, climbs a ladder: the repo, the standard library and the platform, the installed dependencies. New code comes last |
+| `contract first` | Finds every consumer before changing an interface, and every copy before changing a written rule |
+| `fail loudly` | Swallows no error and invents no default to keep going |
+| `strict scope` | Does the task and only the task. What else it noticed goes in the report |
+| `open request` | Asks only when a wrong guess would waste the work; otherwise takes the safest reading and says which |
+| No self-approval | No agent judges its own work. Each closes with the same report, confidence, what would refute it, what it assumed, what it did not verify, and the coordinator decides. `final-reviewer` rereads important changes from scratch |
 
 <br>
 
