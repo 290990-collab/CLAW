@@ -56,10 +56,10 @@ installed, is not guessed: say so.
 | Name | What it demands | Where (`CLAUDE.md` unless named) |
 |---|---|---|
 | `strict scope` | only the assigned task, the rest goes into the report | “Strict scope” |
-| `outside the mandate` | a choice that is not yours is reported with the options, not made | “Decisions outside the mandate” |
-| `open request` | several possible readings: ask before picking one | “Open request” |
+| `outside the mandate` | a cheap-to-undo choice is made and declared; an expensive one is reported with the options | “Decisions outside the mandate” |
+| `open request` | several readings: ask only if a wrong one is expensive, otherwise take the safest and declare it | “Open request” |
 | `don't ask, run it` | an observable fact is observed, not asked | “An observable fact is not asked” |
-| `stop criterion` | without a verifiable criterion you stop | “Stop criterion” |
+| `stop criterion` | without a verifiable criterion, derive one and state it; ask only if it means guessing the goal | “Stop criterion” |
 | `zero redundancy` | green and nothing changed: do not re-run | “Zero redundancy” |
 | `verified sources` | nothing cited without reading or running it in session | “Verified sources” |
 | `proof level` | scale 1-5 and where it stopped; inconclusive is not green | “How far it is proven” |
