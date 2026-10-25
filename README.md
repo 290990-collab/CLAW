@@ -17,9 +17,9 @@ One command gives Claude Code a method to think by and a crew of agents to build
 
 <table>
 <tr>
-<td align="center" width="33%"><h3>22,000 lines</h3>a billing service and its tests, from one request<br><sub><a href="#proof">948 tests green in 2 hours</a></sub></td>
-<td align="center" width="33%"><h3>16 of 16</h3>bug tickets fixed from a single prompt<br><sub><a href="#proof">checked by hidden tests</a></sub></td>
-<td align="center" width="33%"><h3>91%</h3>of the build's tokens spent by the crew, not Opus<br><sub><a href="#proof">7 agents on Sonnet 5.5</a></sub></td>
+<td align="center" width="33%"><h3>91%</h3>of a long build's tokens spent by the crew, not Opus<br><sub><a href="#proof">7 agents on Sonnet 5.5</a></sub></td>
+<td align="center" width="33%"><h3>31 agents</h3>a project installs only the ones it needs<br><sub><a href="#agents">the full roster</a></sub></td>
+<td align="center" width="33%"><h3>1 method</h3>the same rules in every project, kept current from one source<br><sub><a href="#everyday-use">update in one command</a></sub></td>
 </tr>
 </table>
 
@@ -31,27 +31,28 @@ One command gives Claude Code a method to think by and a crew of agents to build
 
 ## Why
 
-Claude Code is the brilliant junior every team has had: quick on a small task, adrift on
-a big one. It guesses what an unclear request meant. It says "done" about code it never
-ran. It edits a failing test until it goes green, and it spends Opus tokens reading files
-a cheaper model could read.
+Claude Code is a strong engineer that starts every session without a brief. When to ask
+and when to pick a default, how sure to be before calling something done, what to leave
+alone, which model should read the logs: it decides each time, and on a small task it
+decides well. On a long task in a large repo those calls pile up, and each one made
+differently from the last is one you check by hand.
 
-Claude Code ships agents, hooks and skills, and no method for using them. CLAW is the
-method: the same rules and the same crew in every project, kept current from one source.
-Built for long tasks and large repos, where those habits cost the most.
+Claude Code ships agents, hooks and skills, and leaves the method to you. CLAW writes
+it down: the same rules and the same crew in every project, kept current from one source.
+Built for long tasks and large repos, where consistency pays the most.
 
 <br>
 
 ## Before / after
 
-| You say | Claude Code alone, often | With CLAW |
+| You say | Claude Code decides case by case | With CLAW, it is a rule |
 |---|---|---|
-| "Add an export" | Picks a format and builds it | Asks first: CSV or JSON, and for whom? |
-| "Fix the failing test" | Edits the expected value until it is green | Fixes the cause. If the test itself is wrong, says so and fixes it in a change of its own |
-| "Add a date field" | Writes a date picker by hand | Checks the repo, then the platform, and reuses your input with `type="date"` |
-| "Is it done?" | "Done!" | "Done. Not verified: the migration never ran on a real database" |
-| A long task | One expensive model does everything | Ask for the crew, or run `/delegate`: Opus plans and checks, the crew reads, runs and writes on cheaper models |
-| "Commit and push it" | Commits and pushes | Shows what will change, then waits for your ok |
+| "Add an export" | Picks a sensible format and builds it | Asks first when the answer changes the work: CSV or JSON, and for whom? |
+| "Fix this bug" | Fixes it, and may tidy the code around it | Fixes the bug only. Anything else it noticed goes in the report, not in the diff |
+| "Fix the failing test" | Fixes it, and settles a test-versus-code disagreement on its own | Fixes the cause. If the test itself is wrong, says so and fixes it in a change of its own |
+| "Is it done?" | Reports what it did | Reports what it did and how far each part is proven: "Done. Not verified: the migration never ran on a real database" |
+| A long task | Works mostly in one context, on the model you picked | Ask for the crew, or run `/delegate`: Opus plans and checks, the crew reads, runs and writes on cheaper models |
+| Tomorrow's session | Starts from what you tell it | Starts from `docs/TODO.md` and `docs/status.md`, where the last session left off |
 
 <sub>Each answer on the right is a rule in the <code>CLAUDE.md</code> that CLAW installs.</sub>
 
@@ -98,8 +99,8 @@ It asks five questions, shows every file it will write and waits for your ok.
 
 | Task | Result | Cost |
 |---|---|---|
-| **Build** `tally`, a B2B billing service, from one request that asked for the crew | 22,000 lines, half of them tests. 948 tests green in 2 hours. Seven `implementer` agents on Sonnet 5.5 spent 91% of the tokens; Opus, 9% | 85% of one Pro session |
-| **Fix** 16 seeded bugs in `tally`, sent as 16 tickets in one prompt | 16 of 16 fixed, in both runs, checked by hidden tests | $3.89 and $5.95 |
+| **Build** a B2B billing service from one request that asked for the crew | 22,000 lines, half of them tests. 948 tests green in 2 hours. Seven `implementer` agents on Sonnet 5.5 spent 91% of the tokens; Opus, 9% | 85% of one Pro session |
+| **Fix** 16 seeded bugs in that service, sent as 16 tickets in one prompt | 16 of 16 fixed, in both runs, checked by hidden tests | $3.89 and $5.95 |
 
 Measured with `claude -p` on Claude Code 2.1.294 to 2.1.301, Opus 5.5 as coordinator, on
 a codebase built for the eval and smaller than most production code.
@@ -110,8 +111,8 @@ a codebase built for the eval and smaller than most production code.
 
 | | What it means for you |
 |---|---|
-| **Evidence first** | Claude cites only what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
-| **Small, safe changes** | No unrequested refactoring, tests never weakened to go green. Commits, installs and anything irreversible wait for your ok |
+| **Evidence first** | Claude cites what it read or ran, says what it did not check, finds the cause before fixing, and asks when a request is unclear |
+| **Small, safe changes** | No unrequested refactoring; a failing test gets its cause fixed, not its assertion loosened. Commits, installs and anything irreversible wait for your ok |
 | **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
 | **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
 | **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
@@ -330,7 +331,12 @@ On a small task, yes: the method is overhead there, and plain Claude Code does i
 less. CLAW is built for the long task, where one unchecked guess costs hours.
 
 **Will it commit, push or install anything on its own?**
-Never. Commits, pushes, installs and anything irreversible wait for your ok, on a preview.
+Not under CLAW's rules: commits, pushes, installs and anything irreversible wait for your
+ok, on a preview. A rule of your own can allow some of them, such as local commits.
+
+**Is it measured against Claude Code alone?**
+Not yet. The runs in [Proof](#proof) show what a CLAW session delivers and what it
+costs. The same tasks without CLAW are the next runs, and their results will go here.
 
 **I changed a rule for my project. Will an update overwrite it?**
 No. Your rules in `.claude/user-rules.md` stay. A framework file edited by hand is regenerated, and `/claw update` names it first so you can move the edit into a rule.
