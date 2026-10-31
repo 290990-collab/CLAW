@@ -23,7 +23,7 @@ One command gives Claude Code a method to think by and a crew of agents to build
 </tr>
 </table>
 
-[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [What's inside](#whats-inside) · [The rules](#the-rules) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
+[Why](#why) · [Before / after](#before--after) · [Install](#getting-started) · [Proof](#proof) · [What's inside](#whats-inside) · [The rules](#the-rules) · [Principles](#principles-you-know-enforced) · [Everyday use](#everyday-use) · [Commands](#commands) · [Agents](#agents) · [FAQ](#faq)
 
 </div>
 
@@ -114,8 +114,12 @@ a codebase built for the eval and smaller than most production code.
 | **Evidence first** | Claude cites what it read or ran, says what it did not check, finds the cause before fixing, and asks only when a wrong guess would cost you |
 | **Small, safe changes** | No unrequested refactoring; a failing test gets its cause fixed, not its assertion loosened. Commits, installs and anything irreversible wait for your ok |
 | **A team sized to the task** | The coordinator knows it can delegate and decides each time on cost and effectiveness: cheaper agents read, run and execute, the top model judges. Small changes it does itself |
-| **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them |
-| **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it check who uses a file before its first edit |
+| **Handoffs that close the exits** | Every delegation names the shortcuts a pressed agent would take: a plan instead of the change, a check that never ran, a fix that holds only on the example. Named, they are off the table |
+| **Reviews without false alarms** | A reviewer tries to disprove a suspicion before reporting it. "What if a null arrives here?" counts only if something can pass one |
+| **Guides that load on demand** | Security, architecture, testing, debugging, performance: each guide opens when the task enters its domain, and stays closed otherwise |
+| **State across sessions** | `docs/TODO.md`, `docs/status.md` and `docs/roadmap.md` say where the work is; every session starts from them. A box is ticked only with the command and its outcome next to it |
+| **A memory that corrects itself** | One episode is a case, two independent ones a pattern. When an old memory and the repo disagree, the repo wins |
+| **Safety hooks** | Claude cannot skip your git hooks or relax a linter configuration. An optional hook makes it look up who imports a file before its first edit: "are you sure?" always gets a yes, a search does not |
 | **One plugin, many projects** | Update CLAW once, then bring each project up to date. Your own rules stay |
 
 <br>
@@ -138,7 +142,64 @@ to the work at hand. A selection of the 35, all in [`reporting.md`](CLAW/styles/
 | `fail loudly` | Swallows no error and invents no default to keep going |
 | `strict scope` | Does the task and only the task. What else it noticed goes in the report |
 | `open request` | Asks only when a wrong guess would waste the work; otherwise takes the safest reading and says which |
+| `don't ask, run it` | Never asks you what a command can answer. Behaviour, timing, output: it runs and looks |
+| `blame the instrument` | An empty search, or a check that passes too easily, makes it doubt the search before the code |
 | No self-approval | No agent judges its own work. Each closes with the same report, confidence, what would refute it, what it assumed, what it did not verify, and the coordinator decides. `final-reviewer` rereads important changes from scratch |
+
+<details>
+<summary><strong>The other 22</strong></summary>
+
+| Rule | What Claude does |
+|---|---|
+| `outside the mandate` | Makes a choice that is cheap to undo and says so; brings you an expensive one, with the options |
+| `stop criterion` | Starts no task without a verifiable finish line. It derives one and states it, and asks only when that would mean guessing the goal |
+| `zero redundancy` | Green and nothing changed: it does not run the suite again |
+| `hypotheses vs facts` | Keeps what it deduced apart from what it verified, on the page too |
+| `honesty` | Says "I don't know" and "this is wrong". Never agrees with you against the evidence |
+| `which decision` | Citing a rule means naming what it changed. A rule quoted for decoration does not count |
+| `kiss` | The simplest solution for today's requirement, never by cutting validation, error handling, security or accessibility |
+| `do it yourself` | A small change is usually cheaper done directly than delegated |
+| `model to the task` | Picks agent and model for the task in front of it, not for the job title |
+| `declared selection` | Runs the same work twice only after saying how it will pick the winner |
+| `proportionate review` | `final-reviewer` on the critical surface and important tasks; a double review only when you ask |
+| `skipped step` | A step left out stays written, with its reason. Assessed and forgotten stay different |
+| `tick with evidence` | A box closes with the command and the outcome next to it |
+| `safe pause` | Stops at a clean boundary and leaves a note for whoever picks up |
+| `pickup` | Reads the trail the last session left instead of redoing it |
+| `promote when it repeats` | One case is not a rule; two independent ones are a pattern |
+| `two shapes` | The `architect` puts two structurally different options on the table before choosing |
+| `plan that does not hold` | An `implementer` that keeps hitting friction reports it instead of quietly redesigning |
+| `reader load` | A refactoring that does not make the code easier to read is undone |
+| `not a finding` | A review drops preferences, hypotheses with no caller and abstractions nobody asked for |
+| `impractical test-first` | When a test cannot come first, says so and names the nearest check that can run |
+| `repro before the fix` | In the history, the failing repro lands before the fix |
+
+</details>
+
+<br>
+
+## Principles you know, enforced
+
+The names you learned on the job. CLAW does not recite them: it makes Claude work by
+them, from the method it reads every session and the guides it opens when a task needs them.
+
+| Principle | What Claude does |
+|---|---|
+| **YAGNI** | No abstraction, option or parameter for a need that does not exist yet. In review, an abstraction without a second use case is the defect |
+| **KISS** | The simplest solution for today's requirement, in the style of the file it lands in |
+| **The Boy Scout rule** | Overruled on purpose. The campsite stays as it was: what Claude would tidy goes in the report, and your diff holds only the task |
+| **Chesterton's fence** | Code that looks dead is searched for before it goes, and a deliberate removal is recorded so nobody brings it back |
+| **Single source of truth** | One copy of each fact is authoritative. Caches, indexes and aggregates are derived and can be rebuilt |
+| **Fail fast** | Missing configuration stops the program at startup. No swallowed exception, no invented default |
+| **Fail closed** | A security check that errors out denies the action. Authorisation is checked server-side, per object, on every path |
+| **Least privilege** | On files, roles and tokens. Input is validated at the boundary against an allowlist, and rejected, not cleaned up |
+| **Make illegal states unrepresentable** | States are a closed set the compiler checks, never flags that combine into impossible ones |
+| **Clean functions** | One level of abstraction per function, early returns, no boolean argument that switches behaviour, queries kept apart from commands |
+| **Dependency inversion** | Domain logic knows nothing of the UI, the database or the transport. A rule that needs a server to be tested is coupled to a detail |
+| **Property-based thinking** | Invariants before examples: idempotence, round-trip, conservation, monotonicity |
+| **Regression test first** | The repro that failed comes before the fix, and proves the bug is gone |
+| **Bisection** | Halves the input, the history or the path. Holds two hypotheses and looks for the observation that separates them |
+| **Measure, don't guess** | No speed claim without a measurement: p50, p95 and p99 over several runs, never one average |
 
 <br>
 
