@@ -6,7 +6,7 @@ description: >
   and checks the rendered result against it on screenshots. Use when a new
   interface or a redesign needs a direction, and when the rendering of a
   finished view needs judging. Writes no code: `frontend` applies the direction.
-model: opus
+model: sonnet
 effort: medium
 tools: Read, Grep, Glob, WebSearch, WebFetch
 color: pink

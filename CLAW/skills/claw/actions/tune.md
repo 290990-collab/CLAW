@@ -70,7 +70,7 @@ Example, static portfolio with design-award ambition, no backend:
 |---|---|---|---|
 | `security-reviewer` | opus / high | sonnet / high | no backend, no forms: headers and dependencies |
 | `copywriter` | sonnet / low | opus / medium | bio and descriptions carry the whole first impression |
-| `visual-director` | opus / medium | opus / medium | — (at the centre: stays) |
+| `visual-director` | sonnet / medium | sonnet / medium | — (at the centre: stays) |
 
 ## Step 4 — Plan, then ok
 
