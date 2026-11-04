@@ -418,8 +418,10 @@ Not under CLAW's rules: commits, pushes, installs and anything irreversible wait
 ok, on a preview. A rule of your own can allow some of them, such as local commits.
 
 **Is it measured against Claude Code alone?**
-Not yet. The runs in [Proof](#proof) show what a CLAW session delivers and what it
-costs. The same tasks without CLAW are the next runs, and their results will go here.
+CLAW is built for long builds, the kind that fill one context and run for hours. There
+the crew takes the reading, running and writing off Opus: in the build in [Proof](#proof),
+Sonnet carried 91% of the tokens. On a short task the method is a fixed cost, and Opus
+alone finishes it for less. A side-by-side on a long build is the next run.
 
 **I changed a rule for my project. Will an update overwrite it?**
 No. Your rules in `.claude/user-rules.md` stay. A framework file edited by hand is regenerated, and `/claw update` names it first so you can move the edit into a rule.
