@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/claw.png" alt="CLAW, an orange block with two claws, sitting cross-legged in calm focus" width="360">
+<img src="assets/claw.png" alt="CLAW, an orange block with two claws, sitting cross-legged in calm focus" width="396">
 
 # CLAW
 
