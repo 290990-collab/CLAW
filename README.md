@@ -62,14 +62,14 @@ Built for long tasks and large repos, where consistency pays the most.
 
 ### Prerequisites
 
-| You need | Why |
+| Requirement | Purpose |
 |---|---|
-| [Claude Code](https://code.claude.com) | CLAW is a method for it |
-| Python 3.11 or later | The installer and the hooks. Standard library only: no packages, no service, no account |
+| [Claude Code](https://code.claude.com) | CLAW runs as a Claude Code plugin |
+| Python 3.11 or later | Used by the installer and hooks. Standard library only; no extra packages or services |
 
-### Install
+### Install the plugin
 
-CLAW is a Claude Code plugin. Once per machine, in Claude Code:
+Install CLAW once per machine. In Claude Code, run:
 
 ```text
 /plugin marketplace add 290990-collab/CLAW
@@ -77,25 +77,28 @@ CLAW is a Claude Code plugin. Once per machine, in Claude Code:
 ```
 
 > [!TIP]
-> In `/plugin` → Marketplaces, turn on auto-update for this marketplace: new releases
-> arrive by themselves.
+> In `/plugin` → Marketplaces, enable auto-update for this marketplace to receive new releases automatically.
 
-Then, in each project, open Claude Code in the project folder and run:
+### Install CLAW in a project
+
+Open Claude Code in the project's folder and run:
 
 ```text
 /claw install
 ```
 
-It asks five questions, shows every file it will write and waits for your ok.
+The installer asks five questions, previews every file it plans to write and waits for your approval.
 
 > [!NOTE]
-> CLAW does not run on its own. It installs files into your project (`CLAUDE.md`,
-> `.claude/agents/`, `.claude/shared/`, hooks, state files) that Claude Code reads
-> in every session.
+> CLAW does not run as a separate application. It installs project files (`CLAUDE.md`,
+> `.claude/agents/`, `.claude/shared/`, hooks and state files) that Claude Code reads
+> during its sessions.
 
 <br>
 
 ## Proof
+
+These results come from two evaluation tasks:
 
 | Task | Result | Cost |
 |---|---|---|
@@ -210,15 +213,15 @@ them, from the method it reads every session and the guides it opens when a task
 
 | I want to… | Do this |
 |---|---|
-| Set up a project | In Claude Code, in the project: `/claw install` |
-| Get a new CLAW release | The plugin updates (automatically, or in `/plugin`). Restart Claude Code |
-| Bring a project to the new release | In Claude Code, in that project: `/claw update`. Your rules stay |
-| Check that a project is healthy | `/claw fix` explains every finding and repairs it |
-| Stop and resume later | Say `safe pause`. Claude writes where things are in `docs/TODO.md` |
+| Set up a project | Run `/claw install` in Claude Code from the project folder |
+| Get a new CLAW release | Update the plugin (automatically or in `/plugin`), then restart Claude Code |
+| Update a project to the new release | Run `/claw update` in that project's Claude Code session. Your own rules are preserved |
+| Check a project's installation | Run `/claw fix`. It explains each finding and repairs what is missing |
+| Pause and resume later | Say `safe pause`. Claude records the current state in `docs/TODO.md` |
 
 > [!IMPORTANT]
-> A project changes only when you run `/claw update` inside it, so nothing moves in a
-> project you are not looking at.
+> Updating the plugin does not change projects automatically. Run `/claw update` inside
+> each project when you are ready to apply the new version.
 
 <br>
 
@@ -226,86 +229,95 @@ them, from the method it reads every session and the guides it opens when a task
 
 ### `/claw` in Claude Code
 
-One skill, one action at a time. `/claw` alone lists the actions.
+Run `/claw` without an action to see the available commands.
 
-| Action | What it does |
+| Command | What it does |
 |---|---|
-| `/claw install` | Sets up CLAW in this project |
-| `/claw update` | Brings this project to the CLAW version you have. Also adds or removes an agent or guide, and changes the profile or the orchestration |
-| `/claw rule` | Writes a rule of your own for this project, or for one agent |
-| `/claw fix` | Checks the installation, explains every finding, regenerates what is missing |
-| `/claw tune` | Adjusts each agent's model and effort to this project |
-| `/claw tidy` | Finds what is stale in the to-do list and in Claude's memory of this project, and the shortcuts left in the code |
-| `/claw comply <rule>` | Measures how often Claude follows a rule. Uses your tokens, so it asks first |
-| `/claw uninstall` | Removes CLAW. What you adapted goes to `.claude/claw-archive/` |
+| `/claw install` | Installs CLAW in the current project |
+| `/claw update` | Updates the project to the installed CLAW version. Adds or removes agents and guides, and updates the profile or orchestration when needed |
+| `/claw rule` | Creates a project-wide rule or a rule for one agent |
+| `/claw fix` | Checks the installation, explains each finding and regenerates missing files |
+| `/claw tune` | Adjusts each agent's model and effort for the project |
+| `/claw tidy` | Finds stale entries in the to-do list and project memory, plus shortcuts left in the code |
+| `/claw comply <rule>` | Measures how consistently Claude follows a rule. Uses your tokens, so it asks for approval first |
+| `/claw uninstall` | Removes CLAW. Your customizations are moved to `.claude/claw-archive/` |
 
-Every action that writes shows its plan first and waits for your ok.
+Every command that writes files previews its plan and waits for your approval.
 
 ### `/delegate` in Claude Code
 
-`/delegate <task>` makes Claude the manager of that task: it splits the work
-into pieces, shows you who does each one, hands them to the agents, then checks
-the results. Claude may also start it on its own for a long task, and says so.
+Use `/delegate <task>` to have Claude coordinate a task. It breaks the work into
+parts, shows who will handle each part, delegates to the agents and checks their reports.
+
+Claude may also start delegation automatically for a long task, and will tell you when it does.
 
 ### Checks in CI
 
-`python claw.py doctor --strict --json <project>`, from the plugin's folder, fails on
-warnings too and prints JSON.
+Run this command from the plugin's folder:
+
+```text
+python claw.py doctor --strict --json <project>
+```
+
+It treats warnings as failures and outputs JSON.
 
 <br>
 
 ## Agents
 
-31 agents. A project installs only the ones its profile and your answers need.
+CLAW provides 31 agents. Each project installs only the agents required by its profile
+and your answers during setup.
 
 <details>
-<summary><strong>The full roster</strong>: always installed, by profile, reviewers of the critical surface</summary>
+<summary><strong>The full roster</strong>: always installed, profile-specific and critical-surface reviewers</summary>
 
 **Always installed**
 
-| Agent | What it does |
+| Agent | Role |
 |---|---|
-| `explorer` | Finds where things live, cheaply |
-| `architect` | Plans changes that cross files or contracts |
-| `implementer` | Writes the planned change |
+| `explorer` | Finds relevant files and code paths |
+| `architect` | Plans changes across files or interfaces |
+| `implementer` | Implements the agreed change |
 | `tester` | Tests invariants and contracts |
-| `refactorer` | Cleans up the structure, behaviour unchanged |
-| `final-reviewer` | Rereads the diff and reruns the tests before an important change is called done |
+| `refactorer` | Restructures code without changing behavior |
+| `final-reviewer` | Independently reviews important changes and reruns relevant tests |
 
 **Added by profile or on request**
 
-| Agent | What it does |
+| Agent | Role |
 |---|---|
-| `api-scout` | Checks third-party APIs before code relies on them |
-| `debugger` | Finds the cause of a defect nobody can explain |
-| `silent-failure-hunter` | Finds swallowed errors and faults hidden behind defaults |
-| `comment-analyzer` | Finds comments that no longer tell the truth |
-| `conversation-analyzer` | Finds corrections that keep repeating in past sessions |
-| `visual-director` | Decides how the interface looks, then checks the rendering against it |
-| `frontend` | Views, components, style, motion, accessibility |
-| `deploy` | Simple hosting: build, domain, secrets. Never with `infra` |
-| `infra` | Infrastructure as code, environments, migrations. Never with `deploy` |
-| `data-ingestion` | Pipelines that bring external data in |
-| `results-analyst` | Reads measured results: is the change real, and why |
+| `api-scout` | Checks third-party APIs before code depends on them |
+| `debugger` | Investigates defects whose cause is unclear |
+| `silent-failure-hunter` | Finds swallowed errors and faults hidden by defaults |
+| `comment-analyzer` | Finds comments that no longer match the code |
+| `conversation-analyzer` | Finds recurring corrections in past sessions |
+| `visual-director` | Defines the visual direction and checks the rendered result |
+| `frontend` | Handles views, components, styling, motion and accessibility |
+| `deploy` | Handles straightforward hosting, builds, domains and secrets. Never runs alongside `infra` |
+| `infra` | Handles infrastructure as code, environments and migrations. Never runs alongside `deploy` |
+| `data-ingestion` | Builds pipelines that bring in external data |
+| `results-analyst` | Evaluates measured results and explains what changed |
 | `literature` | Finds and reads publications |
-| `runner` | Runs tests, builds and logs, reports only the outcome |
-| `light-implementer` | Writes code from a closed specification and its acceptance test, cheaply |
-| `market-researcher` | Audience, alternatives, the promise the product keeps |
-| `campaign-planner` | Channel, cadence, headline, what to measure |
-| `copywriter` | Writes the copy, every claim with its proof |
+| `runner` | Runs tests, builds and logs, then reports the outcome |
+| `light-implementer` | Implements a closed specification and acceptance test at lower cost |
+| `market-researcher` | Researches audiences, alternatives and product positioning |
+| `campaign-planner` | Plans channels, cadence, headlines and measurements |
+| `copywriter` | Writes copy and supports each claim with evidence |
 | `visual-designer` | Specifies images and layouts |
-| `content-analyst` | Reads the numbers after publishing |
+| `content-analyst` | Analyzes performance data after publication |
 
-**Reviewers of the critical surface.** `/claw install` asks what could make the
-work wrong even with perfect code, and adds the matching reviewer.
+**Reviewers for critical surfaces**
 
-| Agent | Watches for |
+During `/claw install`, CLAW asks what could make the work fail even if the code is
+correct, then adds the relevant reviewer.
+
+| Agent | What it reviews |
 |---|---|
-| `security-reviewer` | Someone could abuse it |
-| `scientific-reviewer` | The conclusions might not hold |
-| `data-quality-reviewer` | The data might be wrong upstream |
-| `compliance-reviewer` | Personal data, licences, terms of use |
-| `perf-analyst` | A declared performance requirement |
+| `security-reviewer` | Security and abuse risks |
+| `scientific-reviewer` | Whether conclusions are supported |
+| `data-quality-reviewer` | Whether source data may be incorrect |
+| `compliance-reviewer` | Personal data, licenses and terms of use |
+| `perf-analyst` | Declared performance requirements |
 | `claim-reviewer` | Public claims about the product |
 
 </details>
@@ -314,23 +326,25 @@ work wrong even with perfect code, and adds the matching reviewer.
 
 ## Profiles
 
-The first question of `/claw install`. It picks the extra agents, the guides and
-the work cycle; `/claw update` switches it later.
+The first `/claw install` question selects a profile. It determines the additional agents,
+guides and work cycle. You can change it later with `/claw update`.
 
-| Profile | For |
+| Profile | Intended for |
 |---|---|
 | `software` | Applications, services, CLI and desktop tools |
-| `library` | Libraries and packages: the public API is the product |
-| `web` | Sites and web apps where the look matters |
-| `data` | Acquisition, transformation, storage |
-| `research` | The product is reproducible evidence |
-| `llm` | A language model produces what the code uses |
-| `marketing` | Positioning, copy, images, campaigns |
+| `library` | Libraries and packages where the public API is the product |
+| `web` | Websites and web apps where visual quality matters |
+| `data` | Data acquisition, transformation and storage |
+| `research` | Work where reproducible evidence is the product |
+| `llm` | Systems where a language model produces output used by the code |
+| `marketing` | Positioning, copy, images and campaigns |
 
-| Orchestration | How agents work together |
+### Orchestration modes
+
+| Mode | How agents work |
 |---|---|
-| `orchestrator-worker` (default) | The coordinator hands out work and collects reports |
-| `agent-teams` | Agents message each other. Experimental, needs an interactive session |
+| `orchestrator-worker` (default) | The coordinator assigns tasks and collects reports |
+| `agent-teams` | Agents communicate with one another. Experimental; requires an interactive session |
 
 <br>
 
@@ -338,24 +352,26 @@ the work cycle; `/claw update` switches it later.
 
 | Feature | How it works | Example |
 |---|---|---|
-| **Rule names** | Write a rule's name and Claude applies it to the current work. The 35 names are in [`reporting.md`](CLAW/styles/reporting.md) | `minimal change here`, `proof level?` |
-| **Reference codes** | A reply with three or more findings, decisions or options numbers them | `keep D1, drop O2` |
-| **Aliases** | Sent as the whole message, they rework the last reply | see below |
+| **Rule names** | Mention a rule to apply it to the current task. All 35 names are in [`reporting.md`](CLAW/styles/reporting.md) | `minimal change here`, `proof level?` |
+| **Reference codes** | Replies with three or more findings, decisions or options are numbered | `keep D1, drop O2` |
+| **Aliases** | Send an alias as your entire message to transform the previous reply | See below |
 
-| Alias | You get |
+| Alias | Result |
 |---|---|
-| `scr` | The last reply, simplified and shorter |
-| `foc` | Only the real signal of the last reply |
-| `ref` | The last reply with reference codes |
-| `eli` | The last reply explained simply |
+| `scr` | Simplifies and shortens the previous reply |
+| `foc` | Keeps only the essential information |
+| `ref` | Adds reference codes to the previous reply |
+| `eli` | Explains the previous reply in simpler terms |
 
 <br>
 
 ## Your own rules
 
-`.claude/user-rules.md` is the one file that holds them. It starts empty. Sections:
-`## All` for every agent, `## <agent>` for one; in an agent's section, `model:` and
-`effort:` lines override its defaults.
+Use `.claude/user-rules.md` to store project-specific instructions. It starts empty.
+
+Use `## All` for rules that apply to every agent and `## <agent>` for rules that apply
+to one agent. Inside an agent's section, `model:` and `effort:` override that agent's
+defaults.
 
 ```text
 ## All
@@ -366,9 +382,9 @@ model: sonnet
 - Run `pytest -q -x`, never the whole matrix.
 ```
 
-Claude writes there only when you ask to make something a rule (`/claw rule`), and
-after showing you the line. The framework files are regenerated from it; on conflict,
-your rules win.
+Claude writes to this file only when you ask it to create a rule with `/claw rule`,
+and shows you the proposed line first. CLAW regenerates the framework files from this
+source. If a project rule conflicts with a framework default, your rule takes precedence.
 
 <br>
 
@@ -376,16 +392,20 @@ your rules win.
 
 | Setting | Effect |
 |---|---|
-| `language` in Claude Code's settings | The language Claude answers in. Without it, the language of your messages |
-| `CLAW_GATEGUARD=off` | Turns off the optional hook that checks a file's users before its first edit |
-| `accepted` in `.claude/claw.json` | Warnings of the doctor you keep on purpose, each with a reason |
+| `language` in Claude Code settings | Sets Claude's response language. If unset, Claude uses the language of your messages |
+| `CLAW_GATEGUARD=off` | Disables the optional hook that checks a file's importers before its first edit |
+| `accepted` in `.claude/claw.json` | Stores doctor warnings you have chosen to keep, together with the reason |
 
-`.claude/claw.json` records your choices; every framework file is regenerated from it.
+`.claude/claw.json` records your setup choices. CLAW regenerates framework files from
+this configuration.
+
 To keep a warning, copy its code from the doctor's output into `accepted`:
 
 ```text
 WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel — 4300 in all, ≈5700 tokens paid at every spawn
 ```
+
+Example configuration:
 
 ```json
 {
@@ -403,31 +423,39 @@ WARN  TOKEN_BUDGET      CLAUDE.md: 2400 project words against 1900 of kernel —
 ```
 
 > [!WARNING]
-> Errors cannot be accepted: they must be fixed.
+> Errors cannot be accepted; they must be fixed.
 
 <br>
 
 ## FAQ
 
-**Does it work with Codex, Cursor or Gemini?**
-No. CLAW is built on Claude Code's agents, hooks and skills.
+**Does CLAW work with Codex, Cursor or Gemini?**
 
-**Does it slow Claude down?**
+No. CLAW is built specifically for Claude Code's agents, hooks and skills.
+
+**Does CLAW slow Claude down?**
+
 On a small task, yes: the method is overhead there, and plain Claude Code does it for
-less. CLAW is built for the long task, where one unchecked guess costs hours.
+less. CLAW is built for the long task, where one unchecked assumption can cost hours.
 
-**Will it commit, push or install anything on its own?**
-Not under CLAW's rules: commits, pushes, installs and anything irreversible wait for your
-ok, on a preview. A rule of your own can allow some of them, such as local commits.
+**Can CLAW commit, push or install things on its own?**
 
-**Is it measured against Claude Code alone?**
+Under CLAW's rules, no. Commits, pushes, installs and other irreversible actions require
+your approval after a preview. You can add a project rule to allow specific actions, such
+as local commits.
+
+**Has CLAW been measured against Claude Code alone?**
+
 CLAW is built for long builds, the kind that fill one context and run for hours. There
 the crew takes the reading, running and writing off Opus: in the build in [Proof](#proof),
 Sonnet carried 91% of the tokens. On a short task the method is a fixed cost, and Opus
 alone finishes it for less.
 
-**I changed a rule for my project. Will an update overwrite it?**
-No. Your rules in `.claude/user-rules.md` stay. A framework file edited by hand is regenerated, and `/claw update` names it first so you can move the edit into a rule.
+**Will a project update overwrite my rules?**
+
+No. Rules in `.claude/user-rules.md` are preserved. Framework files edited manually
+are regenerated; `/claw update` identifies those files first so you can move your
+changes into a project rule.
 
 <br>
 
