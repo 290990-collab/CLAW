@@ -106,7 +106,7 @@ In everyday work on real projects it runs the same way: Opus plans and checks, w
 Sonnet and Haiku write the code, make the edits and run the commands.
 
 Measured with `claude -p` on Claude Code 2.1.294 to 2.1.301, Opus 5.5 as coordinator, on
-a codebase built for the eval and smaller than most production code.
+a 22,000-line service built for the eval.
 
 <br>
 
