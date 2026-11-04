@@ -36,7 +36,7 @@ Split the task into atomic pieces and show them in one table before any spawn:
 
 ## 2. Delegate
 
-Every prompt follows § How to write a delegation prompt. New work on files an agent already holds goes to that agent as a message (rule 8), not to a new spawn.
+Every prompt follows § How to write a delegation prompt. Before every spawn, check the agents already in the session: new work in the area of one of the same role goes to it as a message (rule 8), not to a new spawn.
 
 ## 3. What stays yours
 
