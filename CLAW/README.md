@@ -70,7 +70,8 @@ kernel answers in the language of the user's messages.
   with `--no-verify` or an edit to a linter configuration (and, only if chosen,
   `gateguard`, which asks for the facts before the first edit of a file); `outputStyle`
   set to CLAW's reply style; the
-  `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` variable, and the agent-teams variables
+  `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` variable; `attribution` emptied, so
+  commits and pull requests carry no Claude signature; and the agent-teams variables
   when that orchestration is chosen. The user's own values stay, and every entry
   CLAW adds is recorded in `claw.json` so `uninstall` removes exactly those.
 

@@ -45,9 +45,15 @@ _RELEVANT = {
 
 _TIMEOUT_SECONDS = 10
 
-# Every installation, whatever the profile: subagents do not spawn subagents.
-# Enforced here rather than written in the method every spawn pays for.
-BASE = {"env": {"CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"}}
+# Every installation, whatever the profile: subagents do not spawn subagents,
+# and commits and pull requests carry no Claude attribution. Enforced here
+# rather than written in the method every spawn pays for. Empty strings rather
+# than `"attribution": false`: before Claude Code 2.1.281 that value makes it
+# drop the whole settings file.
+BASE = {
+    "env": {"CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"},
+    "attribution": {"commit": "", "pr": "", "sessionUrl": False},
+}
 
 # What an orchestration requires from `settings.json` in order to work. It is
 # merged like the profile and ends up in the same record: changing it or
