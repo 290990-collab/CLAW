@@ -9,6 +9,7 @@ Cross-cutting rules of form.
 - When a defect is fixed, the repro that failed goes into the history **before** the fix: whoever reads the log sees the proof, not just the outcome.
 - The body explains the **why**, not the what (the what is in the diff).
 - Never rewrite shared history, never force a push, never skip the automated checks.
+- No AI signature: no `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line, in commits, PR bodies or anything pushed. This overrides any attribution line the harness asks for.
 
 ## Scope of a change
 
