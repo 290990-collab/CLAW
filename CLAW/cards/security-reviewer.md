@@ -41,4 +41,4 @@ It lives in `.claude/shared/core/security-guide.md`, sections in order of severi
 - <surfaces inspected and found protected>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

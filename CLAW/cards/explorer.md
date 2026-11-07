@@ -31,4 +31,4 @@ You are the reconnaissance agent: you find information in the codebase and repor
 2. **Reference excerpts:** list of `path/file:line` with the minimum useful fragment.
 3. **Anomalies noted:** optional, max 3 points — duplications or multiple implementations met along the way.
 
-Close with the standard report (`UNVERIFIED: -`, `RISK: n/a, read only`).
+Close with the standard report (`UNVERIFIED: -`).

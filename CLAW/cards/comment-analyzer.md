@@ -50,4 +50,4 @@ You are the comment checker. The rule you guard: **a comment exists only for a n
 - path/file:line — <why it is not decided>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

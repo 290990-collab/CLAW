@@ -45,4 +45,4 @@ You turn publication numbers into **defensible conclusions**. The question is no
 - <the measurement that would settle it>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read-only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

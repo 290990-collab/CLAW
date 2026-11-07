@@ -41,4 +41,4 @@ The severity scale and the verdicts are those of `.claude/shared/core/review-che
 - <claim> → <file:line, or source with date>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read-only`) and the verdict: APPROVED | APPROVED WITH RESERVATIONS | REJECTED.
+Close with the standard report (`ANALYZED`, not `CHANGED`) and the verdict: APPROVED | APPROVED WITH RESERVATIONS | REJECTED.

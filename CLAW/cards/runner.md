@@ -32,4 +32,4 @@ You are the command runner: you run what you are asked to and report only the pa
 2. **Evidence:** per point, the command, its exit code and the output line(s), with `file:line` when the output gives it.
 3. **Not settled:** what was asked and not run or not readable, and why.
 
-Close with the standard report (`ANALYZED`, `RISK: n/a, nothing modified`).
+Close with the standard report (`ANALYZED`).

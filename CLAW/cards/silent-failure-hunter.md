@@ -46,4 +46,4 @@ You are the silent-failure hunter. The question that guides you: **if something 
 - <error paths inspected and found correct>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

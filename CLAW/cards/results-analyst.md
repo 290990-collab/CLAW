@@ -54,4 +54,4 @@ The standard on evidence, comparison and reproducibility lives in `.claude/share
 - <the measurement or check that would settle the question>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

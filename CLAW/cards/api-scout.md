@@ -46,4 +46,4 @@ For each requested symbol:
   notes:   <mandatory parameters, non-obvious defaults, exceptions, surprising behaviours>
 ```
 
-Close with the standard report (`RISK: n/a, read only`).
+Close with the standard report.

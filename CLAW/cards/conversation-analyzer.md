@@ -50,4 +50,4 @@ You are the conversation analyst. You read the transcripts the coordinator point
 - <single or ambiguous episodes, and why>
 ```
 
-Order the candidates by frequency and cost of the mistake. Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Order the candidates by frequency and cost of the mistake. Close with the standard report (`ANALYZED`, not `CHANGED`).

@@ -50,4 +50,4 @@ You are the validity reviewer. You verify that the numbers produced mean what th
 - <evaluation pipelines or metrics analysed and found valid>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

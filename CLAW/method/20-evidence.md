@@ -19,7 +19,7 @@ CONF: HIGH | MEDIUM | LOW — <reason in ≤10 words>
 REFUTE: <what would change my mind>
 CHANGED/ANALYZED: <file:line, ...>
 ASSUMED: <list or "-">
-RISK: <regressions or side effects, or "none noted">
+RISK: <regressions or side effects, or "none noted"> — only if you changed something
 UNVERIFIED: <what was not run or checked, or "-">
 ```
 

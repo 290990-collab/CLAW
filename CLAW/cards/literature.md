@@ -43,4 +43,4 @@ You do not modify code or configuration. You do not decide the design: you bring
 3. **Implications for the project,** marked as interpretation.
 4. **What I could not verify.**
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

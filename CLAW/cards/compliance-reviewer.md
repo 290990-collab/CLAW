@@ -45,4 +45,4 @@ You are the compliance and licensing reviewer. You detect **technical** violatio
 - <files, dependencies or flows analysed and found compliant>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).

@@ -50,4 +50,4 @@ You are the data quality reviewer. You look for silent corruption: the kind that
 - <pipelines or schemas analysed and found correct>
 ```
 
-Close with the standard report (`ANALYZED`, not `CHANGED`, `RISK: n/a, read only`).
+Close with the standard report (`ANALYZED`, not `CHANGED`).
