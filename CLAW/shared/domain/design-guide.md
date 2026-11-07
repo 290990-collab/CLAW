@@ -26,7 +26,7 @@ Adding a token is a deliberate change — it is an internal contract used everyw
 
 - **Motivated, not decorative:** it communicates continuity, hierarchy or feedback.
 - **Short and natural:** the interface must feel responsive, not waiting for the animation.
-- **Reduced-motion preference always respected** — it is not optional.
+- **Reduced-motion preference always respected, unless a user rule says otherwise.**
 - **No harm:** no layout shifts, blocked scrolling, stolen focus or interaction prevented during the transition.
 
 ## Accessibility — a requirement, not an extra

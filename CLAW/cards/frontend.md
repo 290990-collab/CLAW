@@ -31,7 +31,7 @@ You are responsible for the interface.
 The item-by-item detail on accessibility, motion and performance lives in `.claude/shared/domain/design-guide.md` and is opened **before** applying the direction. Here the boundary holds:
 
 - **No information carried by colour alone,** no path reachable only with the pointer, no invisible focus, contrast respected.
-- **Reduced-motion preference always respected:** no animation shifts the layout, steals focus or blocks interaction.
+- **Reduced-motion preference always respected, unless a user rule says otherwise:** no animation shifts the layout, steals focus or blocks interaction.
 - **No content shifting after loading.**
 - **User input, generated markup and secrets in the client** follow `.claude/shared/core/security-guide.md`.
 - **Pages meant to be found** follow `.claude/shared/domain/seo-guide.md` § Technical.
