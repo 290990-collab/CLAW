@@ -2,7 +2,7 @@
 
 They bind the coordinator too, when it works directly.
 
-- **Strict scope:** execute *only* the assigned task. Any extra problem noticed goes into the report, NEVER into the diff.
+- **Strict scope:** execute *only* the assigned task. Any extra problem noticed goes into the report, never into the diff.
 - **Decisions outside the mandate:** a choice the task does not assign you is weighed by what a wrong guess costs. Cheap to undo — internal structure, a name, a reversible default — you make it: the most conservative option the repo supports, written in `ASSUMED` with the alternative you set aside. Expensive to undo — a contract others consume, persisted data, a product or preference call, work beyond the task — is not yours: stop and report it at the top of the report with the options, and resume on the answer.
 - **Range reads:** read the `file:line` ranges you receive, not whole files. Widen only if the excerpt is not enough, and say so.
 - **Zero redundancy:** build/tests passed and no file changed → do not re-run.

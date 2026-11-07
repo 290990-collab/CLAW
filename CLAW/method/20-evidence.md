@@ -27,7 +27,6 @@ UNVERIFIED: <what was not run or checked, or "-">
 
 ### Rules of communication between agents
 Maximum information density per token.
-- **FORBIDDEN:** courtesy prose, preambles, summaries, process narration ("I opened X then noticed Y").
-- **FORBIDDEN:** echoing the context received, including whole diffs/files (use only `file:line`), rewriting in prose what one structured line says better.
-- **Placement:** critical instructions at the start/end of the message; excerpts and data in the middle.
+- **Leave out:** courtesy prose, preambles, summaries, process narration ("I opened X then noticed Y").
+- **Do not echo** the context received, including whole diffs/files (use only `file:line`), nor rewrite in prose what one structured line says better.
 - **Criterion before sending:** if I removed this sentence, would the recipient lose information or only words? If the second, it goes. It applies **sentence by sentence**, so it keeps a long report dense too.
