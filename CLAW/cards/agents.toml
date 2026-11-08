@@ -11,7 +11,7 @@ conversation-analyzer = { model = "haiku", effort = "high", tools = "Read, Grep,
 copywriter = { model = "sonnet", effort = "low", tools = "Read, Grep, Glob, Edit, Write", color = "green" }
 data-ingestion = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "green" }
 data-quality-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob", color = "cyan" }
-debugger = { model = "opus", effort = "high", tools = "Read, Grep, Glob, Edit, Bash", color = "yellow" }
+debugger = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, Edit, Bash", color = "yellow" }
 deploy = { model = "sonnet", effort = "medium", tools = "Read, Grep, Glob, Edit, Write, Bash", color = "orange" }
 explorer = { model = "haiku", effort = "medium", maxTurns = 30, tools = "Read, Grep, Glob", color = "cyan" }
 final-reviewer = { model = "opus", effort = "medium", tools = "Read, Grep, Glob, Bash", color = "pink" }

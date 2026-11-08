@@ -6,7 +6,7 @@ description: >
   already identified — if it is, the fix is the implementer's work. Finds and
   explains the mechanism; fixes only when the fix is a few obvious lines.
 model: opus
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Edit, Bash
 color: yellow
 ---
